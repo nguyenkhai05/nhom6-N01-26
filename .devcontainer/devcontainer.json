@@ -1,18 +1,4 @@
 {
-    "name": "Flutter",
-    "image": "matspfeiffer/flutter:beta",
-    "extensions": [
-        "dart-code.dart-code",
-        "dart-code.flutter"
-    ],
-   
-   
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "GitHub.copilot"
-            ]
-        }
-    }
-   
+    "name": "Node.js Dev Container",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:20"
 }
