@@ -22,7 +22,7 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
-  @CreateDateColumn()
+  @Column()
   created_at: Date;
 
   @OneToMany(() => Course, (course) => course.instructor)
