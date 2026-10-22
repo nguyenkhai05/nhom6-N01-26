@@ -14,6 +14,12 @@ export enum CourseStatus {
   ARCHIVED = 'Archived',
 }
 
+export enum CourseLevel {
+  BEGINNER = 'Beginner',
+  INTERMEDIATE = 'Intermediate',
+  ADVANCED = 'Advanced',
+}
+
 @Entity('courses')
 export class Course {
   @PrimaryGeneratedColumn()
@@ -37,8 +43,15 @@ export class Course {
   @Column({ length: 500, nullable: true })
   thumbnail_url: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
+  // MySQL trả decimal dạng chuỗi ("890000.00"), chuyển về số để giỏ hàng/thanh toán tính đúng
+  @Column({
+    type: 'decimal', precision: 10, scale: 2, default: 0.0,
+    transformer: { to: (v?: number) => v, from: (v: string | null) => (v === null ? null : parseFloat(v)) },
+  })
   price: number;
+
+  @Column({ type: 'enum', enum: CourseLevel, default: CourseLevel.BEGINNER })
+  level: CourseLevel;
 
   @Column({ type: 'enum', enum: CourseStatus, default: CourseStatus.DRAFT })
   status: CourseStatus;

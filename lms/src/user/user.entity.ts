@@ -16,8 +16,14 @@ export class User {
   @Column()
   password_hash: string;
 
+  @Column({ length: 500, nullable: true })
+  avatar_url: string;
+
   @Column({ default: true })
   is_active: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
 
   @OneToMany(() => Course, (course) => course.instructor)
   coursesTaught: Relation<Course>[];
