@@ -30,7 +30,7 @@ export default function CourseList({
       <Row className="g-4">
         {courses.length > 0 ? (
           courses.map((course) => (
-            <Col key={course.course_id} xs={12} sm={6} lg={4}>
+            <Col key={course.course_id} xs={12} sm={6} lg={3}>
               <CourseCard
                 course={course}
                 onViewDetail={onViewDetail}
