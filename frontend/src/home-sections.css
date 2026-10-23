@@ -32,7 +32,7 @@
 .bv-card-lg { width: calc((100% - 48px) / 4); min-width: 230px; }
 .bv-card-lg img { aspect-ratio: 5 / 4; }
 .bv-card:focus-visible { outline: 2px solid #006ce4; outline-offset: 3px; border-radius: 8px; }
-.bv-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bv-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* Thẻ khóa học yêu thích (mẫu 4) */
 .bv-stay { background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.14); padding-bottom: 14px; gap: 2px; }
