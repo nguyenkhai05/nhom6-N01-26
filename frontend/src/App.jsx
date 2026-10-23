@@ -16,6 +16,12 @@ import CheckoutPage from './components/CheckoutPage';
 import ChatSupport from './components/ChatSupport';
 import CourseLearningRoom from './components/CourseLearningRoom';
 import Footer from './Footer';
+import useCatalog from './hooks/useCatalog';
+import PlanSection from './components/home/PlanSection';
+import BrowseSections from './components/home/BrowseSections';
+import DealsSection from './components/home/DealsSection';
+import SavingsAndPopular from './components/home/SavingsAndPopular';
+import './home-sections.css';
 
 // Dữ liệu khóa học lập trình thực chiến EduViet
 const INITIAL_COURSES = [
@@ -254,6 +260,13 @@ export default function App() {
     localStorage.setItem('eduviet_courses', JSON.stringify(courses));
   }, [courses]);
 
+  // Dữ liệu khóa học + danh mục lấy từ backend (GET /courses, GET /categories).
+  // Nếu backend chưa bật thì giữ dữ liệu lưu sẵn ở trên để trang vẫn hoạt động.
+  const catalog = useCatalog();
+  useEffect(() => {
+    if (catalog.status === 'ready') setCourses(catalog.courses);
+  }, [catalog.status, catalog.courses]);
+
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('eduviet_user', JSON.stringify(currentUser));
@@ -277,6 +290,17 @@ export default function App() {
   // Handle Search Filter
   const handleSearch = (filterData) => {
     setSearchFilter(filterData);
+  };
+
+  // Bấm thẻ chuyên ngành / trình độ ở các khối trang chủ → lọc rồi cuộn tới danh sách khóa học
+  const handleBrowse = (partial) => {
+    setSearchFilter({ keyword: '', techCategory: 'ALL', level: 'ALL', ...partial });
+    setTimeout(() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' }), 50);
+  };
+
+  const openCourseDetail = (course) => {
+    setSelectedCourse(course);
+    setShowDetailModal(true);
   };
 
   const filteredCourses = courses.filter((course) => {
@@ -615,6 +639,13 @@ export default function App() {
         {currentRoute === 'home' && (
           <div className="page-fade-in">
             <Her onSearch={handleSearch} />
+            {catalog.status === 'error' && (
+              <div className="app-container pt-3">
+                <div className="alert alert-warning mb-0" role="alert">
+                  Không kết nối được máy chủ API. Đang hiển thị dữ liệu lưu sẵn — hãy bật backend (<code>npm run start:dev</code> trong thư mục <code>lms</code>) rồi tải lại trang.
+                </div>
+              </div>
+            )}
             <Offers
               onClaimVoucher={() => {
                 if (!currentUser) {
@@ -622,9 +653,6 @@ export default function App() {
                 } else {
                   setShowDepositModal(true);
                 }
-              }}
-              onSelectCombo={() => {
-                setCurrentRoute('courses');
               }}
             />
             <CourseList
@@ -641,6 +669,18 @@ export default function App() {
                 setActiveLearningCourse(course);
                 setCurrentRoute('learning-room');
               }}
+            />
+            <PlanSection courses={courses} categories={catalog.categories} onViewDetail={openCourseDetail} onBrowse={handleBrowse} />
+            <BrowseSections courses={courses} categories={catalog.categories} onBrowse={handleBrowse} />
+            <DealsSection courses={courses} onViewDetail={openCourseDetail} onSelectCombo={() => setCurrentRoute('courses')} />
+            <SavingsAndPopular
+              courses={courses}
+              categories={catalog.categories}
+              currentUser={currentUser}
+              onOpenLogin={() => setShowLoginModal(true)}
+              onOpenRegister={() => setShowRegisterModal(true)}
+              onBrowse={handleBrowse}
+              onViewDetail={openCourseDetail}
             />
             <div className="app-container">
               <ConversionTriggers
@@ -857,7 +897,7 @@ export default function App() {
       </main>
 
       {/* Footer Full-Width */}
-      <Footer />
+      <Footer onNavigate={setCurrentRoute} />
 
       {/* Floating Chat Support (Bottom-Left) */}
       <ChatSupport />

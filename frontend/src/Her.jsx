@@ -36,7 +36,7 @@ export default function Her({ onSearch }) {
                   <option value="ALL">Tất cả chuyên ngành</option>
                   <option value="Frontend">Frontend (React, Vue)</option>
                   <option value="Backend">Backend (Node, NestJS, Go)</option>
-                  <option value="Database">Cơ sở dữ liệu & SQL</option>
+                  <option value="Cơ sở dữ liệu">Cơ sở dữ liệu & SQL</option>
                   <option value="DevOps">DevOps & Cloud</option>
                   <option value="Mobile">Lập trình Mobile</option>
                 </Form.Select>

@@ -1,97 +1,88 @@
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
 
-export default function Footer() {
+// Chân trang theo mẫu Booking.com: dải liên kết nhanh + 5 cột trên nền xám.
+// Mục có `route` điều hướng trong app; các mục còn lại là liên kết giữ chỗ (chưa có trang đích).
+const QUICK_LINKS = [
+  { label: 'Tất cả khóa học', route: 'courses' },
+  { label: 'Lộ trình nghề nghiệp', route: 'roadmap' },
+  { label: 'Sân chơi luyện code', route: 'practice' },
+  { label: 'Tài liệu', route: 'docs' },
+  { label: 'Khóa học của tôi', route: 'my-learning' },
+  { label: 'Ưu đãi theo mùa' },
+  { label: 'Bài viết công nghệ' },
+];
+
+const COLUMNS = [
+  { title: 'Hỗ trợ', links: [
+    { label: 'Quản lý khóa học của bạn', route: 'my-learning' },
+    { label: 'Liên hệ chăm sóc học viên' },
+    { label: 'Trung tâm thông tin bảo mật' },
+  ] },
+  { title: 'Khám phá thêm', links: [
+    { label: 'Chương trình học viên thân thiết' },
+    { label: 'Ưu đãi theo mùa và dịp lễ' },
+    { label: 'Bài viết về công nghệ' },
+    { label: 'EduViet dành cho doanh nghiệp' },
+    { label: 'Lộ trình nghề nghiệp', route: 'roadmap' },
+    { label: 'Sân chơi luyện code', route: 'practice' },
+  ] },
+  { title: 'Điều khoản và cài đặt', links: [
+    { label: 'Chính sách bảo mật' },
+    { label: 'Điều khoản dịch vụ' },
+    { label: 'Chính sách hoàn học phí 7 ngày' },
+    { label: 'Chính sách về quyền riêng tư' },
+  ] },
+  { title: 'Dành cho giảng viên', links: [
+    { label: 'Đăng nhập trang giảng viên' },
+    { label: 'Trợ giúp giảng viên' },
+    { label: 'Đăng khóa học của bạn' },
+    { label: 'Trở thành đối tác' },
+  ] },
+  { title: 'Về chúng tôi', links: [
+    { label: 'Về EduViet' },
+    { label: 'Chúng tôi hoạt động như thế nào' },
+    { label: 'Cơ hội việc làm' },
+    { label: 'Liên hệ công ty' },
+    { label: 'Hướng dẫn và báo cáo nội dung' },
+  ] },
+];
+
+export default function Footer({ onNavigate }) {
+  const FooterLink = ({ link }) => (
+    <a
+      href="#"
+      onClick={(e) => {
+        e.preventDefault();
+        if (link.route) {
+          onNavigate?.(link.route);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }}
+    >
+      {link.label}
+    </a>
+  );
+
   return (
-    <footer className="site-footer mt-5">
-      <Container className="py-5">
-        <Row className="gy-4">
-          {/* Thông tin thương hiệu EduViet */}
-          <Col xs={12} md={6} lg={4}>
-            <div className="d-flex align-items-center gap-2 mb-3">
-              <span className="brand-badge" style={{ width: '36px', height: '36px', fontSize: '1.1rem' }}>
-                <i className="bi bi-code-slash"></i>
-              </span>
-              <h4 className="footer-brand mb-0">EduViet Code</h4>
-            </div>
-            <p className="footer-text mb-3">
-              Nền tảng đào tạo lập trình thực chiến trực tuyến hàng đầu Việt Nam. 
-              Chúng tôi trang bị kỹ năng chuyên sâu từ Frontend, Backend, Database đến DevOps và AI, 
-              sẵn sàng đáp ứng tiêu chuẩn tuyển dụng của các tập đoàn công nghệ.
-            </p>
-            <div className="d-flex gap-3">
-              <a href="#github" className="footer-social fs-5"><i className="bi bi-github"></i></a>
-              <a href="#facebook" className="footer-social fs-5"><i className="bi bi-facebook"></i></a>
-              <a href="#youtube" className="footer-social fs-5"><i className="bi bi-youtube"></i></a>
-              <a href="#linkedin" className="footer-social fs-5"><i className="bi bi-linkedin"></i></a>
-            </div>
-          </Col>
-
-          {/* Khóa học Lập trình */}
-          <Col xs={6} md={3} lg={2}>
-            <h5 className="footer-title">Khóa Lập Trình</h5>
-            <ul className="footer-links">
-              <li><a href="#courses">ReactJS & Vite</a></li>
-              <li><a href="#courses">Node.js & NestJS</a></li>
-              <li><a href="#courses">Cơ sở dữ liệu MySQL</a></li>
-              <li><a href="#courses">Python & Trí tuệ AI</a></li>
-              <li><a href="#courses">Docker & DevOps</a></li>
-            </ul>
-          </Col>
-
-          {/* Lộ trình & Tài nguyên */}
-          <Col xs={6} md={3} lg={2}>
-            <h5 className="footer-title">Tài Nguyên Dev</h5>
-            <ul className="footer-links">
-              <li><a href="#roadmap">Lộ trình Frontend</a></li>
-              <li><a href="#roadmap">Lộ trình Backend</a></li>
-              <li><a href="#practice">Sân chơi luyện Code</a></li>
-              <li><a href="#docs">Tài liệu API Docs</a></li>
-              <li><a href="#community">Cộng đồng Discord</a></li>
-            </ul>
-          </Col>
-
-          {/* Nhận bản tin công nghệ */}
-          <Col xs={12} md={12} lg={4}>
-            <h5 className="footer-title">Bản Tin Lập Trình Tuần</h5>
-            <p className="footer-text">
-              Nhận thông báo bài viết công nghệ mới, webinar chia sẻ từ Tech Lead và mã giảm giá độc quyền.
-            </p>
-
-            <Form
-              onSubmit={(event) => {
-                event.preventDefault();
-                alert('Cảm ơn bạn đã đăng ký nhận bản tin EduViet!');
-              }}
-              className="d-flex gap-2"
-            >
-              <Form.Control
-                type="email"
-                placeholder="Nhập email của bạn..."
-                required
-                className="bg-dark text-white border-secondary"
-              />
-              <Button type="submit" variant="primary" className="fw-bold text-nowrap">
-                Đăng ký
-              </Button>
-            </Form>
-          </Col>
-        </Row>
-
-        <hr className="footer-divider my-4" />
-
-        <Row className="align-items-center gy-2">
-          <Col md={6}>
-            <p className="footer-copyright mb-0">
-              © {new Date().getFullYear()} EduViet Code Platform. Toàn bộ bản quyền được bảo lưu.
-            </p>
-          </Col>
-          <Col md={6} className="text-md-end">
-            <span className="text-secondary small">
-              Xây dựng trên kiến trúc Master Edu Template • React + Bootstrap
-            </span>
-          </Col>
-        </Row>
+    <footer className="bv-footer mt-5">
+      <Container>
+        <ul className="bv-footer-quick">
+          {QUICK_LINKS.map((l) => <li key={l.label}><FooterLink link={l} /></li>)}
+        </ul>
       </Container>
+      <div className="bv-footer-main">
+        <Container>
+          <div className="bv-footer-cols">
+            {COLUMNS.map((col) => (
+              <nav key={col.title} aria-label={col.title}>
+                <h3>{col.title}</h3>
+                <ul>{col.links.map((l) => <li key={l.label}><FooterLink link={l} /></li>)}</ul>
+              </nav>
+            ))}
+          </div>
+          <p className="bv-footer-copy">© 2026 EduViet Code · Dự án nhóm 6 – N01-26, môn Thiết kế web nâng cao.</p>
+        </Container>
+      </div>
     </footer>
   );
 }
