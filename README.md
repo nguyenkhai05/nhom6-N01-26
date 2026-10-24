@@ -54,25 +54,40 @@ nhom6-N01-26/
 │   │   │   ├── CourseLearningRoom.jsx    # Phòng học bài giảng & Live Code Studio
 │   │   │   ├── CourseList.jsx            # Danh sách khóa học có bộ lọc công nghệ
 │   │   │   ├── DepositHistoryModal.jsx   # Sổ giao dịch nạp ví & Hóa đơn điện tử
+│   │   │   ├── home/                     # Các khối trang chủ theo mẫu Booking.com
+│   │   │   │   ├── ScrollRow.jsx             # Hàng thẻ cuộn ngang + nút mũi tên tròn
+│   │   │   │   ├── PlanSection.jsx           # Tab chuyên ngành + "Lộ trình nghề nghiệp"
+│   │   │   │   ├── BrowseSections.jsx        # Tìm theo trình độ & Khám phá chuyên ngành
+│   │   │   │   ├── DealsSection.jsx          # Thẻ ưu đãi & Khóa học yêu thích (nút tim)
+│   │   │   │   └── SavingsAndPopular.jsx     # Banner đăng nhập & Lưới liên kết phổ biến
 │   │   │   └── UserProfile.jsx           # Hồ sơ cá nhân & Quản lý khóa học của tôi
+│   │   ├── hooks/
+│   │   │   └── useCatalog.js             # Tải khóa học + danh mục từ backend (loading/ready/error)
+│   │   ├── services/
+│   │   │   └── api.js                    # Gọi API NestJS (GET /courses, /categories), chuẩn hóa dữ liệu
+│   │   ├── utils/
+│   │   │   └── catalog.js                # Nhãn trình độ, định dạng giá, gom danh mục
 │   │   ├── App.jsx                       # Điều hướng chính, State Store & Modals
 │   │   ├── Header.jsx                    # Header Full-Width & Dropdown tài khoản
 │   │   ├── Her.jsx                       # Booking.com style Search Bar (Viền vàng 3px)
-│   │   ├── Offers.jsx                    # Banner khuyến mãi & Combo khóa học
-│   │   ├── Footer.jsx                    # Chân trang chuẩn hệ thống đào tạo
+│   │   ├── Offers.jsx                    # Khối "Vì sao chọn EduViet?"
+│   │   ├── Footer.jsx                    # Chân trang 5 cột + dải liên kết nhanh (kiểu Booking.com)
+│   │   ├── home-sections.css             # CSS các khối trang chủ (tiền tố bv-)
 │   │   └── main.jsx                      # Điểm khởi chạy React DOM
+│   ├── .env.example                  # Mẫu biến môi trường (VITE_API_URL)
 │   ├── package.json
 │   └── vite.config.js
 │
 ├── lms/                          # Backend API Services (NestJS 12 + TypeORM + MySQL)
 │   ├── src/
 │   │   ├── category/             # Module quản lý danh mục khóa học
-│   │   ├── course/               # Module API khóa học
+│   │   ├── course/               # Module API khóa học (kèm danh mục + giảng viên, lọc category_id/level/q)
 │   │   ├── course-module/        # Module chương mục bài học
 │   │   ├── enrollment/           # Module đăng ký & phân quyền học viên
 │   │   ├── student/              # Module hồ sơ học viên & ví tiền
 │   │   ├── user/                 # Module xác thực người dùng
 │   │   └── database/             # Kết nối cơ sở dữ liệu MySQL
+│   ├── .env.example              # Mẫu cấu hình kết nối MySQL (copy thành .env)
 │   ├── package.json
 │   └── tsconfig.json
 │
@@ -109,6 +124,8 @@ npm run dev
 Sau khi chạy lệnh trên, ứng dụng sẽ hoạt động tại:  
 👉 **`http://localhost:5173`** (hoặc địa chỉ IP hiển thị trên terminal).
 
+> Trang chủ lấy khóa học và danh mục từ backend. Nếu backend chưa bật, trang hiện cảnh báo và dùng dữ liệu lưu sẵn. Nếu backend chạy ở địa chỉ khác, sao chép `frontend/.env.example` thành `frontend/.env` và sửa `VITE_API_URL`.
+
 ---
 
 ### 2. Khởi chạy Máy Chủ Backend (NestJS - Tùy chọn)
@@ -127,11 +144,17 @@ npm run start:dev
 Máy chủ backend sẽ chạy tại:  
 👉 **`http://localhost:3000`**
 
+| Endpoint | Mô tả |
+| :--- | :--- |
+| `GET /courses` | Khóa học đã Published, kèm danh mục và tên giảng viên. Lọc bằng `?category_id=`, `?level=` (Beginner/Intermediate/Advanced), `?q=` |
+| `GET /courses/:id` | Chi tiết một khóa học (404 nếu không tồn tại) |
+| `GET /categories` | Danh sách danh mục |
+
 ---
 
 ### 3. Cơ Sở Dữ Liệu MySQL (Database)
 - Import file **`lms_db.sql`** ở thư mục gốc vào MySQL / phpMyAdmin / XAMPP.
-- Cấu hình thông tin kết nối trong file `.env` của thư mục `lms`:
+- Sao chép `lms/.env.example` thành `lms/.env` rồi chỉnh thông tin kết nối:
   ```env
   DB_HOST=localhost
   DB_PORT=3306
