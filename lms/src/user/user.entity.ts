@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, type Relation } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, type Relation } from 'typeorm';
 import { Course } from '../course/course.entity.js';
 import { Enrollment } from '../enrollment/enrollment.entity.js';
 
@@ -22,7 +22,7 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
-  @Column()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
   @OneToMany(() => Course, (course) => course.instructor)

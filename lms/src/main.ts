@@ -8,4 +8,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 
-bootstrap();
+void bootstrap().catch((err: unknown) => {
+  console.error('Failed to start Nest application:', err);
+  process.exit(1);
+});

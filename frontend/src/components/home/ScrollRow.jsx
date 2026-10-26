@@ -8,9 +8,11 @@ export default function ScrollRow({ children, className = '' }) {
   const update = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    setEdge({
-      start: el.scrollLeft <= 4,
-      end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4,
+    const start = el.scrollLeft <= 4;
+    const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    setEdge((prev) => {
+      if (prev.start === start && prev.end === end) return prev;
+      return { start, end };
     });
   }, []);
 
@@ -22,8 +24,6 @@ export default function ScrollRow({ children, className = '' }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [update]);
-
-  useEffect(update);
 
   const scrollBy = (dir) =>
     ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.8, behavior: 'smooth' });

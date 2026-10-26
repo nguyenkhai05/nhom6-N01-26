@@ -209,7 +209,15 @@ export default function CodeArena() {
     setTimeout(() => {
       try {
         // Safe evaluation of the function in sandbox scope
-        const evalFunction = new Function(`${userCode}; return ${selectedChallenge.id === 'two-sum' ? 'twoSum' : selectedChallenge.id === 'reverse-string' ? 'reverseString' : 'fizzBuzz'};`)();
+        const functionNameMap = {
+          'two-sum': 'twoSum',
+          'reverse-string': 'reverseString',
+          'fizz-buzz': 'fizzBuzz',
+          'valid-palindrome': 'isPalindrome',
+          'max-subarray': 'maxSubArray',
+        };
+        const targetFn = functionNameMap[selectedChallenge.id] || 'solution';
+        const evalFunction = new Function(`${userCode}; return ${targetFn};`)();
 
         let allPassed = true;
         const results = selectedChallenge.testCases.map((tc, idx) => {

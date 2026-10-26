@@ -1,4 +1,3 @@
-// lms/src/database/database.providers.ts
 import { DataSource } from 'typeorm';
 import { User } from '../user/user.entity.js';
 import { Course } from '../course/course.entity.js';
@@ -144,7 +143,7 @@ function createMockRepository(initialData: any[], idField: string) {
     },
     create: (data: any) => data,
     save: async (data: any) => {
-      const id = data[idField] ?? store.length + 1;
+      const id = data[idField] ?? (Math.max(0, ...store.map((s) => Number(s[idField]) || 0)) + 1);
       const saved = { ...data, [idField]: id };
       store.push(saved);
       return saved;
@@ -171,21 +170,40 @@ export const databaseProviders = [
   {
     provide: 'DATA_SOURCE',
     useFactory: async () => {
+      const isDemoMode = process.env.DEMO_MODE === 'true';
+      const dbHost = process.env.DB_HOST ?? 'localhost';
+      const dbPort = Number(process.env.DB_PORT ?? 3306);
+      const dbUser = process.env.DB_USERNAME ?? 'root';
+      const dbPass = process.env.DB_PASSWORD ?? '';
+      const dbName = process.env.DB_DATABASE ?? 'lms_db';
+
       const dataSource = new DataSource({
         type: 'mysql',
-        host: process.env.DB_HOST ?? 'localhost',
-        port: Number(process.env.DB_PORT ?? 3306),
-        username: process.env.DB_USERNAME ?? 'root',
-        password: process.env.DB_PASSWORD ?? '',
-        database: process.env.DB_DATABASE ?? 'lms_db',
+        host: dbHost,
+        port: dbPort,
+        username: dbUser,
+        password: dbPass,
+        database: dbName,
         entities: [User, Course, Category, CourseModule, Enrollment, Lesson],
-        synchronize: true,
+        // R02: Tắt synchronize: true mặc định để bảo vệ schema CSDL và không drop cột users.created_at
+        synchronize: process.env.DB_SYNCHRONIZE === 'true',
       });
 
       try {
-        return await dataSource.initialize();
+        const initialized = await dataSource.initialize();
+        console.log(`✅ [Database] Kết nối MySQL thành công tới ${dbHost}:${dbPort}/${dbName}`);
+        return initialized;
       } catch (err: any) {
-        console.warn('⚠️ [MySQL] Không kết nối được tới cổng 3306. Chuyển sang In-Memory Mock Database để ứng dụng hoạt động ổn định:', err.message);
+        if (!isDemoMode && process.env.NODE_ENV === 'production') {
+          console.error(`❌ [Database Fatal] Không kết nối được MySQL tại ${dbHost}:${dbPort}/${dbName}:`, err.message);
+          throw err;
+        }
+
+        console.warn(
+          `⚠️ [Database Notice] Không kết nối được tới MySQL (${dbHost}:${dbPort}). Chuyển sang DEMO MODE In-Memory Database (Để kết nối MySQL thật, vui lòng cấu hình DB_HOST/PORT hợp lệ và tắt DEMO_MODE). Chi tiết:`,
+          err.message,
+        );
+
         const courseRepo = createMockRepository(INITIAL_COURSES, 'course_id');
         const categoryRepo = createMockRepository(INITIAL_CATEGORIES, 'category_id');
         const userRepo = createMockRepository([], 'user_id');

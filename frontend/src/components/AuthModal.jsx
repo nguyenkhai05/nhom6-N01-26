@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, Form, Button, Alert, InputGroup, Tabs, Tab } from 'react-bootstrap';
 
 export default function AuthModal({
@@ -9,6 +9,14 @@ export default function AuthModal({
 }) {
   const [mode, setMode] = useState(initialMode); // 'login' | 'register'
   const [roleMode, setRoleMode] = useState('student'); // 'student' | 'admin'
+
+  useEffect(() => {
+    if (show) {
+      setMode(initialMode);
+      setErrorMsg('');
+      setSuccessMsg('');
+    }
+  }, [show, initialMode]);
 
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
@@ -769,3 +777,4 @@ export default function AuthModal({
     </Modal>
   );
 }
+
