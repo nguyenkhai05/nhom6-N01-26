@@ -108,7 +108,7 @@ const INITIAL_COURSES = [
     thumbnail_url: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&auto=format&fit=crop&q=80',
     price: 850000,
     old_price: 1250000,
-    category: { name: 'Frontend' },
+    category: { name: 'Mobile' },
     level: 'Beginner',
     instructor: { name: 'Đỗ Tuấn Thành (Mobile Tech Lead)' },
     duration: '50 giờ',
@@ -596,7 +596,7 @@ export default function App() {
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      {/* 1. Header Full-Width */}
+      {currentRoute !== 'learning-room' && (
       <Header
         currentUser={currentUser}
         cartCount={cart.length}
@@ -608,9 +608,10 @@ export default function App() {
         currentRoute={currentRoute}
         onNavigate={setCurrentRoute}
       />
+      )}
 
       {/* Guest Alert Banner (Hiển thị khi chưa đăng nhập) */}
-      {!currentUser && (
+      {!currentUser && currentRoute !== 'learning-room' && (
         <div className="app-container pt-3">
           <div className="alert alert-info border-0 rounded-4 shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mb-0">
             <div className="d-flex align-items-center gap-2">
@@ -896,8 +897,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer Full-Width */}
-      <Footer onNavigate={setCurrentRoute} />
+      {currentRoute !== 'learning-room' && <Footer onNavigate={setCurrentRoute} />}
 
       {/* Floating Chat Support (Bottom-Left) */}
       <ChatSupport />

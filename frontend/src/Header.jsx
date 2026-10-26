@@ -68,7 +68,7 @@ export default function Header({
                   className={`nav-link border-0 bg-transparent ${currentRoute === 'courses' ? 'active' : ''}`}
                   onClick={() => onNavigate('courses')}
                 >
-                  <i className="bi bi-mortarboard me-1"></i> Khóa học Lập trình
+                  <i className="bi bi-mortarboard me-1"></i> Khóa học
                 </button>
               </li>
               <li className="nav-item">
@@ -76,7 +76,7 @@ export default function Header({
                   className={`nav-link border-0 bg-transparent ${currentRoute === 'roadmap' ? 'active' : ''}`}
                   onClick={() => onNavigate('roadmap')}
                 >
-                  <i className="bi bi-signpost-split me-1 text-primary"></i> Lộ trình Frontend/Backend
+                  <i className="bi bi-signpost-split me-1 text-primary"></i> Lộ trình
                 </button>
               </li>
               <li className="nav-item">
@@ -84,7 +84,7 @@ export default function Header({
                   className={`nav-link border-0 bg-transparent ${currentRoute === 'practice' ? 'active' : ''}`}
                   onClick={() => onNavigate('practice')}
                 >
-                  <i className="bi bi-terminal me-1 text-success"></i> Luyện Code & Test
+                  <i className="bi bi-terminal me-1 text-success"></i> Luyện Code
                 </button>
               </li>
               <li className="nav-item">
@@ -92,7 +92,7 @@ export default function Header({
                   className={`nav-link border-0 bg-transparent ${currentRoute === 'docs' ? 'active' : ''}`}
                   onClick={() => onNavigate('docs')}
                 >
-                  <i className="bi bi-journal-code me-1 text-danger"></i> Tài liệu Dev
+                  <i className="bi bi-journal-code me-1 text-danger"></i> Tài liệu
                 </button>
               </li>
               {currentUser?.role === 'ADMIN' && (
@@ -134,7 +134,7 @@ export default function Header({
                   className="px-3 fw-bold"
                   onClick={onOpenLogin}
                 >
-                  <i className="bi bi-google me-1 text-danger"></i> Đăng nhập Gmail
+                  <i className="bi bi-google me-1 text-danger"></i> Đăng nhập
                 </Button>
                 <Button
                   variant="primary"
