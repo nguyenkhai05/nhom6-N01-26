@@ -812,11 +812,16 @@ body { background: #fff; color: #1b1b1b; }
 .custom-navbar .container-fluid { max-width: 1260px; margin-inline: auto; padding-inline: 16px !important; }
 .custom-navbar .navbar-brand, .custom-navbar .navbar-brand .text-dark,
 .custom-navbar .nav-link, .custom-navbar .nav-link i { color: #fff !important; }
-.custom-navbar .nav-link { border-radius: 24px; padding: .6rem .85rem; }
-.custom-navbar .nav-link:hover, .custom-navbar .nav-link.active { background: rgba(255,255,255,.14) !important; color: #fff !important; }
+.custom-navbar .nav-link { border-radius: 9999px !important; padding: 0.45rem 1rem !important; font-size: 0.88rem !important; font-weight: 500 !important; white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; line-height: 1.2 !important; border: 1px solid transparent !important; transition: all 0.2s ease !important; }
+.custom-navbar .nav-link:hover { background: rgba(255, 255, 255, 0.15) !important; color: #fff !important; }
+.custom-navbar .nav-link.active { background: #ffffff !important; color: #003b95 !important; font-weight: 700 !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important; }
+.custom-navbar .nav-link.active i { color: #003b95 !important; }
 .custom-navbar .brand-badge { background: #fff; color: #003b95; }
-.custom-navbar .btn-outline-primary { border-color: #fff; color: #003b95; background: #fff; }
-.custom-navbar .btn-primary { background: #0071e8; border-color: #0071e8; }
+.custom-navbar .btn-outline-primary { border-color: rgba(255, 255, 255, 0.4) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.12) !important; backdrop-filter: blur(8px) !important; border-radius: 9999px !important; padding: 0.45rem 1.1rem !important; font-size: 0.88rem !important; font-weight: 600 !important; white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; line-height: 1.2 !important; transition: all 0.2s ease !important; }
+.custom-navbar .btn-outline-primary:hover { background: rgba(255, 255, 255, 0.25) !important; border-color: #ffffff !important; color: #ffffff !important; }
+.custom-navbar .btn-primary { background: #0071e8 !important; border-color: #0071e8 !important; color: #ffffff !important; border-radius: 9999px !important; padding: 0.45rem 1.25rem !important; font-size: 0.88rem !important; font-weight: 700 !important; white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; line-height: 1.2 !important; box-shadow: 0 2px 8px rgba(0, 113, 232, 0.35) !important; transition: all 0.2s ease !important; }
+.custom-navbar .btn-primary:hover { background: #005bb5 !important; border-color: #005bb5 !important; }
+.custom-navbar .btn-light { border-radius: 9999px !important; padding: 0.45rem 1.1rem !important; font-size: 0.88rem !important; white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; line-height: 1.2 !important; }
 .booking-hero { background: #003b95; color: #fff; padding: 64px 0 0; min-height: 335px; }
 .booking-hero-copy { padding-bottom: 86px; }
 .booking-hero-copy h1 { font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 750; letter-spacing: -.035em; margin: 0 0 8px; }
@@ -875,3 +880,5 @@ body { background: #fff; color: #1b1b1b; }
 }
 
 .app-container.pt-3 { display: none; }
+
+

@@ -9,6 +9,7 @@ export default function CourseLearningRoom({
 }) {
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
   const [completedLessons, setCompletedLessons] = useState([0]);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [codeEditorValue, setCodeEditorValue] = useState(`// Bài tập thực hành: ${course?.title || 'Khóa học EduViet'}
 function solution() {
   console.log("Xin chào! Bắt đầu học và thực hành ngay trên EduViet IDE.");
@@ -17,6 +18,32 @@ function solution() {
 solution();`);
   const [terminalOutput, setTerminalOutput] = useState('EduViet Virtual Node.js v20.11 Environment Ready.\nBấm "Chạy Thử Code" để biên dịch kết quả.');
   const [isRunningCode, setIsRunningCode] = useState(false);
+
+  // Mapping video YouTube thực tế theo từng môn học
+  const getCourseVideoId = (courseId) => {
+    switch (courseId) {
+      case 1: // React & Next.js
+        return 'bMknfKXIFA8';
+      case 2: // NestJS & MySQL
+        return '1dqp4flwjlk';
+      case 3: // MySQL Database
+        return 'HXV3zeQKqGY';
+      case 4: // Python & AI
+        return 'rfscVS0vtbw';
+      case 5: // DevOps Docker
+        return 'pTXWhryx4e8';
+      case 6: // Flutter & Dart
+        return 'IgTUncKx66M';
+      case 7: // Golang
+        return 'un6ZyFkqFKo';
+      case 8: // Next.js 15
+        return 'Q-cPtlYG1cY';
+      default:
+        return 'bMknfKXIFA8';
+    }
+  };
+
+  const defaultVideoId = getCourseVideoId(course?.course_id || 1);
 
   // Danh sách bài giảng thực tế theo giáo trình EduViet
   const modules = [
@@ -27,7 +54,7 @@ solution();`);
           id: 1,
           title: '01. Giới thiệu tổng quan lộ trình & cài đặt công cụ cần thiết',
           duration: '15:20',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoId: defaultVideoId,
           description: 'Nắm vững kiến trúc dự án thực tế, cài đặt Node.js LTS, Git và cấu hình Visual Studio Code chuẩn Production.',
           sampleCode: `// Cấu hình môi trường dự án
 const appConfig = {
@@ -42,7 +69,7 @@ console.log("Khởi tạo cấu hình:", appConfig);`
           id: 2,
           title: '02. Cấu trúc thư mục chuẩn Clean Architecture & TypeScript',
           duration: '24:10',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoId: defaultVideoId,
           description: 'Phân tách các tầng Service, Repository, Controller và DTO đảm bảo khả năng mở rộng hàng triệu users.',
           sampleCode: `// Định nghĩa Interface User DTO
 interface CreateUserDto {
@@ -50,7 +77,7 @@ interface CreateUserDto {
   email: string;
   targetTrack: 'Frontend' | 'Backend' | 'DevOps';
 }
-const student: CreateUserDto = {
+const student = {
   fullName: "${currentUser?.fullName || 'Học viên'}",
   email: "${currentUser?.email || 'student@eduviet.vn'}",
   targetTrack: 'Frontend'
@@ -66,7 +93,7 @@ console.log("Học viên khởi tạo:", student);`
           id: 3,
           title: '03. Xử lý bất đồng bộ Async/Await & Tối ưu hiệu năng',
           duration: '32:45',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoId: defaultVideoId,
           description: 'Thành thạo Promise.allSettled, quản lý luồng dữ liệu, xử lý Exception và Retry Pattern.',
           sampleCode: `async function fetchCourseLessons(courseId) {
   console.log("Đang tải dữ liệu bài học cho khóa #" + courseId);
@@ -80,7 +107,7 @@ fetchCourseLessons(1).then(console.log);`
           id: 4,
           title: '04. Tích hợp Authentication JWT & Phân quyền RBAC',
           duration: '40:15',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoId: defaultVideoId,
           description: 'Bảo mật API với Access Token, Refresh Token xoay vòng, Middleware kiểm soát quyền Guest/User/Admin.',
           sampleCode: `function checkPermission(userRole, requiredRole) {
   const roles = ['GUEST', 'USER', 'ADMIN'];
@@ -97,7 +124,7 @@ console.log("Quyền truy cập:", checkPermission('${currentUser?.role || 'USER
           id: 5,
           title: '05. Triển khai Docker Container & CI/CD GitHub Actions',
           duration: '45:00',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoId: 'pTXWhryx4e8',
           description: 'Đóng gói ứng dụng thành Docker Image, cấu hình Nginx Reverse Proxy và triển khai lên Cloud AWS.',
           sampleCode: `// Docker Healthcheck Simulation
 const healthCheck = () => {
@@ -109,7 +136,7 @@ console.log(healthCheck());`
           id: 6,
           title: '06. Đánh giá Code Review & Xuất Chứng Chỉ Certificate EduViet',
           duration: '28:30',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoId: defaultVideoId,
           description: 'Nhận feedback trực tiếp từ Senior Mentor và nhận bằng chứng nhận kỹ sư có mã QR truy xuất quốc tế.',
           sampleCode: `console.log("Chúc mừng học viên đã hoàn thành 100% đồ án!");`
         }
@@ -123,6 +150,7 @@ console.log(healthCheck());`
 
   const handleSelectLesson = (idx, lesson) => {
     setActiveLessonIndex(idx);
+    setIsPlaying(true);
     if (!completedLessons.includes(idx)) {
       setCompletedLessons((prev) => [...prev, idx]);
     }
@@ -137,12 +165,10 @@ console.log(healthCheck());`
     setTimeout(() => {
       setIsRunningCode(false);
       try {
-        // Safe evaluation of console logs
         let logs = [];
         const originalLog = console.log;
         console.log = (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
         
-        // Execute sample
         const fn = new Function(codeEditorValue);
         fn();
         console.log = originalLog;
@@ -158,35 +184,35 @@ console.log(healthCheck());`
 
   return (
     <div className="course-learning-room bg-light min-vh-100 pb-5 page-fade-in">
-      {/* Top Navbar Học Tập Chuyên Nghiệp */}
-      <div className="bg-dark text-white px-3 py-2 border-bottom border-secondary d-flex flex-wrap justify-content-between align-items-center sticky-top shadow-sm" style={{ zIndex: 1020 }}>
+      {/* Top Banner Navigation */}
+      <div className="bg-dark text-white py-3 px-lg-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div className="d-flex align-items-center gap-3">
           <Button
             variant="outline-light"
             size="sm"
-            className="rounded-pill px-3 fw-bold"
+            className="rounded-pill px-3"
             onClick={onBack}
           >
-            <i className="bi bi-arrow-left me-1"></i> Quay lại
+            <i className="bi bi-arrow-left me-1"></i> Trở về Khóa học
           </Button>
-          <div className="vr bg-secondary d-none d-sm-block"></div>
           <div>
-            <span className="badge bg-primary text-white me-2">Phòng Học Trực Tuyến</span>
-            <strong className="text-white small d-inline-block text-truncate" style={{ maxWidth: 380 }}>
-              {course?.title}
-            </strong>
+            <h5 className="mb-0 fw-bold d-flex align-items-center gap-2">
+              <span className="text-warning">●</span> {course?.title || 'Phòng Học Trực Tuyến'}
+            </h5>
+            <span className="text-secondary small">
+              Giảng viên: {course?.instructor?.name || 'Mentor EduViet'} | Đang học bài {activeLessonIndex + 1}/{allLessons.length}
+            </span>
           </div>
         </div>
 
-        <div className="d-flex align-items-center gap-3 mt-2 mt-sm-0">
-          <div className="d-none d-md-flex align-items-center gap-2">
-            <span className="small text-muted">Tiến độ bài học:</span>
-            <div style={{ width: 140 }}>
-              <ProgressBar now={progressPercent} variant="success" style={{ height: 8 }} className="rounded-pill" />
+        <div className="d-flex align-items-center gap-3">
+          <div className="text-end d-none d-md-block" style={{ width: 180 }}>
+            <div className="d-flex justify-content-between small text-secondary mb-1">
+              <span>Tiến độ hoàn thành:</span>
+              <strong className="text-success">{progressPercent}%</strong>
             </div>
-            <strong className="text-success small font-monospace">{progressPercent}%</strong>
+            <ProgressBar now={progressPercent} variant="success" style={{ height: 6 }} className="rounded-pill" />
           </div>
-
           <Badge bg="success" className="px-3 py-2 rounded-pill fw-bold">
             <i className="bi bi-patch-check-fill me-1"></i> Đã Kích Hoạt Trọn Đời
           </Badge>
@@ -197,29 +223,39 @@ console.log(healthCheck());`
         <Row className="g-3">
           {/* Cột Trái & Giữa: Video Player & Khung Luyện Code Tương Tác */}
           <Col lg={8} xl={8}>
-            {/* Khung Chiếu Video Bài Giảng */}
+            {/* Khung Chiếu Video YouTube Bài Giảng Trực Tiếp */}
             <Card className="border-0 rounded-4 shadow-sm overflow-hidden mb-3 bg-black">
               <div className="ratio ratio-16x9">
-                <div className="d-flex flex-column align-items-center justify-content-center bg-dark text-white p-4">
-                  <div
-                    className="rounded-circle bg-primary bg-opacity-25 border border-primary p-4 mb-3 d-flex align-items-center justify-content-center text-primary"
-                    style={{ width: 88, height: 88, fontSize: '2.5rem' }}
-                  >
-                    <i className="bi bi-play-circle-fill"></i>
-                  </div>
-                  <h5 className="fw-bold mb-1 text-center">{currentLesson.title}</h5>
-                  <p className="text-secondary small mb-3 text-center" style={{ maxWidth: 520 }}>
-                    {currentLesson.description}
-                  </p>
-                  <div className="d-flex gap-2">
-                    <Button variant="primary" className="fw-bold px-4 rounded-pill shadow-sm">
-                      <i className="bi bi-play-fill me-1"></i> Phát Video Bài Giảng ({currentLesson.duration})
+                {isPlaying ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${currentLesson.videoId || defaultVideoId}?autoplay=1&rel=0&modestbranding=1`}
+                    title={currentLesson.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-100 h-100 border-0"
+                  />
+                ) : (
+                  <div className="d-flex flex-column align-items-center justify-content-center bg-dark text-white p-4">
+                    <div
+                      className="rounded-circle bg-primary bg-opacity-25 border border-primary p-4 mb-3 d-flex align-items-center justify-content-center text-primary"
+                      style={{ width: 88, height: 88, fontSize: '2.5rem', cursor: 'pointer' }}
+                      onClick={() => setIsPlaying(true)}
+                    >
+                      <i className="bi bi-play-circle-fill"></i>
+                    </div>
+                    <h5 className="fw-bold mb-1 text-center">{currentLesson.title}</h5>
+                    <p className="text-secondary small mb-3 text-center" style={{ maxWidth: 520 }}>
+                      {currentLesson.description}
+                    </p>
+                    <Button
+                      variant="primary"
+                      className="fw-bold px-4 rounded-pill shadow-sm"
+                      onClick={() => setIsPlaying(true)}
+                    >
+                      <i className="bi bi-play-fill me-1"></i> Bật Video Bài Giảng ({currentLesson.duration})
                     </Button>
-                    <Button variant="outline-light" className="rounded-pill px-3">
-                      <i className="bi bi-download me-1"></i> Tải Tài Liệu
-                    </Button>
                   </div>
-                </div>
+                )}
               </div>
             </Card>
 
@@ -236,139 +272,123 @@ console.log(healthCheck());`
                     variant="outline-secondary"
                     size="sm"
                     className="rounded-pill px-3"
-                    onClick={() => setCodeEditorValue(currentLesson.sampleCode || '')}
+                    onClick={() => setCodeEditorValue(currentLesson?.sampleCode || '')}
+                    title="Đặt lại mã nguồn mẫu"
                   >
-                    <i className="bi bi-arrow-counterclockwise me-1"></i> Đặt lại code
+                    <i className="bi bi-arrow-counterclockwise me-1"></i> Khôi phục mẫu
                   </Button>
                   <Button
                     variant="success"
                     size="sm"
-                    className="rounded-pill px-3 fw-bold shadow-sm"
+                    className="fw-bold rounded-pill px-3 shadow-sm d-flex align-items-center gap-1"
                     onClick={handleRunCode}
                     disabled={isRunningCode}
                   >
                     {isRunningCode ? (
                       <>
-                        <span className="spinner-border spinner-border-sm me-1"></span> Đang chạy...
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>Đang chạy...</span>
                       </>
                     ) : (
                       <>
-                        <i className="bi bi-play-fill me-1"></i> Chạy Thử Code
+                        <i className="bi bi-play-circle-fill"></i>
+                        <span>Chạy Thử Code</span>
                       </>
                     )}
                   </Button>
                 </div>
               </Card.Header>
+
               <Card.Body className="p-0">
-                <textarea
-                  className="form-control font-monospace border-0 p-3"
-                  style={{
-                    backgroundColor: '#1e1e2e',
-                    color: '#a6accd',
-                    fontSize: '0.9rem',
-                    minHeight: '220px',
-                    outline: 'none',
-                    resize: 'vertical'
-                  }}
-                  value={codeEditorValue}
-                  onChange={(e) => setCodeEditorValue(e.target.value)}
-                />
-                {/* Terminal Console Output */}
-                <div className="p-3 border-top" style={{ backgroundColor: '#181825', color: '#89dceb', fontSize: '0.82rem', fontFamily: 'monospace', minHeight: 90 }}>
-                  <div className="text-muted small mb-1 d-flex align-items-center gap-1">
-                    <i className="bi bi-terminal"></i> Console Output:
+                <div className="p-2 bg-dark">
+                  <textarea
+                    rows={8}
+                    value={codeEditorValue}
+                    onChange={(e) => setCodeEditorValue(e.target.value)}
+                    className="form-control bg-dark text-light border-0 font-monospace p-3"
+                    style={{
+                      fontSize: '0.88rem',
+                      lineHeight: '1.5',
+                      resize: 'vertical',
+                      backgroundColor: '#1e1e1e !important',
+                      color: '#9cdcfe',
+                    }}
+                    placeholder="// Nhập code JavaScript hoặc TypeScript tại đây..."
+                  />
+                </div>
+
+                {/* Khung Console Output */}
+                <div className="bg-black text-white p-3 font-monospace border-top" style={{ fontSize: '0.82rem', maxHeight: 180, overflowY: 'auto' }}>
+                  <div className="text-secondary border-bottom border-secondary pb-1 mb-2 d-flex justify-content-between align-items-center">
+                    <span><i className="bi bi-terminal me-1 text-success"></i> Terminal Output Console</span>
+                    <span className="badge bg-secondary">Exit Code 0</span>
                   </div>
-                  <pre className="mb-0 text-white" style={{ whiteSpace: 'pre-wrap' }}>
+                  <pre className="mb-0 text-success-emphasis" style={{ whiteSpace: 'pre-wrap' }}>
                     {terminalOutput}
                   </pre>
                 </div>
               </Card.Body>
             </Card>
-
-            {/* Thông tin Giảng viên & Tài liệu tham khảo */}
-            <Card className="border-0 rounded-4 shadow-sm p-3 bg-white">
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: 44, height: 44 }}>
-                    {course?.instructor?.name ? course.instructor.name.charAt(0) : 'E'}
-                  </div>
-                  <div>
-                    <strong className="text-dark d-block">{course?.instructor?.name || 'Giảng viên Chuyên gia EduViet'}</strong>
-                    <span className="text-muted small">Cố vấn giải đáp 1-1 & Hướng dẫn đồ án</span>
-                  </div>
-                </div>
-                <Button variant="outline-primary" size="sm" className="rounded-pill fw-bold" onClick={() => alert('Đã kết nối trợ giảng 1-1 qua Chatbot AI!')}>
-                  <i className="bi bi-chat-dots me-1"></i> Đặt câu hỏi cho Mentor
-                </Button>
-              </div>
-            </Card>
           </Col>
 
-          {/* Cột Phải: Danh Sách Giáo Trình & Bài Học (Curriculum Accordion) */}
+          {/* Cột Phải: Danh Sách Giáo Trình & Bài Học */}
           <Col lg={4} xl={4}>
-            <Card className="border-0 rounded-4 shadow-sm overflow-hidden bg-white sticky-top" style={{ top: '80px' }}>
-              <Card.Header className="bg-light border-bottom p-3">
-                <div className="d-flex justify-content-between align-items-center mb-1">
-                  <h6 className="fw-bold text-dark mb-0">
-                    <i className="bi bi-list-check text-primary me-2"></i>
-                    Nội Dung Khóa Học
-                  </h6>
-                  <span className="badge bg-primary rounded-pill small">
-                    {completedLessons.length}/{allLessons.length} bài đã học
-                  </span>
+            <Card className="border-0 rounded-4 shadow-sm overflow-hidden bg-white sticky-top" style={{ top: 80 }}>
+              <Card.Header className="bg-white border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="fw-bold mb-0 text-dark">Nội Dung Khóa Học</h6>
+                  <span className="text-secondary small">{allLessons.length} bài giảng • Toàn bộ video HD</span>
                 </div>
-                <div className="small text-muted">
-                  Thời lượng: <strong>{course?.duration || '40 giờ'}</strong> • {modules.length} Chương lớn
-                </div>
+                <Badge bg="primary-subtle" className="text-primary border border-primary-subtle px-2 py-1 rounded-pill">
+                  {completedLessons.length}/{allLessons.length} bài
+                </Badge>
               </Card.Header>
 
-              <Card.Body className="p-0 overflow-auto" style={{ maxHeight: '70vh' }}>
+              <Card.Body className="p-0" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
                 <Accordion defaultActiveKey="0" flush>
                   {modules.map((mod, modIdx) => (
-                    <Accordion.Item eventKey={String(modIdx)} key={modIdx} className="border-bottom">
+                    <Accordion.Item eventKey={String(modIdx)} key={modIdx}>
                       <Accordion.Header>
-                        <div className="small fw-bold text-dark">
-                          {mod.moduleTitle}
-                        </div>
+                        <span className="fw-bold small text-dark">{mod.moduleTitle}</span>
                       </Accordion.Header>
                       <Accordion.Body className="p-0">
-                        <div className="list-group list-group-flush small">
+                        <div className="list-group list-group-flush">
                           {mod.lessons.map((lesson) => {
-                            const globalIndex = allLessons.findIndex((l) => l.id === lesson.id);
-                            const isActive = globalIndex === activeLessonIndex;
-                            const isDone = completedLessons.includes(globalIndex);
+                            const globalIdx = allLessons.findIndex((l) => l.id === lesson.id);
+                            const isActive = globalIdx === activeLessonIndex;
+                            const isDone = completedLessons.includes(globalIdx);
 
                             return (
                               <button
                                 key={lesson.id}
                                 type="button"
-                                className={`list-group-item list-group-item-action text-start p-3 d-flex align-items-center justify-content-between border-0 ${
-                                  isActive ? 'bg-primary-subtle text-primary fw-bold' : ''
+                                onClick={() => handleSelectLesson(globalIdx, lesson)}
+                                className={`list-group-item list-group-item-action border-0 py-3 px-3 d-flex align-items-start gap-2 ${
+                                  isActive ? 'bg-primary-subtle border-start border-primary border-4 fw-bold' : ''
                                 }`}
-                                onClick={() => handleSelectLesson(globalIndex, lesson)}
                               >
-                                <div className="d-flex align-items-center gap-2">
-                                  <i
-                                    className={`bi ${
-                                      isDone
-                                        ? 'bi-check-circle-fill text-success fs-5'
-                                        : isActive
-                                        ? 'bi-play-circle-fill text-primary fs-5'
-                                        : 'bi-circle text-muted fs-6'
-                                    }`}
-                                  ></i>
-                                  <div>
-                                    <div className="text-dark fw-semibold">{lesson.title}</div>
-                                    <span className="text-muted small">
-                                      <i className="bi bi-clock me-1"></i> {lesson.duration}
+                                <span className="pt-1">
+                                  {isDone ? (
+                                    <i className="bi bi-check-circle-fill text-success fs-5"></i>
+                                  ) : (
+                                    <i className="bi bi-circle text-secondary fs-5"></i>
+                                  )}
+                                </span>
+                                <div className="flex-grow-1 text-start">
+                                  <div className="d-flex justify-content-between align-items-baseline mb-1">
+                                    <span className={`small ${isActive ? 'text-primary fw-bold' : 'text-dark'}`}>
+                                      {lesson.title}
                                     </span>
                                   </div>
+                                  <div className="d-flex align-items-center gap-2 text-secondary" style={{ fontSize: '0.75rem' }}>
+                                    <span><i className="bi bi-play-circle me-1"></i> Video YouTube</span>
+                                    <span>•</span>
+                                    <span><i className="bi bi-clock me-1"></i> {lesson.duration}</span>
+                                    {isActive && (
+                                      <span className="badge bg-primary text-white ms-auto">Đang xem</span>
+                                    )}
+                                  </div>
                                 </div>
-                                {isDone && (
-                                  <Badge bg="success-subtle" className="text-success border border-success-subtle">
-                                    Đã học
-                                  </Badge>
-                                )}
                               </button>
                             );
                           })}
@@ -378,17 +398,6 @@ console.log(healthCheck());`
                   ))}
                 </Accordion>
               </Card.Body>
-
-              <Card.Footer className="bg-light p-3 border-top text-center">
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  className="w-100 rounded-pill fw-semibold"
-                  onClick={() => onNavigate?.('my-learning')}
-                >
-                  <i className="bi bi-grid me-1"></i> Về Danh Sách Khóa Học Của Tôi
-                </Button>
-              </Card.Footer>
             </Card>
           </Col>
         </Row>
