@@ -194,13 +194,18 @@ export const databaseProviders = [
         console.log(`✅ [Database] Kết nối MySQL thành công tới ${dbHost}:${dbPort}/${dbName}`);
         return initialized;
       } catch (err: any) {
-        if (!isDemoMode && process.env.NODE_ENV === 'production') {
-          console.error(`❌ [Database Fatal] Không kết nối được MySQL tại ${dbHost}:${dbPort}/${dbName}:`, err.message);
+        if (!isDemoMode) {
+          console.error(
+            `❌ [Database Fatal] Không kết nối được MySQL tại ${dbHost}:${dbPort}/${dbName}. ` +
+              'Kiểm tra lms/.env hoặc đặt DEMO_MODE=true nếu chủ động muốn chạy dữ liệu mô phỏng.',
+            err.message,
+          );
           throw err;
         }
 
         console.warn(
-          `⚠️ [Database Notice] Không kết nối được tới MySQL (${dbHost}:${dbPort}). Chuyển sang DEMO MODE In-Memory Database (Để kết nối MySQL thật, vui lòng cấu hình DB_HOST/PORT hợp lệ và tắt DEMO_MODE). Chi tiết:`,
+          `⚠️ [Database Demo] Không kết nối MySQL tại ${dbHost}:${dbPort}/${dbName}. ` +
+            'Backend đang dùng dữ liệu in-memory vì DEMO_MODE=true. API lúc này KHÔNG đọc dữ liệu MySQL.',
           err.message,
         );
 

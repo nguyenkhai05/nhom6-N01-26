@@ -1,4 +1,5 @@
 # 🎓 EduViet LMS - Nền Tảng Học Lập Trình Trực Tuyến Thực Chiến
+
 > **Dự án Nhóm 6 - Lớp N01-26**  
 > Kiến trúc Master Template: Giao diện Booking.com Search Bar chuẩn Responsive, Phân quyền RBAC 3 cấp độ (Guest, Học viên có Ví điện tử, Admin Singleton), và Phòng Học Live Code Studio tương tác.
 
@@ -7,6 +8,7 @@
 ## 🌟 Tính Năng Nổi Bật
 
 ### 1. 🛡️ Bảo Mật & Phân Quyền (3-Role RBAC Security Matrix)
+
 - **Khách vãng lai (Guest)**: Xem danh mục khóa học, tìm kiếm theo công nghệ/độ khó, xem đề cương bài giảng và học thử miễn phí.
 - **Học viên chính thức (Student / User)**:
   - Đăng ký tài khoản nhận ngay **1.000.000 đ** vào ví học tập.
@@ -19,12 +21,14 @@
   - Toàn quyền CRUD khóa học, duyệt đơn hàng thanh toán chuyển khoản, nạp/trừ ví học viên và quản lý mã giảm giá Voucher.
 
 ### 2. 📝 Bộ Modal Xác Nhận & Chúc Mừng Chi Tiết (Detailed Confirmations)
+
 - **Bảng Xác Nhận Đăng Ký Tài Khoản**: Rà soát đầy đủ họ tên, email Gmail, số điện thoại, lộ trình theo đuổi, mật khẩu mã hóa SHA-256, thẻ định danh học viên `STU-xxxxxx` và quà tặng chào mừng.
 - **Bảng Xác Nhận Đăng Ký Khóa Học**: Đối soát học phí, số dư ví hiện có, số dư còn lại sau khi thanh toán, quyền lợi học trọn đời và cam kết hoàn tiền 100% trong 7 ngày.
 - **Bảng Xác Nhận Nạp Tiền Vào Ví**: Quy trình 2 bước trực quan, tự động miễn phí 100% cổng thanh toán, sinh mã tham chiếu `DEP-xxxxx`.
 - **Màn Hình Chúc Mừng Vinh Danh**: Thông báo hoàn tất kèm biên lai điện tử và nút **"Vào Học Ngay Lập Tức"**.
 
 ### 3. 💻 Phòng Học Trực Tuyến Tương Tác (Course Learning Room)
+
 - **Trình chiếu Video bài giảng**: Tích hợp danh sách bài học chia theo chương, theo dõi tiến độ hoàn thành tự động theo tỉ lệ phần trăm.
 - **EduViet Live Interactive Code Studio**:
   - Khung soạn thảo code trực tiếp trên trình duyệt (JavaScript / Node.js 20).
@@ -102,13 +106,60 @@ nhom6-N01-26/
 ## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
 
 ### Yêu Cầu Môi Trường
+
 - **Node.js**: Phiên bản 18.x trở lên (khuyên dùng LTS 20.x hoặc 22.x)
 - **Git**
 - **Trình duyệt**: Chrome, Edge, Firefox hoặc Safari mới nhất
 
 ---
 
-### 1. Khởi chạy Ứng Dụng Frontend (React + Vite)
+### 1. Chuẩn bị MySQL (bắt buộc để kiểm tra dữ liệu thật)
+
+1. Mở MySQL bằng MySQL Workbench, XAMPP hoặc phpMyAdmin.
+2. Import file `lms_db.sql` ở thư mục gốc. Script sẽ tạo database `lms_db` cùng dữ liệu mẫu.
+3. Sao chép `lms/.env.example` thành `lms/.env` và cập nhật thông tin kết nối MySQL:
+
+   ```env
+   PORT=3000
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USERNAME=root
+   DB_PASSWORD=
+   DB_DATABASE=lms_db
+   DB_SYNCHRONIZE=false
+   DEMO_MODE=false
+   ```
+
+   **Lưu ý:** để xác minh dữ liệu MySQL thật, giữ `DEMO_MODE=false`. Nếu kết nối MySQL lỗi, backend sẽ dừng khởi động thay vì âm thầm chuyển sang dữ liệu mô phỏng. Chỉ đặt `DEMO_MODE=true` khi chủ động muốn demo bằng dữ liệu in-memory.
+
+### 2. Khởi chạy Backend (NestJS)
+
+```bash
+cd lms
+npm install
+npm run start:dev
+```
+
+Backend mặc định chạy tại `http://localhost:3000`. Giữ terminal này mở.
+
+### 3. Kiểm thử API bằng script có sẵn
+
+Mở terminal khác, từ thư mục gốc chạy:
+
+```bash
+cd lms
+npm run test:api
+```
+
+Script kiểm tra `GET /courses`, `GET /courses/:id`, `GET /categories`, và xác nhận khóa học có kèm tên danh mục/giảng viên. Kết quả thành công chỉ có ý nghĩa khi backend đang chạy với `DEMO_MODE=false` và kết nối MySQL thật.
+
+Có thể gọi thủ công bằng trình duyệt hoặc Postman:
+
+- `http://localhost:3000/courses`
+- `http://localhost:3000/courses/1`
+- `http://localhost:3000/categories`
+
+### 4. Khởi chạy Ứng Dụng Frontend (React + Vite)
 
 ```bash
 # Di chuyển vào thư mục frontend
@@ -128,54 +179,24 @@ Sau khi chạy lệnh trên, ứng dụng sẽ hoạt động tại:
 
 ---
 
-### 2. Khởi chạy Máy Chủ Backend (NestJS - Tùy chọn)
-
-```bash
-# Di chuyển vào thư mục lms
-cd lms
-
-# Cài đặt thư viện dependencies
-npm install
-
-# Khởi chạy máy chủ NestJS ở chế độ Development
-npm run start:dev
-```
-
-Máy chủ backend sẽ chạy tại:  
-👉 **`http://localhost:3000`**
-
-| Endpoint | Mô tả |
-| :--- | :--- |
-| `GET /courses` | Khóa học đã Published, kèm danh mục và tên giảng viên. Lọc bằng `?category_id=`, `?level=` (Beginner/Intermediate/Advanced), `?q=` |
-| `GET /courses/:id` | Chi tiết một khóa học (404 nếu không tồn tại) |
-| `GET /categories` | Danh sách danh mục |
-
----
-
-### 3. Cơ Sở Dữ Liệu MySQL (Database)
-- Import file **`lms_db.sql`** ở thư mục gốc vào MySQL / phpMyAdmin / XAMPP.
-- Sao chép `lms/.env.example` thành `lms/.env` rồi chỉnh thông tin kết nối:
-  ```env
-  DB_HOST=localhost
-  DB_PORT=3306
-  DB_USERNAME=root
-  DB_PASSWORD=
-  DB_DATABASE=lms_db
-  ```
-
----
+| Endpoint           | Mô tả                                          |
+| :----------------- | :--------------------------------------------- |
+| `GET /courses`     | Danh sách khóa học, kèm danh mục và giảng viên |
+| `GET /courses/:id` | Chi tiết một khóa học (404 nếu không tồn tại)  |
+| `GET /categories`  | Danh sách danh mục                             |
 
 ## 🔑 Tài Khoản Thử Nghiệm Hệ Thống
 
-| Vai Trò | Email / Tên Đăng Nhập | Mật Khẩu | Quyền Hạn |
-| :--- | :--- | :--- | :--- |
-| **Quản Trị Viên (Admin)** | `admin` | `Eduenglish123` | Toàn quyền quản trị CSDL, thêm/sửa/xóa khóa học, duyệt đơn hàng, nạp ví học viên |
-| **Học Viên (Student)** | `dev.nguyen@gmail.com` | `123456` | Số dư sẵn có, sở hữu khóa học, học trực tuyến |
-| **Đăng Ký Mới** | *(Bất kỳ Gmail nào)* | *(Tự chọn $\ge$ 6 ký tự)* | Nhận ngay **1.000.000 đ** vào ví học tập khi hoàn tất đăng ký |
+| Vai Trò                   | Email / Tên Đăng Nhập  | Mật Khẩu                  | Quyền Hạn                                                                        |
+| :------------------------ | :--------------------- | :------------------------ | :------------------------------------------------------------------------------- |
+| **Quản Trị Viên (Admin)** | `admin`                | `Eduenglish123`           | Toàn quyền quản trị CSDL, thêm/sửa/xóa khóa học, duyệt đơn hàng, nạp ví học viên |
+| **Học Viên (Student)**    | `dev.nguyen@gmail.com` | `123456`                  | Số dư sẵn có, sở hữu khóa học, học trực tuyến                                    |
+| **Đăng Ký Mới**           | _(Bất kỳ Gmail nào)_   | _(Tự chọn $\ge$ 6 ký tự)_ | Nhận ngay **1.000.000 đ** vào ví học tập khi hoàn tất đăng ký                    |
 
 ---
 
 ## 👥 Nhóm Thực Hiện
+
 - **Dự án**: Hệ thống quản lý học tập & kinh doanh khóa học lập trình trực tuyến EduViet LMS
 - **Đơn vị**: Nhóm 6 - Lớp N01-26
 - **Công nghệ chính**: React 19, Vite, Bootstrap 5, NestJS 12, TypeORM, MySQL, Git

@@ -17,6 +17,7 @@ import ChatSupport from './components/ChatSupport';
 import CourseLearningRoom from './components/CourseLearningRoom';
 import Footer from './Footer';
 import useCatalog from './hooks/useCatalog';
+import { getCourse } from './services/api';
 import PlanSection from './components/home/PlanSection';
 import BrowseSections from './components/home/BrowseSections';
 import DealsSection from './components/home/DealsSection';
@@ -183,6 +184,8 @@ export default function App() {
   const [showDepositHistoryModal, setShowDepositHistoryModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseDetailStatus, setCourseDetailStatus] = useState('idle');
+  const [courseDetailError, setCourseDetailError] = useState('');
   const [showEnrollConfirmModal, setShowEnrollConfirmModal] = useState(false);
   const [courseToEnroll, setCourseToEnroll] = useState(null);
   const [showEnrollSuccessModal, setShowEnrollSuccessModal] = useState(false);
@@ -298,9 +301,20 @@ export default function App() {
     setTimeout(() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' }), 50);
   };
 
-  const openCourseDetail = (course) => {
+  const openCourseDetail = async (course) => {
     setSelectedCourse(course);
     setShowDetailModal(true);
+    setCourseDetailStatus('loading');
+    setCourseDetailError('');
+
+    try {
+      const detail = await getCourse(course.course_id);
+      setSelectedCourse(detail);
+      setCourseDetailStatus('ready');
+    } catch (error) {
+      setCourseDetailStatus('error');
+      setCourseDetailError(error?.message || 'Không tải được chi tiết khóa học.');
+    }
   };
 
   const filteredCourses = courses.filter((course) => {
@@ -658,10 +672,7 @@ export default function App() {
             />
             <CourseList
               courses={filteredCourses}
-              onViewDetail={(course) => {
-                setSelectedCourse(course);
-                setShowDetailModal(true);
-              }}
+              onViewDetail={openCourseDetail}
               onEnroll={handleEnrollCourse}
               enrolledCourseIds={currentUser?.enrolledCourses || []}
               onAddToCart={handleAddToCart}
@@ -706,10 +717,7 @@ export default function App() {
             </div>
             <CourseList
               courses={courses}
-              onViewDetail={(course) => {
-                setSelectedCourse(course);
-                setShowDetailModal(true);
-              }}
+              onViewDetail={openCourseDetail}
               onEnroll={handleEnrollCourse}
               enrolledCourseIds={currentUser?.enrolledCourses || []}
               onAddToCart={handleAddToCart}
@@ -795,10 +803,7 @@ export default function App() {
             {currentUser.enrolledCourses?.length > 0 ? (
               <CourseList
                 courses={courses.filter((c) => currentUser.enrolledCourses.includes(c.course_id))}
-                onViewDetail={(c) => {
-                  setSelectedCourse(c);
-                  setShowDetailModal(true);
-                }}
+                onViewDetail={openCourseDetail}
                 enrolledCourseIds={currentUser.enrolledCourses}
                 onStartLearning={(c) => {
                   setActiveLearningCourse(c);
@@ -1245,8 +1250,25 @@ export default function App() {
       </Modal>
 
       {/* Modal Chi Tiết Khóa Học */}
-      <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg" centered>
-        {selectedCourse && (
+      <Modal show={showDetailModal} onHide={() => { setShowDetailModal(false); setCourseDetailStatus('idle'); }} size="lg" centered>
+        {courseDetailStatus === 'loading' && (
+          <Modal.Body className="py-5 text-center" role="status">
+            <div className="spinner-border text-primary mb-3" aria-hidden="true" />
+            <p className="mb-0">Đang tải chi tiết khóa học...</p>
+          </Modal.Body>
+        )}
+        {courseDetailStatus === 'error' && (
+          <Modal.Body>
+            <Alert variant="danger" className="mb-0">
+              <strong>Không tải được chi tiết khóa học.</strong>
+              <div className="small mt-1">{courseDetailError}</div>
+              <Button variant="outline-danger" size="sm" className="mt-3" onClick={() => selectedCourse && openCourseDetail(selectedCourse)}>
+                Thử lại
+              </Button>
+            </Alert>
+          </Modal.Body>
+        )}
+        {courseDetailStatus === 'ready' && selectedCourse && (
           <>
             <Modal.Header closeButton>
               <Modal.Title className="fw-bold fs-5">
