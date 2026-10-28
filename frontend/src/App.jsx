@@ -321,7 +321,7 @@ export default function App() {
     const matchesKeyword =
       !searchFilter.keyword ||
       course.title.toLowerCase().includes(searchFilter.keyword.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchFilter.keyword.toLowerCase());
+      (course.description ?? '').toLowerCase().includes(searchFilter.keyword.toLowerCase());
 
     const matchesCategory =
       searchFilter.techCategory === 'ALL' ||

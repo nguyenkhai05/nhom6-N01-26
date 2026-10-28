@@ -3,7 +3,8 @@ import {
   NotFoundException, Param, ParseIntPipe, Post, Put,
 } from '@nestjs/common';
 import { CategoryService } from './category.service.js';
-import { Category } from './category.entity.js';
+import { CreateCategoryDto } from './dto/create-category.dto.js';
+import { UpdateCategoryDto } from './dto/update-category.dto.js';
 
 @Controller('categories')
 export class CategoryController {
@@ -22,12 +23,12 @@ export class CategoryController {
   }
 
   @Post()
-  createCategory(@Body() body: Partial<Category>) {
+  createCategory(@Body() body: CreateCategoryDto) {
     return this.categoryService.create(body);
   }
 
   @Put(':id')
-  async updateCategory(@Param('id', ParseIntPipe) id: number, @Body() body: Partial<Category>) {
+  async updateCategory(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCategoryDto) {
     const updated = await this.categoryService.update(id, body);
     if (!updated) throw new NotFoundException('Không tìm thấy danh mục');
     return updated;
