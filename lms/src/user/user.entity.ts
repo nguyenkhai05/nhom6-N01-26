@@ -1,6 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, type Relation } from 'typeorm';
+import {
+  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany,
+  ManyToMany, JoinTable, type Relation,
+} from 'typeorm';
 import { Course } from '../course/course.entity.js';
 import { Enrollment } from '../enrollment/enrollment.entity.js';
+import { Role } from '../role/role.entity.js';
 
 @Entity('users')
 export class User {
@@ -13,7 +17,8 @@ export class User {
   @Column({ length: 100, unique: true })
   email: string;
 
-  @Column()
+  // select: false → mọi truy vấn thông thường KHÔNG trả về cột này (chỉ login mới addSelect)
+  @Column({ length: 255, select: false })
   password_hash: string;
 
   @Column({ length: 500, nullable: true })
@@ -24,6 +29,15 @@ export class User {
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
+
+  // Nhiều-nhiều qua bảng user_roles có sẵn trong lms_db.sql
+  @ManyToMany(() => Role)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'user_id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'role_id' },
+  })
+  roles: Relation<Role>[];
 
   @OneToMany(() => Course, (course) => course.instructor)
   coursesTaught: Relation<Course>[];

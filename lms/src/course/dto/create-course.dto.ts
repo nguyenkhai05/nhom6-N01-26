@@ -5,10 +5,12 @@ import {
 import { CourseLevel, CourseStatus } from '../course.entity.js';
 
 export class CreateCourseDto {
+  // Giảng viên: bỏ qua (hệ thống lấy từ token). Admin: bắt buộc truyền.
+  @IsOptional()
   @Type(() => Number)
   @IsInt({ message: 'instructor_id phải là số nguyên' })
   @Min(1)
-  instructor_id: number;
+  instructor_id?: number;
 
   @IsOptional()
   @Type(() => Number)

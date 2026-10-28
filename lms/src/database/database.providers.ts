@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { User } from '../user/user.entity.js';
+import { Role } from '../role/role.entity.js';
 import { Course } from '../course/course.entity.js';
 import { Category } from '../category/category.entity.js';
 import { CourseModule } from '../course-module/course-module.entity.js';
@@ -184,7 +185,7 @@ export const databaseProviders = [
         username: dbUser,
         password: dbPass,
         database: dbName,
-        entities: [User, Course, Category, CourseModule, Enrollment, Lesson],
+        entities: [User, Role, Course, Category, CourseModule, Enrollment, Lesson],
         // R02: Tắt synchronize: true mặc định để bảo vệ schema CSDL và không drop cột users.created_at
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
       });
