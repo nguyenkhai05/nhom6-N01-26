@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Modal, Form, Button, Alert, InputGroup, Tabs, Tab } from 'react-bootstrap';
+import { Modal, Form, Button, Alert, InputGroup } from 'react-bootstrap';
+import { apiLogin, apiRegister, saveToken, toFrontendUser, DEFAULT_AVATAR } from '../services/auth';
 
 export default function AuthModal({
   show,
@@ -8,15 +9,7 @@ export default function AuthModal({
   onLoginSuccess,
 }) {
   const [mode, setMode] = useState(initialMode); // 'login' | 'register'
-  const [roleMode, setRoleMode] = useState('student'); // 'student' | 'admin'
-
-  useEffect(() => {
-    if (show) {
-      setMode(initialMode);
-      setErrorMsg('');
-      setSuccessMsg('');
-    }
-  }, [show, initialMode]);
+  const [loading, setLoading] = useState(false);
 
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
@@ -28,7 +21,7 @@ export default function AuthModal({
   const [regFullName, setRegFullName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
-  const [regTarget, setRegTarget] = useState('Frontend');
+  const [regTarget, setRegTarget] = useState('Frontend Web Engineer');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(true);
@@ -53,133 +46,75 @@ export default function AuthModal({
     setPendingStudent(null);
     setIsRegisterSuccess(false);
     setRegisteredStudentData(null);
+    setLoading(false);
   };
+
+  // Mỗi lần mở modal: về đúng tab được yêu cầu và xóa trạng thái cũ
+  useEffect(() => {
+    if (show) {
+      setMode(initialMode);
+      resetForms();
+    }
+  }, [show, initialMode]);
 
   const handleTabChange = (k) => {
     setMode(k);
     resetForms();
   };
 
-  const handleQuickFillAdmin = () => {
-    setLoginEmail('admin');
-    setLoginPassword('Eduenglish123');
-    setRoleMode('admin');
-    setErrorMsg('');
-  };
-
-  const handleLoginSubmit = (e) => {
+  // Đăng nhập: gửi email + mật khẩu lên POST /auth/login, nhận token và thông tin người dùng
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
 
-    const emailTrimmed = loginEmail.trim();
-
-    // 1. Singleton Admin check: admin / Eduenglish123 (theo kiến trúc EduEnglish Master Template)
-    if (
-      (emailTrimmed === 'admin' || emailTrimmed === 'admin@eduviet.vn') &&
-      loginPassword === 'Eduenglish123'
-    ) {
-      const adminUser = {
-        userId: 1,
-        fullName: 'Quản Trị Viên EduViet',
-        email: 'admin@eduviet.vn',
-        phone: '0988.888.999',
-        role: 'ADMIN',
-        walletBalance: 999999999,
-        enrolledCourses: [1, 2, 3, 4, 5, 6],
-        bio: 'Quản trị viên kỹ thuật tối cao của hệ sinh thái EduViet.',
-        targetTrack: 'Fullstack Enterprise Architecture',
-        joinDate: '01/01/2026',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'
-      };
-
-      setSuccessMsg('Đăng nhập Quản trị viên thành công! Đang chuyển hướng...');
-      setTimeout(() => {
-        onLoginSuccess(adminUser);
-        onHide();
-        resetForms();
-      }, 500);
+    const email = loginEmail.trim();
+    if (!email || !loginPassword) {
+      setErrorMsg('Vui lòng nhập đầy đủ email và mật khẩu.');
       return;
     }
 
-    // 2. Học viên đăng nhập
-    if (emailTrimmed && loginPassword) {
-      if (emailTrimmed.toLowerCase().includes('admin') && loginPassword !== 'Eduenglish123') {
-        setErrorMsg('Sai mật khẩu tài khoản Quản trị viên!');
-        return;
-      }
+    setLoading(true);
+    try {
+      const { access_token, user } = await apiLogin(email, loginPassword);
+      saveToken(access_token, rememberMe);
+      const frontendUser = toFrontendUser(user);
 
-      if (loginPassword.length < 6) {
-        setErrorMsg('Mật khẩu phải từ 6 ký tự trở lên.');
-        return;
-      }
-
-      // Lấy thông tin user đã lưu hoặc tạo mới
-      const existingUsers = JSON.parse(localStorage.getItem('eduviet_registered_users') || '[]');
-      const found = existingUsers.find(
-        (u) => u.email.toLowerCase() === emailTrimmed.toLowerCase() && u.password === loginPassword
+      setSuccessMsg(
+        frontendUser.role === 'ADMIN'
+          ? 'Đăng nhập Quản trị viên thành công! Đang chuyển hướng...'
+          : 'Đăng nhập thành công!'
       );
-
-      let studentUser;
-      if (found) {
-        studentUser = {
-          userId: found.userId,
-          fullName: found.fullName,
-          email: found.email,
-          phone: found.phone || '0912.345.678',
-          role: 'USER',
-          walletBalance: found.walletBalance || 1000000,
-          enrolledCourses: found.enrolledCourses || [],
-          bio: found.bio || 'Học viên đam mê chinh phục công nghệ lập trình.',
-          targetTrack: found.targetTrack || 'Frontend Web Engineer',
-          joinDate: found.joinDate || 'Hôm nay',
-          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80'
-        };
-      } else {
-        studentUser = {
-          userId: Date.now(),
-          fullName: emailTrimmed.split('@')[0].toUpperCase() || 'Học Viên EduViet',
-          email: emailTrimmed,
-          phone: '0912.345.678',
-          role: 'USER',
-          walletBalance: 1500000, // Tặng sẵn trải nghiệm
-          enrolledCourses: [],
-          bio: 'Học viên mới tham gia EduViet.',
-          targetTrack: 'Fullstack Web Engineer',
-          joinDate: 'Hôm nay',
-          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80'
-        };
-      }
-
-      setSuccessMsg('Đăng nhập học viên thành công!');
       setTimeout(() => {
-        onLoginSuccess(studentUser);
+        onLoginSuccess(frontendUser);
         onHide();
         resetForms();
       }, 500);
-    } else {
-      setErrorMsg('Vui lòng nhập đầy đủ thông tin email và mật khẩu.');
+    } catch (err) {
+      setErrorMsg(err.message);
+      setLoading(false);
     }
   };
 
+  // Bước 1 của đăng ký: kiểm tra dữ liệu nhập rồi chuyển sang bảng xác nhận
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
-
-    // Rule: Tuyệt đối cấm đăng ký quyền Admin
-    if (regEmail.toLowerCase().includes('admin')) {
-      setErrorMsg('Nghiêm cấm đăng ký tài khoản Quản trị viên qua biểu mẫu này!');
-      return;
-    }
 
     if (!regFullName.trim() || !regEmail.trim() || !regPassword) {
       setErrorMsg('Vui lòng điền đầy đủ các trường thông tin bắt buộc (*).');
       return;
     }
 
-    if (regPassword.length < 6) {
-      setErrorMsg('Mật khẩu tối thiểu phải từ 6 ký tự.');
+    // Quy tắc mật khẩu phải khớp backend (RegisterDto: 8–72 ký tự)
+    if (regPassword.length < 8) {
+      setErrorMsg('Mật khẩu tối thiểu phải từ 8 ký tự.');
+      return;
+    }
+
+    if (regPassword.length > 72) {
+      setErrorMsg('Mật khẩu tối đa 72 ký tự.');
       return;
     }
 
@@ -193,43 +128,56 @@ export default function AuthModal({
       return;
     }
 
-    // Chuẩn bị thông tin tài khoản và chuyển sang Bảng Xác Nhận
-    const candidateStudent = {
-      userId: Date.now(),
+    // Chỉ giữ thông tin hiển thị ở bảng xác nhận. Mật khẩu vẫn nằm ở state regPassword,
+    // không đưa vào đối tượng này và không lưu ở bất kỳ đâu.
+    setPendingStudent({
       fullName: regFullName.trim(),
       email: regEmail.trim(),
       phone: regPhone.trim() || 'Chưa cập nhật',
-      password: regPassword,
-      role: 'USER',
-      walletBalance: 1000000, // Quà tặng chào mừng 1.000.000đ
-      enrolledCourses: [],
-      bio: `Mục tiêu nghề nghiệp: ${regTarget}`,
       targetTrack: regTarget,
-      joinDate: new Date().toLocaleDateString('vi-VN'),
-      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80'
-    };
-
-    setPendingStudent(candidateStudent);
+    });
     setShowConfirmStep(true);
   };
 
-  const handleFinalConfirmRegister = () => {
+  // Bước 2: gọi POST /auth/register. Vai trò luôn do máy chủ đặt là Student.
+  const handleFinalConfirmRegister = async () => {
     if (!pendingStudent) return;
+    setErrorMsg('');
+    setLoading(true);
 
-    // Lưu vào database giả lập LocalStorage
-    const existingUsers = JSON.parse(localStorage.getItem('eduviet_registered_users') || '[]');
-    existingUsers.push(pendingStudent);
-    localStorage.setItem('eduviet_registered_users', JSON.stringify(existingUsers));
+    try {
+      const { access_token, user } = await apiRegister({
+        full_name: pendingStudent.fullName,
+        email: pendingStudent.email,
+        password: regPassword,
+      });
+      saveToken(access_token, true);
 
-    setRegisteredStudentData(pendingStudent);
-    setIsRegisterSuccess(true);
-    setShowConfirmStep(false);
+      // Ví, số điện thoại, mục tiêu học tập là dữ liệu giả lập ở frontend (backend chưa có)
+      const frontendUser = toFrontendUser(user, {
+        phone: pendingStudent.phone,
+        bio: `Mục tiêu nghề nghiệp: ${pendingStudent.targetTrack}`,
+        targetTrack: pendingStudent.targetTrack,
+        walletBalance: 1000000, // Quà tặng chào mừng 1.000.000đ
+        enrolledCourses: [],
+        joinDate: new Date().toLocaleDateString('vi-VN'),
+      });
+
+      // Đăng nhập ngay sau khi đăng ký; App sẽ ghi nhận quà tặng khi isNew = true
+      onLoginSuccess(frontendUser, { isNew: true });
+      setRegisteredStudentData(frontendUser);
+      setIsRegisterSuccess(true);
+      setShowConfirmStep(false);
+    } catch (err) {
+      // Ví dụ 409 "Email đã được đăng ký": quay lại biểu mẫu để sửa
+      setErrorMsg(err.message);
+      setShowConfirmStep(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFinishRegisterCelebration = () => {
-    if (registeredStudentData) {
-      onLoginSuccess(registeredStudentData);
-    }
     onHide();
     resetForms();
   };
@@ -291,39 +239,15 @@ export default function AuthModal({
         {/* FORM ĐĂNG NHẬP */}
         {mode === 'login' && (
           <Form onSubmit={handleLoginSubmit}>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <span className="small text-muted fw-semibold">Bạn đăng nhập với vai trò:</span>
-              <div className="d-flex gap-1">
-                <Button
-                  size="sm"
-                  variant={roleMode === 'student' ? 'primary' : 'outline-secondary'}
-                  className="rounded-pill py-0 px-2 fw-semibold"
-                  style={{ fontSize: '0.75rem' }}
-                  onClick={() => setRoleMode('student')}
-                >
-                  Học viên
-                </Button>
-                <Button
-                  size="sm"
-                  variant={roleMode === 'admin' ? 'danger' : 'outline-secondary'}
-                  className="rounded-pill py-0 px-2 fw-semibold"
-                  style={{ fontSize: '0.75rem' }}
-                  onClick={handleQuickFillAdmin}
-                >
-                  Quản trị viên (Admin)
-                </Button>
-              </div>
-            </div>
-
             <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold">Email hoặc Tên đăng nhập *</Form.Label>
+              <Form.Label className="small fw-bold">Email *</Form.Label>
               <InputGroup>
                 <InputGroup.Text className="bg-light border-end-0">
                   <i className="bi bi-envelope text-muted"></i>
                 </InputGroup.Text>
                 <Form.Control
-                  type="text"
-                  placeholder="Nhập email học viên hoặc 'admin'..."
+                  type="email"
+                  placeholder="Nhập email của bạn..."
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="border-start-0"
@@ -340,7 +264,7 @@ export default function AuthModal({
                   className="small text-decoration-none text-primary"
                   onClick={(e) => {
                     e.preventDefault();
-                    alert('Hệ thống đã gửi liên kết khôi phục mật khẩu đến email của bạn!');
+                    alert('Tính năng khôi phục mật khẩu chưa được hỗ trợ. Vui lòng liên hệ quản trị viên để được cấp lại.');
                   }}
                 >
                   Quên mật khẩu?
@@ -377,19 +301,15 @@ export default function AuthModal({
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="small text-secondary"
               />
-              {roleMode === 'admin' && (
-                <span className="badge bg-danger-subtle text-danger small">
-                  Tài khoản Admin: admin | Eduenglish123
-                </span>
-              )}
             </div>
 
             <Button
               type="submit"
-              variant={roleMode === 'admin' ? 'danger' : 'primary'}
+              variant="primary"
               className="w-100 fw-bold py-2 mb-3 shadow-sm"
+              disabled={loading}
             >
-              {roleMode === 'admin' ? 'Đăng Nhập Quản Trị Viên' : 'Đăng Nhập Ngay'}
+              {loading ? 'Đang đăng nhập...' : 'Đăng Nhập Ngay'}
             </Button>
 
             <div className="text-center">
@@ -424,7 +344,7 @@ export default function AuthModal({
               <div className="p-3 bg-light rounded-4 border mb-3">
                 <div className="d-flex align-items-center gap-3 pb-3 border-bottom mb-3">
                   <img
-                    src={pendingStudent.avatarUrl}
+                    src={DEFAULT_AVATAR}
                     alt="Student Avatar"
                     className="rounded-circle border border-2 border-primary shadow-sm"
                     style={{ width: 56, height: 56, objectFit: 'cover' }}
@@ -474,14 +394,14 @@ export default function AuthModal({
                     <div className="p-2 bg-white rounded-3 border">
                       <span className="text-muted d-block small">Mật khẩu bảo vệ:</span>
                       <span className="font-monospace text-secondary">
-                        {'•'.repeat(Math.min(pendingStudent.password.length, 12))} ({pendingStudent.password.length} ký tự, mã hóa SHA-256)
+                        {'•'.repeat(Math.min(regPassword.length, 12))} ({regPassword.length} ký tự, máy chủ băm bằng scrypt)
                       </span>
                     </div>
                   </div>
                   <div className="col-sm-6">
                     <div className="p-2 bg-white rounded-3 border">
                       <span className="text-muted d-block small">Mã định danh Student ID:</span>
-                      <strong className="text-secondary font-monospace">STU-{String(pendingStudent.userId).slice(-6)}</strong>
+                      <strong className="text-secondary font-monospace">Cấp sau khi kích hoạt</strong>
                     </div>
                   </div>
                 </div>
@@ -572,8 +492,9 @@ export default function AuthModal({
                   variant="success"
                   className="w-50 fw-bold rounded-pill py-2 shadow-sm"
                   onClick={handleFinalConfirmRegister}
+                  disabled={loading}
                 >
-                  <i className="bi bi-check2-circle me-1"></i> Đồng Ý & Kích Hoạt Tài Khoản
+                  <i className="bi bi-check2-circle me-1"></i> {loading ? 'Đang tạo tài khoản...' : 'Đồng Ý & Kích Hoạt Tài Khoản'}
                 </Button>
               </div>
             </div>
@@ -603,7 +524,7 @@ export default function AuthModal({
                 <div className="d-flex justify-content-between align-items-center pb-2 border-bottom mb-2">
                   <span className="small text-muted">Mã Học Viên Định Danh:</span>
                   <strong className="text-primary font-monospace fs-6">
-                    STU-{String(registeredStudentData.userId).slice(-6)}
+                    STU-{String(registeredStudentData.userId).padStart(6, '0')}
                   </strong>
                 </div>
 
@@ -726,7 +647,7 @@ export default function AuthModal({
                     <Form.Label className="small fw-bold">Mật khẩu *</Form.Label>
                     <Form.Control
                       type="password"
-                      placeholder="Tối thiểu 6 ký tự"
+                      placeholder="Tối thiểu 8 ký tự"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       required

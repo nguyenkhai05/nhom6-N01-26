@@ -8,6 +8,7 @@ import CodeArena from './components/CodeArena';
 import CareerRoadmap from './components/CareerRoadmap';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
+import { apiMe, clearToken, getToken, saveExtras, toFrontendUser } from './services/auth';
 import UserProfile from './components/UserProfile';
 import DepositHistoryModal from './components/DepositHistoryModal';
 import ConversionTriggers from './components/ConversionTriggers';
@@ -169,9 +170,16 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_COURSES;
   });
 
+  // Người dùng đăng nhập. Chỉ khôi phục bản lưu khi còn token; vai trò thật sẽ được
+  // máy chủ xác nhận lại bằng GET /auth/me ngay bên dưới (không tin dữ liệu ở localStorage).
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('eduviet_user');
-    return saved ? JSON.parse(saved) : null;
+    if (!getToken()) return null;
+    try {
+      const saved = JSON.parse(localStorage.getItem('eduviet_user') || 'null');
+      return saved && typeof saved === 'object' ? saved : null;
+    } catch {
+      return null;
+    }
   });
 
   const [currentRoute, setCurrentRoute] = useState('home');
@@ -223,17 +231,10 @@ export default function App() {
   });
 
   // Form states
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
   const [depositAmount, setDepositAmount] = useState('500000');
   const [depositMethod, setDepositMethod] = useState('BANK_QR'); // 'BANK_QR' | 'MOMO'
   const [depositStep, setDepositStep] = useState('select'); // 'select' | 'confirm' | 'success'
   const [lastDepositTx, setLastDepositTx] = useState(null);
-  const [authError, setAuthError] = useState('');
-  const [authSuccess, setAuthSuccess] = useState('');
 
   // Course manage state for Admin
   const [editingCourse, setEditingCourse] = useState(null);
@@ -273,10 +274,35 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('eduviet_user', JSON.stringify(currentUser));
+      saveExtras(currentUser); // ví, khóa học đã mua... lưu theo từng tài khoản
     } else {
       localStorage.removeItem('eduviet_user');
     }
   }, [currentUser]);
+
+  // Mở trang: nếu có token thì hỏi máy chủ xem còn hiệu lực không (GET /auth/me).
+  // 401 = token hết hạn hoặc sai → đăng xuất. Lỗi mạng thì giữ nguyên trạng thái.
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setCurrentUser(null);
+      return undefined;
+    }
+    let cancelled = false;
+    apiMe(token)
+      .then((me) => {
+        if (!cancelled) setCurrentUser(toFrontendUser(me));
+      })
+      .catch((err) => {
+        if (!cancelled && err.status === 401) {
+          clearToken();
+          setCurrentUser(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('eduviet_deposit_history', JSON.stringify(depositHistory));
@@ -334,96 +360,26 @@ export default function App() {
     return matchesKeyword && matchesCategory && matchesLevel;
   });
 
-  // Authentication Logic (3-role RBAC: Guest, Student User, Admin singleton)
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setAuthError('');
-
-    // Rule: Admin singleton account: admin / Eduenglish123 (hoặc admin@eduviet.vn)
-    if (
-      (loginEmail === 'admin' || loginEmail === 'admin@eduviet.vn') &&
-      loginPassword === 'Eduenglish123'
-    ) {
-      const adminUser = {
-        userId: 1,
-        fullName: 'Quản Trị Viên EduViet',
-        email: 'admin@eduviet.vn',
-        role: 'ADMIN',
-        walletBalance: 999999999,
-        enrolledCourses: [1, 2, 3, 4, 5, 6],
-      };
-      setCurrentUser(adminUser);
-      setShowLoginModal(false);
-      setLoginEmail('');
-      setLoginPassword('');
-      return;
-    }
-
-    // Học viên đăng nhập
-    if (loginEmail && loginPassword) {
-      const studentUser = {
-        userId: Date.now(),
-        fullName: loginEmail.split('@')[0] || 'Học Viên EduViet',
-        email: loginEmail,
-        role: 'USER',
-        walletBalance: 1500000, // Tặng số dư mặc định trải nghiệm
-        enrolledCourses: [],
-      };
-      setCurrentUser(studentUser);
-      setShowLoginModal(false);
-      setLoginEmail('');
-      setLoginPassword('');
-    } else {
-      setAuthError('Vui lòng nhập đầy đủ email và mật khẩu.');
-    }
-  };
-
-  const handleRegister = (e) => {
-    e.preventDefault();
-    setAuthError('');
-
-    // Quy tắc: Tuyệt đối cấm đăng ký tài khoản có quyền Admin
-    if (regEmail.toLowerCase().includes('admin')) {
-      setAuthError('Không được phép đăng ký tài khoản quyền Quản Trị Viên!');
-      return;
-    }
-
-    if (!regName || !regEmail || !regPassword) {
-      setAuthError('Vui lòng nhập đầy đủ thông tin đăng ký.');
-      return;
-    }
-
-    const newUser = {
-      userId: Date.now(),
-      fullName: regName,
-      email: regEmail,
-      role: 'USER',
-      walletBalance: 1000000, // Tặng 1.000.000đ khi đăng ký mới
-      enrolledCourses: [],
-    };
-    setCurrentUser(newUser);
-
-    // Ghi nhận lịch sử quà tặng thành viên mới
-    const bonusTx = {
-      id: 'DEP-' + Math.floor(10000 + Math.random() * 90000),
-      amount: 1000000,
-      date: new Date().toLocaleString('vi-VN'),
-      method: 'Thưởng Thành Viên Mới',
-      note: 'Ưu đãi đăng ký tài khoản thành viên EduViet',
-      status: 'Thành công',
-    };
-    setDepositHistory((prev) => [bonusTx, ...prev]);
-
-    setShowRegisterModal(false);
-    setRegName('');
-    setRegEmail('');
-    setRegPassword('');
-    alert('Chúc mừng! Bạn đã đăng ký thành công và nhận 1.000.000đ trong ví EduViet!');
-  };
-
   const handleLogout = () => {
+    clearToken();
     setCurrentUser(null);
     setCurrentRoute('home');
+  };
+
+  // Gọi khi AuthModal đăng nhập / đăng ký thành công. isNew = tài khoản vừa tạo → ghi nhận quà tặng.
+  const handleAuthSuccess = (user, { isNew = false } = {}) => {
+    setCurrentUser(user);
+    if (isNew) {
+      const bonusTx = {
+        id: 'DEP-' + Math.floor(10000 + Math.random() * 90000),
+        amount: 1000000,
+        date: new Date().toLocaleString('vi-VN'),
+        method: 'Thưởng Thành Viên Mới',
+        note: 'Ưu đãi đăng ký tài khoản thành viên EduViet',
+        status: 'Thành công',
+      };
+      setDepositHistory((prev) => [bonusTx, ...prev]);
+    }
   };
 
   // Nạp tiền vào ví
@@ -915,9 +871,7 @@ export default function App() {
           setShowLoginModal(false);
           setShowRegisterModal(false);
         }}
-        onLoginSuccess={(user) => {
-          setCurrentUser(user);
-        }}
+        onLoginSuccess={handleAuthSuccess}
       />
 
       {/* Modal Nạp Tiền Vào Ví Chi Tiết (Quy trình 2 bước: Chọn số tiền & Bảng Xác nhận chi tiết) */}
