@@ -27,6 +27,12 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ length: 255, nullable: true, select: false })
+  reset_token_hash: string | null;
+
+  @Column({ type: 'timestamp', nullable: true, select: false })
+  reset_token_expires_at: Date | null;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 

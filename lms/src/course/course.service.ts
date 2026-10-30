@@ -65,7 +65,7 @@ export class CourseService {
     this.assertCanModify(course, user);
 
     // Chỉ Admin được đổi chủ khóa học
-    const { instructor_id, ...rest } = data;
+    const { instructor_id: _instructor_id, ...rest } = data;
     const changes = this.isAdmin(user) ? data : rest;
 
     try {

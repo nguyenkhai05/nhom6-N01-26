@@ -1,5 +1,5 @@
 // Dịch vụ gọi API backend NestJS (lms/). Đổi địa chỉ bằng biến VITE_API_URL trong frontend/.env
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+export const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 async function request(path, { signal } = {}) {
   const res = await fetch(`${API_URL}${path}`, { signal });

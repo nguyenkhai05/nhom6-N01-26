@@ -130,23 +130,94 @@ export const INITIAL_COURSES = [
   },
 ];
 
+function matchesCondition(item: any, condition: any): boolean {
+  if (!condition || typeof condition !== 'object') return false;
+  return Object.entries(condition).every(([k, v]) => {
+    if (v === undefined) return true;
+    if (v === null) return item[k] === null || item[k] === undefined;
+    return String(item[k]) === String(v);
+  });
+}
+
+const INITIAL_ROLES = [
+  { role_id: 1, role_name: 'Admin' },
+  { role_id: 2, role_name: 'Instructor' },
+  { role_id: 3, role_name: 'Student' },
+];
+
+const INITIAL_USERS = [
+  {
+    user_id: 1,
+    full_name: 'Quản trị viên EduViet',
+    email: 'admin@eduviet.vn',
+    password_hash: '7d416cc472d0f256d92a5c8f1c7470019161d35020f65276e226e241188b7597',
+    is_active: true,
+    roles: [{ role_id: 1, role_name: 'Admin' }],
+    created_at: new Date(),
+  },
+  {
+    user_id: 2,
+    full_name: 'Vũ Quốc Huy',
+    email: 'giangvien@eduviet.vn',
+    password_hash: '34356b03ebdbcff3e93eda08096d4a0f907e6b0919d1783df8530fdd8d594fe4',
+    is_active: true,
+    roles: [{ role_id: 2, role_name: 'Instructor' }],
+    created_at: new Date(),
+  },
+  {
+    user_id: 3,
+    full_name: 'Nguyễn Văn Dev',
+    email: 'dev.nguyen@gmail.com',
+    password_hash: 'f0accdde0c5b36481cf143c72b22bb8fa7ad5a5cc93bfef380b2d6a59918be17',
+    is_active: true,
+    roles: [{ role_id: 3, role_name: 'Student' }],
+    created_at: new Date(),
+  },
+];
+
+
 function createMockRepository(initialData: any[], idField: string) {
   const store = [...initialData];
   return {
     find: async () => [...store],
     findOne: async (options?: any) => {
-      const id = options?.where?.[idField] ?? options?.[idField];
-      return store.find((item) => item[idField] === Number(id)) ?? null;
+      const where = options?.where ?? options;
+      if (!where) return store[0] ?? null;
+      return store.find((item) => matchesCondition(item, where)) ?? null;
     },
     findOneBy: async (where: any) => {
-      const id = where?.[idField];
-      return store.find((item) => item[idField] === Number(id)) ?? null;
+      if (!where) return null;
+      return store.find((item) => matchesCondition(item, where)) ?? null;
+    },
+    
+    createQueryBuilder: () => {
+      let whereEmail = null;
+      const builder = {
+        addSelect: () => builder,
+        leftJoinAndSelect: () => builder,
+        where: (clause, params) => {
+          if (params && params.email) whereEmail = params.email;
+          return builder;
+        },
+        getOne: async () => {
+          if (whereEmail) {
+            return store.find((item) => item.email && item.email.toLowerCase() === whereEmail.toLowerCase()) || null;
+          }
+          return store[0] || null;
+        },
+      };
+      return builder;
     },
     create: (data: any) => data,
     save: async (data: any) => {
-      const id = data[idField] ?? (Math.max(0, ...store.map((s) => Number(s[idField]) || 0)) + 1);
+      const id = data[idField] ?? (Math.max(0, ...store.map((s: any) => Number(s[idField]) || 0)) + 1);
       const saved = { ...data, [idField]: id };
-      store.push(saved);
+      const existingIdx = store.findIndex((s) => s[idField] === id);
+      if (existingIdx !== -1) {
+        store[existingIdx] = saved;
+      } else {
+        store.push(saved);
+      }
       return saved;
     },
     update: async (id: any, data: any) => {
@@ -212,7 +283,8 @@ export const databaseProviders = [
 
         const courseRepo = createMockRepository(INITIAL_COURSES, 'course_id');
         const categoryRepo = createMockRepository(INITIAL_CATEGORIES, 'category_id');
-        const userRepo = createMockRepository([], 'user_id');
+        const userRepo = createMockRepository(INITIAL_USERS, 'user_id');
+        const roleRepo = createMockRepository(INITIAL_ROLES, 'role_id');
         const defaultRepo = createMockRepository([], 'id');
 
         return {
@@ -221,6 +293,7 @@ export const databaseProviders = [
             if (entity === Course || entity?.name === 'Course') return courseRepo;
             if (entity === Category || entity?.name === 'Category') return categoryRepo;
             if (entity === User || entity?.name === 'User') return userRepo;
+            if (entity === Role || entity?.name === 'Role') return roleRepo;
             return defaultRepo;
           },
         } as unknown as DataSource;
