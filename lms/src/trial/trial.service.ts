@@ -10,26 +10,35 @@ export const INITIAL_TRIALS = [
     language: 'javascript',
     duration_minutes: 8,
     difficulty: 'Beginner',
-    summary: 'Làm quen với cú pháp JSX và cơ chế truyền nhận dữ liệu qua Props trong Functional Component React 19.',
+    video_id: 'bMknfKXIFA8',
+    video_start: 60,
+    live_preview_type: 'react-component',
+    summary: 'Làm quen với tư duy phân rã giao diện (Component-Driven), cú pháp JSX và truyền nhận dữ liệu qua Props trong React 19.',
+    concept_summary: `### 💡 Khái Niệm Trọng Tâm: Component & Props Trong React 19
+- **Component**: Là các khối giao diện độc lập, có thể tái sử dụng (giống như các khối Lego ghép lại thành website).
+- **Props (Properties)**: Là các tham số đầu vào được truyền từ Component cha xuống Component con. Props là dữ liệu chỉ đọc (Immutable), giúp giao diện phản chiếu trạng thái một cách dự đoán được (Predictable).
+- **React 19 Đổi Mới**: Không cần cấu hình prop-types phức tạp, tự động tối ưu hóa re-render thông qua React Compiler.`,
     instructions: `### Mục tiêu bài học thử:
-Trong React 19, một **Component** là một hàm JavaScript nhận dữ liệu qua **Props** và trả về giao diện.
+Bạn đang xây dựng một thẻ chào mừng học viên (**Welcome Card**) trong hệ sinh thái EduViet. Thẻ này sẽ nhận tên học viên và chức danh để hiển thị giao diện cá nhân hóa.
 
-#### Yêu cầu thực hành:
-1. Hoàn thiện hàm component \`WelcomeCard({ name, role })\`.
-2. Hàm phải trả về chuỗi có định dạng:
-   \`"Xin chào " + name + " - Vai trò: " + role\`
-3. Đảm bảo nếu không truyền \`role\`, giá trị mặc định sẽ là \`"Học viên"\`.`,
+#### 📋 Các bước thực hiện:
+1. **Bước 1**: Đọc và hiểu hàm component \`WelcomeCard({ name, role })\`.
+2. **Bước 2**: Sử dụng Destructuring để gán giá trị mặc định cho \`role = "Học viên"\` nếu người dùng không truyền vào.
+3. **Bước 3**: Trả về chuỗi thông điệp chuẩn xác: \`"Xin chào " + name + " - Vai trò: " + role\`.
+4. **Bước 4**: Bấm **"Chạy Thử Code"** để xem Live UI Preview và bấm **"Kiểm Tra & Hoàn Thành"** để nhận chứng nhận học thử!`,
     hints: [
-      'Gợi ý 1: Bạn có thể dùng destructuring với default value: `{ name, role = "Học viên" }`',
-      'Gợi ý 2: Sử dụng template string: `return `Xin chào ${name} - Vai trò: ${role}`;`',
+      'Gợi ý 1: Bạn có thể khai báo tham số: `function WelcomeCard({ name, role = "Học viên" })`',
+      'Gợi ý 2: Sử dụng template string ES6: `return `Xin chào ${name} - Vai trò: ${role}`;`',
+      'Gợi ý 3: Xem ngay tab "Giao Diện Live UI" để thấy thẻ card thay đổi tức thời khi bạn code!',
     ],
     initial_code: `function WelcomeCard({ name, role = "Học viên" }) {
-  // Hoàn thiện mã nguồn của bạn tại đây
+  // BƯỚC THỰC HÀNH: Hoàn thiện thông điệp chào mừng
+  // Định dạng: "Xin chào " + name + " - Vai trò: " + role
   return "";
 }
 
-// Kiểm tra thử hàm
-console.log(WelcomeCard({ name: "Nam", role: "Developer" }));`,
+// Gọi thử hàm để xem kết quả
+console.log(WelcomeCard({ name: "Nguyễn Văn Dev", role: "Frontend Developer" }));`,
     solution_code: `function WelcomeCard({ name, role = "Học viên" }) {
   return "Xin chào " + name + " - Vai trò: " + role;
 }`,
@@ -55,26 +64,38 @@ console.log(WelcomeCard({ name: "Nam", role: "Developer" }));`,
     language: 'javascript',
     duration_minutes: 10,
     difficulty: 'Intermediate',
-    summary: 'Tìm hiểu cơ chế định tuyến (Routing) trong NestJS và cấu trúc một hàm Controller xử lý request chuẩn.',
-    instructions: `### Mục tiêu bài học thử:
-Trong NestJS, mỗi Controller chịu trách nhiệm tiếp nhận HTTP Request đến các endpoint cụ thể và trả về Response tương ứng.
+    video_id: '2n3xS89TJMI',
+    video_start: 120,
+    live_preview_type: 'api-response',
+    summary: 'Tìm hiểu cơ chế định tuyến (Routing) trong NestJS và cấu trúc một hàm Controller xử lý request chuẩn RESTful API.',
+    concept_summary: `### 💡 Khái Niệm Trọng Tâm: NestJS Controllers & HTTP Lifecycle
+- **Controller**: Là tầng đầu tiên tiếp nhận HTTP Request (GET, POST, PUT, DELETE) từ Client thông qua URL Path.
+- **Data Transfer Object (DTO)**: Khuôn mẫu dữ liệu gửi lên máy chủ được kiểm định nghiêm ngặt.
+- **RESTful Standard**: Định dạng response nhất quán: Thành công trả về status \`"success"\` kèm data; Không tìm thấy trả về \`"not_found"\` kèm message.`,
+    instructions: `### 🎯 Mục Tiêu Bài Học Thử:
+Bạn đóng vai trò Backend Developer xây dựng API endpoint lấy thông tin khóa học: \`GET /courses/:id\`.
 
-#### Yêu cầu thực hành:
-1. Viết một hàm mô phỏng handler \`getCourseOverview(courseId, coursesList)\`.
-2. Tìm khóa học có \`id === courseId\` trong danh sách.
-3. Nếu tìm thấy, trả về object: \`{ status: "success", data: course }\`.
-4. Nếu không tìm thấy, trả về: \`{ status: "not_found", message: "Course not found" }\`.`,
+#### 📋 Các bước thực hiện:
+1. **Bước 1**: Viết hàm handler \`getCourseOverview(courseId, coursesList)\`.
+2. **Bước 2**: Dùng phương thức mảng \`.find()\` để tìm khóa học có \`id === courseId\`.
+3. **Bước 3**: Nếu tìm thấy, trả về object: \`{ status: "success", data: course }\`.
+4. **Bước 4**: Nếu không tìm thấy, trả về: \`{ status: "not_found", message: "Course not found" }\`.
+5. **Bước 5**: Kiểm tra Swagger / Postman Mock Preview bên phải để xem kết quả HTTP thực tế!`,
     hints: [
-      'Gợi ý 1: Dùng phương thức `coursesList.find(c => c.id === courseId)`.',
-      'Gợi ý 2: Kiểm tra if (!course) return { status: "not_found", message: "Course not found" }.',
+      'Gợi ý 1: Dùng phương thức `const course = coursesList.find(c => c.id === courseId);`',
+      'Gợi ý 2: Kiểm tra điều kiện if (!course) return { status: "not_found", message: "Course not found" };',
     ],
     initial_code: `function getCourseOverview(courseId, coursesList) {
-  // Viết logic tìm kiếm và trả về định dạng chuẩn
+  // BƯỚC THỰC HÀNH: Tìm kiếm khóa học trong danh sách
+  // và trả về định dạng JSON chuẩn REST API
   
 }
 
-// Dữ liệu mẫu
-const mockCourses = [{ id: 1, title: "React 19" }, { id: 2, title: "NestJS" }];
+// Dữ liệu mẫu kiểm thử
+const mockCourses = [
+  { id: 1, title: "React 19 Chuyên Sâu", price: 890000 },
+  { id: 2, title: "NestJS Backend Master", price: 950000 }
+];
 console.log(getCourseOverview(1, mockCourses));`,
     solution_code: `function getCourseOverview(courseId, coursesList) {
   const course = coursesList.find(c => c.id === courseId);
@@ -105,22 +126,28 @@ console.log(getCourseOverview(1, mockCourses));`,
     language: 'javascript',
     duration_minutes: 8,
     difficulty: 'Beginner',
-    summary: 'Học cách duyệt mảng, trích xuất điểm số sinh viên và tính giá trị trung bình trong phân tích dữ liệu.',
-    instructions: `### Mục tiêu bài học thử:
-Trong phân tích dữ liệu và AI, bước tiền xử lý (Data Preprocessing) là quan trọng nhất để làm sạch và tổng hợp dữ liệu.
+    video_id: 'rfscVS0vtbw',
+    video_start: 90,
+    live_preview_type: 'data-chart',
+    summary: 'Học tư duy tiền xử lý dữ liệu (Data Preprocessing), lọc outliers và tính toán thống kê cơ bản trong phân tích dữ liệu.',
+    concept_summary: `### 💡 Khái Niệm Trọng Tâm: Data Preprocessing & Outlier Cleaning
+- **Data Cleansing**: Dữ liệu thực tế luôn chứa rác (nhiễu, giá trị âm, điểm vượt trần). Bước đầu tiên của kỹ sư AI là làm sạch (Sanitize).
+- **Outliers**: Các giá trị ngoài khoảng hợp lệ [0, 10] phải bị loại bỏ để không làm méo mó kết quả phân tích thống kê.`,
+    instructions: `### 🎯 Mục Tiêu Bài Học Thử:
+Bạn phụ trách viết hàm tiền xử lý điểm số học viên trước khi nạp vào mô hình Machine Learning.
 
-#### Yêu cầu thực hành:
-Viết hàm \`calculateAverageScore(scores)\` nhận vào danh sách điểm số [8.5, 9.0, 7.5...]:
-1. Bỏ qua các điểm không hợp lệ (nhỏ hơn 0 hoặc lớn hơn 10).
-2. Tính điểm trung bình của các điểm hợp lệ (làm tròn 2 chữ số thập phân).
-3. Nếu không có điểm nào hợp lệ, trả về 0.0.`,
+#### 📋 Các bước thực hiện:
+1. **Bước 1**: Nhận vào danh sách điểm số \`scores\` (ví dụ: \`[8.5, -2, 14, 9.0]\`).
+2. **Bước 2**: Lọc bỏ các điểm không hợp lệ (điểm < 0 hoặc điểm > 10).
+3. **Bước 3**: Tính điểm trung bình của các điểm hợp lệ (làm tròn số nguyên hoặc 2 chữ số thập phân).
+4. **Bước 4**: Nếu không có điểm nào hợp lệ, trả về \`0.0\`.`,
     hints: [
-      'Gợi ý 1: Lọc các điểm hợp lệ: `const valid = scores.filter(s => s >= 0 && s <= 10);`',
+      'Gợi ý 1: Lọc điểm hợp lệ: `const valid = scores.filter(s => s >= 0 && s <= 10);`',
       'Gợi ý 2: Tính tổng: `const sum = valid.reduce((a, b) => a + b, 0);`',
-      'Gợi ý 3: Làm tròn: `return Number((sum / valid.length).toFixed(2));`',
+      'Gợi ý 3: Nếu valid.length === 0 return 0.0; ngược lại return Number((sum / valid.length).toFixed(2));',
     ],
     initial_code: `function calculateAverageScore(scores) {
-  // Hoàn thiện thuật toán làm sạch và tính trung bình điểm số
+  // BƯỚC THỰC HÀNH: Lọc bỏ điểm < 0 hoặc > 10, sau đó tính trung bình
   return 0.0;
 }
 
@@ -153,28 +180,37 @@ console.log(calculateAverageScore([8.0, 9.0, 10.0]));`,
     course_price: 690000,
     language: 'javascript',
     duration_minutes: 7,
+    video_id: 'fqMOX6JJhGo',
+    video_start: 45,
+    live_preview_type: 'devops-pipeline',
     difficulty: 'Intermediate',
     summary: 'Hiểu cấu trúc pipeline nhiều tầng (Multi-stage CI/CD) để tự động hóa kiểm định build và deploy an toàn.',
-    instructions: `### Mục tiêu bài học thử:
-Trong văn hóa DevOps hiện đại, việc kiểm tra tính toàn vẹn của các giai đoạn pipeline CI/CD trước khi đưa vào môi trường Production là bắt buộc.
+    concept_summary: `### 💡 Khái Niệm Trọng Tâm: CI/CD Pipeline & Zero-Downtime Deployment
+- **CI (Continuous Integration)**: Tự động chạy linter, kiểm thử unit test khi có mã nguồn mới.
+- **CD (Continuous Deployment)**: Đóng gói Docker image và tự động triển khai lên cụm máy chủ nếu các bước trước thành công.
+- **Fail-Fast Principle**: Bất kỳ bước nào thất bại (Failed), hệ thống phải ngắt pipeline ngay để ngăn chặn rủi ro làm sập Production.`,
+    instructions: `### 🎯 Mục Tiêu Bài Học Thử:
+Bạn đóng vai trò DevOps Engineer viết hàm kiểm định trạng thái của chuỗi Pipeline tự động hóa.
 
-#### Yêu cầu:
-Viết hàm \`validateDevOpsPipeline(stages)\` nhận vào mảng các stage:
-1. Mỗi stage có cấu trúc: \`{ name: string, status: string }\`.
-2. Phải có ít nhất 2 stage: \`"build"\` và \`"deploy"\`.
-3. Nếu tất cả các stage đều có status \`"success"\`, trả về: \`{ valid: true }\`.
-4. Nếu có bất kỳ stage nào fail, trả về: \`{ valid: false, error: "Pipeline failed at " + stage.name }\`.`,
+#### 📋 Các bước thực hiện:
+1. **Bước 1**: Nhận mảng các stage: \`[{ name: "build", status: "success" }, ...]\`.
+2. **Bước 2**: Đảm bảo pipeline có đủ ít nhất 2 stage bắt buộc: \`"build"\` và \`"deploy"\`.
+3. **Bước 3**: Nếu có stage thất bại (status !== "success"), trả về ngay: \`{ valid: false, error: "Pipeline failed at " + stage.name }\`.
+4. **Bước 4**: Nếu tất cả đều "success" và đủ bước, trả về: \`{ valid: true }\`.`,
     hints: [
-      'Gợi ý 1: Kiểm tra stage thất bại: `const failed = stages.find(s => s.status !== "success");`',
-      'Gợi ý 2: Nếu có `failed`, return `{ valid: false, error: "Pipeline failed at " + failed.name }`.',
+      'Gợi ý 1: Tìm stage lỗi trước: `const failed = stages.find(s => s.status !== "success");`',
+      'Gợi ý 2: Kiểm tra tồn tại: `const hasBuild = stages.some(s => s.name === "build");`',
     ],
     initial_code: `function validateDevOpsPipeline(stages) {
-  // Hoàn thiện hàm kiểm định trạng thái các stage CI/CD
+  // BƯỚC THỰC HÀNH: Kiểm định trạng thái các stage của Pipeline CI/CD
   return { valid: false };
 }
 
 // Kiểm tra thử hàm
-console.log(validateDevOpsPipeline([{ name: "build", status: "success" }, { name: "deploy", status: "success" }]));`,
+console.log(validateDevOpsPipeline([
+  { name: "build", status: "success" },
+  { name: "deploy", status: "success" }
+]));`,
     solution_code: `function validateDevOpsPipeline(stages) {
   const failed = stages.find(s => s.status !== 'success');
   if (failed) {
@@ -215,6 +251,8 @@ export class TrialService {
       duration_minutes: t.duration_minutes,
       difficulty: t.difficulty,
       summary: t.summary,
+      video_id: t.video_id,
+      live_preview_type: t.live_preview_type,
     }));
   }
 

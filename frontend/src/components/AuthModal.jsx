@@ -43,7 +43,13 @@ export default function AuthModal({
   const [showCustomAccountInput, setShowCustomAccountInput] = useState(false);
   const [googleActionType, setGoogleActionType] = useState('login'); // 'login' | 'register'
   const [showGoogleCloudConfig, setShowGoogleCloudConfig] = useState(false);
-  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientId, setGoogleClientId] = useState(() => {
+    try {
+      return localStorage.getItem('eduviet_google_client_id') || import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+    } catch {
+      return '';
+    }
+  });
 
   const resetForms = () => {
     setErrorMsg('');
@@ -106,6 +112,89 @@ export default function AuthModal({
   };
 
   // Mở trình chọn tài khoản Google (Cho phép chọn hoặc nhập bất kỳ tài khoản nào)
+
+  // Khởi tạo Google Identity Services (GIS) cho đăng nhập Google thật
+  useEffect(() => {
+    if (!window.google?.accounts?.id) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        if (googleClientId.trim()) initGoogleGSI(googleClientId.trim());
+      };
+      document.body.appendChild(script);
+    } else if (googleClientId.trim()) {
+      initGoogleGSI(googleClientId.trim());
+    }
+  }, [googleClientId, showGoogleChooser]);
+
+  const initGoogleGSI = (clientId) => {
+    if (!window.google?.accounts?.id || !clientId?.trim()) return;
+    try {
+      window.google.accounts.id.initialize({
+        client_id: clientId.trim(),
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      const btnContainer = document.getElementById('google-real-gsi-btn');
+      if (btnContainer) {
+        btnContainer.innerHTML = '';
+        window.google.accounts.id.renderButton(btnContainer, {
+          theme: 'outline',
+          size: 'large',
+          width: 320,
+          text: 'continue_with',
+          shape: 'pill',
+          logo_alignment: 'left',
+        });
+      }
+    } catch (e) {
+      console.warn('Google GSI init notice:', e);
+    }
+  };
+
+  const handleGoogleCredentialResponse = async (response) => {
+    if (!response?.credential) return;
+    setShowGoogleChooser(false);
+    setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const payload = JSON.parse(jsonPayload);
+
+      const { access_token, user } = await apiGoogleLogin({
+        id_token: response.credential,
+        email: payload.email,
+        full_name: payload.name,
+        avatar_url: payload.picture,
+      });
+
+      saveToken(access_token, true);
+      const frontendUser = toFrontendUser(user);
+      setSuccessMsg(`Đăng nhập Google thật thành công với: ${payload.email}`);
+      setTimeout(() => {
+        onLoginSuccess(frontendUser);
+        onHide();
+        resetForms();
+      }, 500);
+    } catch (err) {
+      setErrorMsg(err.message || 'Xác thực Google ID Token thất bại.');
+      setLoading(false);
+    }
+  };
+
   const openGoogleChooser = (actionType = 'login') => {
     setGoogleActionType(actionType);
     setShowCustomAccountInput(false);
@@ -979,49 +1068,88 @@ export default function AuthModal({
           </div>
         )}
 
-        {/* Liên kết mở trực tiếp accounts.google.com nếu người dùng có Client ID */}
-        <div className="pt-3 border-top text-center">
-          <small className="text-muted d-block mb-2" style={{ fontSize: '0.78rem' }}>
-            Để tiếp tục, Google sẽ chia sẻ tên, địa chỉ email, tùy chọn ngôn ngữ và ảnh hồ sơ của bạn với EduViet.
-          </small>
-
-          {!showGoogleCloudConfig ? (
-            <button
-              type="button"
-              className="btn btn-link p-0 small text-decoration-none text-secondary"
-              style={{ fontSize: '0.75rem' }}
-              onClick={() => setShowGoogleCloudConfig(true)}
-            >
-              <i className="bi bi-shield-lock me-1"></i>
-              Mở trực tiếp accounts.google.com OAuth API?
-            </button>
-          ) : (
-            <div className="p-3 bg-light rounded-3 text-start small border mt-2">
-              <div className="fw-bold mb-1 text-dark">
-                <i className="bi bi-google me-1 text-danger"></i> Google OAuth 2.0 Web Client ID:
-              </div>
-              <Form.Control
-                type="text"
-                placeholder="xxxxx.apps.googleusercontent.com"
-                size="sm"
-                value={googleClientId}
-                onChange={(e) => setGoogleClientId(e.target.value)}
-                className="mb-2"
-              />
-              <Button
-                variant="danger"
-                size="sm"
-                className="w-100 fw-bold"
-                disabled={!googleClientId.trim()}
-                onClick={() => {
-                  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId.trim())}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=token%20id_token&scope=openid%20profile%20email`;
-                  window.location.href = authUrl;
-                }}
-              >
-                Chuyển Hướng Trực Tiếp Tới accounts.google.com
-              </Button>
+                {/* Hướng dẫn & Nút Đăng nhập Google Thật (Google Identity Services) */}
+        <div className="pt-3 border-top">
+          <div className="p-3 bg-light rounded-4 border mb-3">
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <span className="fw-bold small text-dark d-flex align-items-center gap-2">
+                <i className="bi bi-google text-danger fs-5"></i>
+                Đăng Nhập Google Thật (Google OAuth API)
+              </span>
+              {googleClientId ? (
+                <span className="badge bg-success-subtle text-success border border-success-subtle">
+                  <i className="bi bi-check-circle-fill me-1"></i>Đã cấu hình Client ID
+                </span>
+              ) : (
+                <span className="badge bg-warning-subtle text-warning border border-warning-subtle">
+                  Chưa cấu hình Client ID
+                </span>
+              )}
             </div>
-          )}
+
+            {googleClientId ? (
+              <div className="text-center py-2">
+                <p className="small text-muted mb-2" style={{ fontSize: '0.8rem' }}>
+                  Bấm nút bên dưới để mở cửa sổ đăng nhập chính thức từ Google (accounts.google.com):
+                </p>
+                <div id="google-real-gsi-btn" className="d-flex justify-content-center my-2"></div>
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    className="btn btn-link text-muted p-0 small text-decoration-none"
+                    style={{ fontSize: '0.75rem' }}
+                    onClick={() => {
+                      setGoogleClientId('');
+                      localStorage.removeItem('eduviet_google_client_id');
+                    }}
+                  >
+                    <i className="bi bi-arrow-repeat me-1"></i>Thay đổi Google Client ID khác
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="small text-secondary mb-2" style={{ fontSize: '0.8rem' }}>
+                  Để mở popup tài khoản Google thật từ Google, bạn chỉ cần nhập <strong>Google Web Client ID</strong> (miễn phí từ Google Cloud Console):
+                </p>
+
+                <div className="bg-white p-2 rounded-3 border mb-2 small text-muted" style={{ fontSize: '0.75rem' }}>
+                  <strong>3 bước lấy Client ID trong 1 phút:</strong>
+                  <ol className="ps-3 mb-1 mt-1">
+                    <li>Vào <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="fw-bold text-primary">Google Cloud Console</a> &rarr; <em>Create Credentials &rarr; OAuth client ID</em>.</li>
+                    <li>Chọn loại <strong>Web application</strong>.</li>
+                    <li>Thêm Authorized JavaScript origins: <code className="text-dark">http://localhost:5173</code> và <code className="text-dark">https://eduviet-mastery.loca.lt</code>.</li>
+                  </ol>
+                </div>
+
+                <div className="input-group input-group-sm mb-2">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-key-fill text-muted"></i>
+                  </span>
+                  <Form.Control
+                    type="text"
+                    placeholder="Dán Client ID (ví dụ: xxxxx.apps.googleusercontent.com)..."
+                    value={googleClientId}
+                    onChange={(e) => setGoogleClientId(e.target.value)}
+                    className="border-start-0 font-monospace"
+                  />
+                  <Button
+                    variant="danger"
+                    className="fw-bold px-3"
+                    disabled={!googleClientId.trim()}
+                    onClick={() => {
+                      const id = googleClientId.trim();
+                      localStorage.setItem('eduviet_google_client_id', id);
+                      initGoogleGSI(id);
+                      alert('Đã lưu Google Client ID thành công! Bạn có thể bấm nút đăng nhập Google thật ngay bên dưới.');
+                    }}
+                  >
+                    Lưu & Kích Hoạt
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="text-center pt-3">

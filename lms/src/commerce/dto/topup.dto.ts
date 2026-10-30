@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TopupStatus } from '../entities/topup-request.entity.js';
 
@@ -13,14 +13,28 @@ export class CreateTopupDto {
   payment_method?: string = 'DEMO_BANK';
 
   @IsOptional()
+  @IsString()
+  note?: string;
+
+  @IsOptional()
+  @IsBoolean()
   auto_confirm?: boolean;
 }
 
 export class ConfirmTopupDto {
+  @IsOptional()
   @IsEnum(TopupStatus, { message: 'Trạng thái duyệt nạp tiền không hợp lệ' })
-  status: TopupStatus;
+  status?: TopupStatus;
+
+  @IsOptional()
+  @IsBoolean()
+  approved?: boolean;
 
   @IsOptional()
   @IsString()
   admin_note?: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

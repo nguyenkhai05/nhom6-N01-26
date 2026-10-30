@@ -1,5 +1,5 @@
 import { API_URL } from './api';
-import { getToken } from './auth';
+import { getToken, clearToken } from './auth';
 
 async function authRequest(path, { method = 'GET', body } = {}) {
   const token = getToken();
@@ -17,6 +17,10 @@ async function authRequest(path, { method = 'GET', body } = {}) {
 
     const data = await res.json().catch(() => null);
     if (!res.ok) {
+      if (res.status === 401) {
+        clearToken();
+        window.dispatchEvent(new CustomEvent('eduviet:unauthorized'));
+      }
       const msg = Array.isArray(data?.message) ? data.message.join('. ') : data?.message;
       throw new Error(msg || `Lỗi máy chủ (${res.status})`);
     }
@@ -39,14 +43,14 @@ export async function apiGetWalletLedger() {
   return authRequest('/commerce/wallet/ledger');
 }
 
-export async function apiTopupWallet({ amount, payment_method = 'BANK_QR', note = 'Nạp ví học tập EduViet', auto_confirm = true }) {
+export async function apiTopupWallet({ amount, payment_method = 'BANK_QR', note = 'Nạp ví học tập EduViet - MBBank', auto_confirm = true }) {
   return authRequest('/commerce/topup', {
     method: 'POST',
     body: {
       amount: Number(amount),
       payment_method,
-      note,
-      auto_confirm,
+      note: note || undefined,
+      auto_confirm: Boolean(auto_confirm),
     },
   });
 }

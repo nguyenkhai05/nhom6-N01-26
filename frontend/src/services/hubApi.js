@@ -1,5 +1,5 @@
 import { API_URL } from './api';
-import { getToken } from './auth';
+import { getToken, clearToken } from './auth';
 
 async function request(path, options = {}) {
   const token = getToken();
@@ -16,6 +16,10 @@ async function request(path, options = {}) {
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
+    if (res.status === 401) {
+      clearToken();
+      window.dispatchEvent(new CustomEvent('eduviet:unauthorized'));
+    }
     const msg = Array.isArray(data?.message) ? data.message.join('. ') : data?.message;
     throw new Error(msg || `Lỗi máy chủ (${res.status})`);
   }
@@ -84,6 +88,7 @@ export const getCourseRecommendations = (body) =>
 // 8. Học Thử Tương Tác (Interactive Trials - Codecademy Inspired)
 export const getTrials = () => request('/trials');
 export const getTrial = (id) => request(`/trials/${id}`);
+export const getTrialSolution = (id) => request(`/trials/${id}/solution`);
 
 // 9. Trung Tâm Hỗ Trợ & FAQ (Help Center)
 export const getFaq = () => request('/help/faq');

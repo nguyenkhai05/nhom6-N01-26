@@ -25,10 +25,40 @@ export class JwtAuthGuard implements CanActivate {
 
     // FIX02: Đọc trạng thái tài khoản từ server để khóa tức thì phiên nếu tài khoản bị vô hiệu hóa
     if (this.userRepository) {
-      const user = await this.userRepository.findOne({
+      let user = await this.userRepository.findOne({
         where: { user_id: payload.sub },
         relations: { roles: true },
       });
+
+      // Nếu không tìm thấy theo user_id (ví dụ server khởi động lại trong chế độ in-memory demo),
+      // tự động tìm theo email đã được chứng thực trong chữ ký số JWT
+      if (!user && payload.email) {
+        user = await this.userRepository.findOne({
+          where: { email: payload.email },
+          relations: { roles: true },
+        });
+      }
+
+      // Tự động khôi phục bản ghi người dùng hợp lệ trong bộ nhớ nếu chữ ký JWT hoàn toàn hợp lệ
+      if (!user && payload.email) {
+        try {
+          const userRoles = (payload.roles && payload.roles.length > 0) ? payload.roles : ['Student'];
+          const roleEntities = userRoles.map((r, i) => ({ role_id: i + 1, role_name: r }));
+          user = await this.userRepository.save(
+            this.userRepository.create({
+              user_id: payload.sub,
+              email: payload.email,
+              full_name: (payload as any).full_name || payload.email.split('@')[0],
+              is_active: true,
+              roles: roleEntities as any,
+              created_at: new Date(),
+            }),
+          );
+        } catch {
+          // Bỏ qua lỗi lưu trong trường hợp xung đột
+        }
+      }
+
       if (!user || user.is_active === false) {
         throw new UnauthorizedException('Tài khoản đã bị khóa hoặc không còn tồn tại');
       }

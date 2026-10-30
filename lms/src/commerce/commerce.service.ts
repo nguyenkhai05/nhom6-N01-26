@@ -219,10 +219,10 @@ export class CommerceService {
       user_id: userId,
       amount: dto.amount,
       status: isAutoConfirm ? TopupStatus.CONFIRMED : TopupStatus.PENDING,
-      payment_method: dto.payment_method ?? 'DEMO_BANK',
+      payment_method: dto.payment_method ?? 'BANK_QR',
       transaction_ref: transactionRef,
       confirmed_at: isAutoConfirm ? new Date() : undefined,
-      admin_note: isAutoConfirm ? 'Tự động duyệt nạp ví học tập EduViet Sandbox' : 'Mô phỏng nạp tiền học tập — EduViet Sandbox',
+      admin_note: dto.note ?? (isAutoConfirm ? 'Tự động duyệt nạp ví học tập EduViet Sandbox' : 'Mô phỏng nạp tiền học tập — EduViet Sandbox'),
     });
 
     const saved = await this.topupRepo.save(req);
@@ -245,7 +245,7 @@ export class CommerceService {
         balance_after: balanceAfter,
         reference_type: 'TOPUP',
         reference_id: transactionRef,
-        description: `Nạp tiền ví thành công qua ${dto.payment_method || 'DEMO_BANK'} (Ref: ${transactionRef})`,
+        description: dto.note || `Nạp tiền ví thành công qua ${dto.payment_method || 'MBBank QR'} (Ref: ${transactionRef})`,
       });
       await this.ledgerRepo.save(ledger);
     }
@@ -255,10 +255,12 @@ export class CommerceService {
       transaction_ref: saved.transaction_ref,
       amount: saved.amount,
       status: saved.status,
-      bank_name: 'MB Bank (Ngân hàng Quân Đội)',
-      account_number: '0987654321',
-      account_holder: 'CONG TY CP CONG NGHE EDUVIET',
+      bank_name: 'MBBank (Ngân hàng TMCP Quân Đội)',
+      account_number: '8515112005',
+      account_holder: 'NGUYEN HOANG SON',
       transfer_syntax: saved.transaction_ref,
+      qr_image: '/bank_qr.png',
+      dynamic_qr_url: `https://api.vietqr.io/image/970422-8515112005-compact2.png?amount=${saved.amount}&addInfo=${encodeURIComponent(saved.transaction_ref)}&accountName=NGUYEN%20HOANG%20SON`,
       wallet_balance: updatedWallet ? Number(updatedWallet.balance) : undefined,
       notice: 'Hệ thống hỗ trợ nạp tiền thử nghiệm phục vụ học tập và đánh giá.',
     };
@@ -279,7 +281,10 @@ export class CommerceService {
       throw new BadRequestException('Yêu cầu nạp tiền này đã được xử lý trước đó');
     }
 
-    if (dto.status === TopupStatus.CONFIRMED) {
+    const targetStatus = dto.status ?? (dto.approved ? TopupStatus.CONFIRMED : TopupStatus.REJECTED);
+    const targetNote = dto.admin_note ?? dto.note;
+
+    if (targetStatus === TopupStatus.CONFIRMED) {
       const wallet = await this.getOrCreateWallet(req.user_id);
       const balanceBefore = Number(wallet.balance);
       const amount = Number(req.amount);
@@ -304,13 +309,13 @@ export class CommerceService {
 
       req.status = TopupStatus.CONFIRMED;
       req.confirmed_at = new Date();
-      req.admin_note = dto.admin_note ?? 'Đã đối soát và cộng tiền thành công';
+      req.admin_note = targetNote ?? 'Đã đối soát và cộng tiền thành công';
       await this.topupRepo.save(req);
 
       return { success: true, message: 'Đã nạp tiền thành công', wallet, ledger };
     } else {
       req.status = TopupStatus.REJECTED;
-      req.admin_note = dto.admin_note ?? 'Yêu cầu nạp tiền bị từ chối';
+      req.admin_note = targetNote ?? 'Yêu cầu nạp tiền bị từ chối';
       await this.topupRepo.save(req);
       return { success: false, message: 'Đã từ chối yêu cầu nạp tiền', request: req };
     }

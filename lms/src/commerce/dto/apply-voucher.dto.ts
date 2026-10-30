@@ -1,7 +1,7 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ApplyVoucherDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Mã voucher không được để trống' })
-  code: string;
+  code?: string;
 }

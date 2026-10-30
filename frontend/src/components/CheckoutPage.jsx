@@ -233,7 +233,7 @@ export default function CheckoutPage({
                         <i className="bi bi-qr-code-scan fs-4"></i>
                       </div>
                       <div>
-                        <strong className="text-dark d-block">Chuyển Khoản Mã QR Ngân Hàng (Vietcombank / Napas247)</strong>
+                        <strong className="text-dark d-block">Chuyển Khoản Mã QR Ngân Hàng (MBBank / Napas247)</strong>
                         <span className="small text-secondary">Tự động kích hoạt trong 30 giây ngay sau khi quét mã VietQR</span>
                       </div>
                     </div>
@@ -243,7 +243,7 @@ export default function CheckoutPage({
                         <Row className="align-items-center">
                           <Col sm={4} className="text-center mb-2 mb-sm-0">
                             <img
-                              src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=EDUVET_ORDER_PAYMENT"
+                              src="/bank_qr.png"
                               alt="QR Code"
                               className="img-fluid border p-1 rounded-2 shadow-sm"
                               width={130}
@@ -251,9 +251,9 @@ export default function CheckoutPage({
                             <span className="small d-block text-muted mt-1" style={{ fontSize: '0.7rem' }}>Quét bằng App Ngân hàng</span>
                           </Col>
                           <Col sm={8} className="small">
-                            <div className="mb-1"><strong>Ngân hàng:</strong> Vietcombank CN Hà Nội</div>
-                            <div className="mb-1"><strong>Số tài khoản:</strong> <span className="text-primary fw-bold font-monospace">1029384756</span></div>
-                            <div className="mb-1"><strong>Chủ tài khoản:</strong> CÔNG TY CÔNG NGHỆ EDUVIET</div>
+                            <div className="mb-1"><strong>Ngân hàng:</strong> MBBank (Ngân hàng TMCP Quân Đội)</div>
+                            <div className="mb-1"><strong>Số tài khoản:</strong> <span className="text-primary fw-bold font-monospace">8515112005</span></div>
+                            <div className="mb-1"><strong>Chủ tài khoản:</strong> NGUYEN HOANG SON</div>
                             <div className="mb-1"><strong>Số tiền:</strong> <span className="text-success fw-bold font-monospace">{finalTotal.toLocaleString('vi-VN')} đ</span></div>
                             <div><strong>Nội dung:</strong> <span className="text-danger fw-bold font-monospace">EDU {currentUser?.email?.split('@')[0] || 'PAY'}</span></div>
                           </Col>

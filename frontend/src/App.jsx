@@ -40,6 +40,7 @@ import CartPage from './components/CartPage';
 import CheckoutPage from './components/CheckoutPage';
 import ChatSupport from './components/ChatSupport';
 import CourseLearningRoom from './components/CourseLearningRoom';
+import CourseCurriculumModal from './components/CourseCurriculumModal';
 import Footer from './Footer';
 import useCatalog from './hooks/useCatalog';
 import { getCourse } from './services/api';
@@ -389,6 +390,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      clearToken();
+      setCurrentUser(null);
+    };
+    window.addEventListener('eduviet:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('eduviet:unauthorized', handleUnauthorized);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('eduviet_deposit_history', JSON.stringify(depositHistory));
   }, [depositHistory]);
 
@@ -493,7 +503,7 @@ export default function App() {
         id: res.transaction_ref || ('DEP-' + Math.floor(10000 + Math.random() * 90000)),
         amount,
         date: new Date().toLocaleString('vi-VN'),
-        method: depositMethod === 'BANK_QR' ? 'Vietcombank VietQR 24/7' : 'Ví MoMo Auto-Pay',
+        method: depositMethod === 'BANK_QR' ? 'MBBank VietQR 24/7' : 'Ví MoMo Auto-Pay',
         note: 'Nạp ví học tập EduViet Platform',
         status: 'Thành công',
       };
@@ -1403,7 +1413,7 @@ export default function App() {
                         onChange={() => setDepositMethod('BANK_QR')}
                       />
                       <div>
-                        <strong className="d-block small text-dark">Chuyển khoản QR Ngân hàng (Vietcombank 24/7)</strong>
+                        <strong className="d-block small text-dark">Chuyển khoản QR Ngân hàng (MBBank 24/7)</strong>
                         <span className="text-muted small">Quét mã VietQR nhận tiền sau 15-30 giây</span>
                       </div>
                     </div>
@@ -1499,7 +1509,7 @@ export default function App() {
                     <tr>
                       <td className="ps-3 py-2 text-muted">Phương thức xử lý:</td>
                       <td className="text-end pe-3 py-2 fw-bold text-primary">
-                        {depositMethod === 'BANK_QR' ? 'Vietcombank 24/7 (VietQR Chuẩn NAPAS)' : 'Ví Điện Tử MoMo Auto'}
+                        {depositMethod === 'BANK_QR' ? 'MBBank 24/7 (VietQR Chuẩn NAPAS)' : 'Ví Điện Tử MoMo Auto'}
                       </td>
                     </tr>
                     <tr>
@@ -1523,6 +1533,81 @@ export default function App() {
                   </tbody>
                 </table>
               </div>
+
+              {depositMethod === 'BANK_QR' && (
+                <div className="p-3 bg-white border border-primary rounded-3 shadow-sm mb-3">
+                  <div className="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                    <span className="fw-bold text-primary small d-flex align-items-center gap-2">
+                      <i className="bi bi-qr-code-scan fs-5 text-danger"></i> Quét Mã VietQR Chuyển Khoản (MBBank)
+                    </span>
+                    <Badge bg="danger" className="text-white">Napas 24/7</Badge>
+                  </div>
+                  <div className="row align-items-center g-3">
+                    <div className="col-12 col-md-5 text-center">
+                      <div className="p-2 bg-light border rounded-3 d-inline-block shadow-sm">
+                        <img
+                          src="/bank_qr.png"
+                          alt="Mã QR MBBank NGUYEN HOANG SON"
+                          className="img-fluid rounded"
+                          style={{ maxWidth: 180, maxHeight: 180, objectFit: 'contain' }}
+                        />
+                      </div>
+                      <div className="text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+                        Quét bằng App Ngân Hàng hoặc MoMo
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-7 small">
+                      <div className="mb-2 p-2 bg-light rounded-2 border">
+                        <div className="text-muted" style={{ fontSize: '0.72rem' }}>Ngân hàng thụ hưởng:</div>
+                        <strong className="text-dark">MBBank (Ngân hàng TMCP Quân Đội)</strong>
+                      </div>
+                      <div className="mb-2 p-2 bg-light rounded-2 border d-flex justify-content-between align-items-center">
+                        <div>
+                          <div className="text-muted" style={{ fontSize: '0.72rem' }}>Số tài khoản:</div>
+                          <strong className="text-primary font-monospace fs-6">8515112005</strong>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline-primary"
+                          className="py-0 px-2"
+                          style={{ fontSize: '0.72rem' }}
+                          onClick={() => {
+                            navigator.clipboard?.writeText('8515112005');
+                            alert('Đã sao chép số tài khoản: 8515112005');
+                          }}
+                        >
+                          <i className="bi bi-clipboard me-1"></i>Copy
+                        </Button>
+                      </div>
+                      <div className="mb-2 p-2 bg-light rounded-2 border">
+                        <div className="text-muted" style={{ fontSize: '0.72rem' }}>Chủ tài khoản:</div>
+                        <strong className="text-dark font-monospace">NGUYEN HOANG SON</strong>
+                      </div>
+                      <div className="mb-2 p-2 bg-light rounded-2 border d-flex justify-content-between align-items-center">
+                        <div>
+                          <div className="text-muted" style={{ fontSize: '0.72rem' }}>Nội dung chuyển khoản:</div>
+                          <strong className="text-danger font-monospace">
+                            EDUV {currentUser?.email?.split('@')[0]?.toUpperCase() || 'NAP'}
+                          </strong>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          className="py-0 px-2"
+                          style={{ fontSize: '0.72rem' }}
+                          onClick={() => {
+                            const memo = `EDUV ${currentUser?.email?.split('@')[0]?.toUpperCase() || 'NAP'}`;
+                            navigator.clipboard?.writeText(memo);
+                            alert(`Đã sao chép nội dung: ${memo}`);
+                          }}
+                        >
+                          <i className="bi bi-clipboard me-1"></i>Copy
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="p-3 bg-light rounded-3 small text-muted border mb-3">
                 <div className="fw-bold text-dark mb-1">
@@ -1597,7 +1682,7 @@ export default function App() {
                 <div className="d-flex justify-content-between align-items-center pb-2 border-bottom mb-2">
                   <span className="small text-muted">Cổng Thanh Toán:</span>
                   <span className="badge bg-primary-subtle text-primary border">
-                    {lastDepositTx?.method || 'Vietcombank VietQR 24/7'}
+                    {lastDepositTx?.method || 'MBBank VietQR 24/7'}
                   </span>
                 </div>
 
@@ -1657,115 +1742,23 @@ export default function App() {
         </Modal.Body>
       </Modal>
 
-      {/* Modal Chi Tiết Khóa Học */}
-      <Modal show={showDetailModal} onHide={() => { setShowDetailModal(false); setCourseDetailStatus('idle'); }} size="lg" centered>
-        {courseDetailStatus === 'loading' && (
-          <Modal.Body className="py-5 text-center" role="status">
-            <div className="spinner-border text-primary mb-3" aria-hidden="true" />
-            <p className="mb-0">Đang tải chi tiết khóa học...</p>
-          </Modal.Body>
-        )}
-        {courseDetailStatus === 'error' && (
-          <Modal.Body>
-            <Alert variant="danger" className="mb-0">
-              <strong>Không tải được chi tiết khóa học.</strong>
-              <div className="small mt-1">{courseDetailError}</div>
-              <Button variant="outline-danger" size="sm" className="mt-3" onClick={() => selectedCourse && openCourseDetail(selectedCourse)}>
-                Thử lại
-              </Button>
-            </Alert>
-          </Modal.Body>
-        )}
-        {courseDetailStatus === 'ready' && selectedCourse && (
-          <>
-            <Modal.Header closeButton>
-              <Modal.Title className="fw-bold fs-5">
-                {selectedCourse.title}
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="row g-3">
-                <div className="col-md-5">
-                  <img
-                    src={selectedCourse.thumbnail_url}
-                    alt={selectedCourse.title}
-                    className="img-fluid rounded-3 w-100 shadow-sm"
-                  />
-                  <div className="mt-3 p-3 bg-light rounded-3 text-center">
-                    <span className="text-muted small d-block">Học phí trọn gói</span>
-                    <span className="fs-4 fw-bold text-primary">
-                      {Number(selectedCourse.price).toLocaleString('vi-VN')} đ
-                    </span>
-                  </div>
-                </div>
-                <div className="col-md-7">
-                  <Badge bg="primary" className="mb-2">
-                    {selectedCourse.category?.name}
-                  </Badge>
-                  <h5>Giới thiệu khóa học</h5>
-                  <p className="text-secondary">{selectedCourse.description}</p>
-                  <hr />
-                  <div className="small text-secondary mb-2">
-                    <i className="bi bi-person-video3 text-primary me-2"></i>
-                    Giảng viên: <strong>{selectedCourse.instructor?.name}</strong>
-                  </div>
-                  <div className="small text-secondary mb-2">
-                    <i className="bi bi-clock text-primary me-2"></i>
-                    Thời lượng: <strong>{selectedCourse.duration || '40 giờ'}</strong>
-                  </div>
-                  <div className="small text-secondary mb-3">
-                    <i className="bi bi-mortarboard text-primary me-2"></i>
-                    Cấp chứng chỉ hoàn thành khóa học từ EduViet Platform.
-                  </div>
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" className="rounded-pill px-3" onClick={() => setShowDetailModal(false)}>
-                Đóng
-              </Button>
-
-              {currentUser?.enrolledCourses?.includes(selectedCourse.course_id) ? (
-                <Button
-                  variant="success"
-                  className="fw-bold rounded-pill px-4 shadow-sm"
-                  onClick={() => {
-                    const toLearn = selectedCourse;
-                    setShowDetailModal(false);
-                    setActiveLearningCourse(toLearn);
-                    setCurrentRoute('learning-room');
-                  }}
-                >
-                  <i className="bi bi-play-circle-fill me-1"></i> Vào Phòng Học Ngay
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant={cart.some((c) => c.course_id === selectedCourse.course_id) ? "warning" : "outline-primary"}
-                    className="fw-bold rounded-pill px-3"
-                    onClick={() => {
-                      handleAddToCart(selectedCourse);
-                    }}
-                  >
-                    <i className={`bi ${cart.some((c) => c.course_id === selectedCourse.course_id) ? "bi-cart-check-fill" : "bi-cart-plus"} me-1`}></i>
-                    {cart.some((c) => c.course_id === selectedCourse.course_id) ? "Đã trong giỏ" : "Thêm vào giỏ"}
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="fw-bold rounded-pill px-4 shadow-sm"
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      handleEnrollCourse(selectedCourse);
-                    }}
-                  >
-                    <i className="bi bi-lightning-charge-fill me-1"></i> Đăng ký học ngay
-                  </Button>
-                </>
-              )}
-            </Modal.Footer>
-          </>
-        )}
-      </Modal>
+      {/* Modal Giáo Trình & Tài Liệu Khóa Học Chuẩn Đại Học */}
+      <CourseCurriculumModal
+        show={showDetailModal}
+        onHide={() => {
+          setShowDetailModal(false);
+          setCourseDetailStatus('idle');
+        }}
+        course={selectedCourse}
+        isEnrolled={Boolean(currentUser?.enrolledCourses?.includes(selectedCourse?.course_id))}
+        isInCart={Boolean(cart.some((c) => c.course_id === selectedCourse?.course_id))}
+        onAddToCart={(c) => handleAddToCart(c)}
+        onEnroll={(c) => handleEnrollCourse(c)}
+        onStartLearning={(c) => {
+          setActiveLearningCourse(c);
+          setCurrentRoute('learning-room');
+        }}
+      />
 
       {/* Modal Lịch Sử Nạp Tiền & Giao Dịch Ví */}
       <DepositHistoryModal
