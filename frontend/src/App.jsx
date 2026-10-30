@@ -17,7 +17,7 @@ import HelpCenterPage from './components/HelpCenterPage';
 import MyLearningDashboard from './components/MyLearningDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
-import { apiMe, clearToken, getToken, saveExtras, toFrontendUser } from './services/auth';
+import { apiMe, apiGoogleLogin, clearToken, getToken, saveToken, saveExtras, toFrontendUser } from './services/auth';
 import {
   apiGetWallet,
   apiGetWalletLedger,
@@ -396,6 +396,41 @@ export default function App() {
     };
     window.addEventListener('eduviet:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('eduviet:unauthorized', handleUnauthorized);
+  }, []);
+
+  // Lắng nghe Google OAuth redirect hash (#id_token=... hoặc #access_token=...)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && (hash.includes('id_token=') || hash.includes('access_token='))) {
+      try {
+        const params = new URLSearchParams(hash.replace(/^#/, ''));
+        const idToken = params.get('id_token');
+        if (idToken) {
+          const base64Url = idToken.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const payload = JSON.parse(jsonPayload);
+          apiGoogleLogin({
+            id_token: idToken,
+            email: payload.email,
+            full_name: payload.name,
+            avatar_url: payload.picture,
+          }).then(({ access_token, user }) => {
+            saveToken(access_token, true);
+            const frontendUser = toFrontendUser(user);
+            handleAuthSuccess(frontendUser);
+            window.history.replaceState(null, '', window.location.pathname);
+          }).catch((e) => console.warn('Lỗi xử lý Google OAuth token:', e));
+        }
+      } catch (e) {
+        console.warn('Lỗi phân tích Google OAuth hash:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {

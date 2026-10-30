@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal, Form, Button, Alert, InputGroup } from 'react-bootstrap';
 import { apiLogin, apiGoogleLogin, apiRegister, saveToken, toFrontendUser, DEFAULT_AVATAR } from '../services/auth';
+import GoogleAccountChooserModal from './GoogleAccountChooserModal';
 
 export default function AuthModal({
   show,
@@ -203,26 +204,27 @@ export default function AuthModal({
     setShowGoogleChooser(true);
   };
 
-  // Thực thi xác thực tài khoản Google được chọn
-  const executeGoogleAuth = async (email, name) => {
-    setShowGoogleChooser(false);
-    setShowCustomAccountInput(false);
+  // Xử lý xác thực khi người dùng chọn tài khoản từ GoogleAccountChooserModal
+  const handleGoogleChooserSelect = async ({ email, full_name, avatar_url }) => {
+    setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
-    setLoading(true);
 
     try {
       const emailToUse = (email || '').toLowerCase().trim();
-      if (!emailToUse || !emailToUse.includes('@')) {
-        throw new Error('Vui lòng cung cấp địa chỉ email Google hợp lệ.');
+      let rawName = (full_name || '').trim();
+      if (!rawName) {
+        if (emailToUse.includes('nuicuti15')) rawName = 'Son Nguyễn';
+        else if (emailToUse.includes('sonn0924')) rawName = 'Son Nguyen';
+        else rawName = emailToUse.split('@')[0];
       }
-      const rawName = (name || '').trim() || emailToUse.split('@')[0].replace(/[\._]/g, ' ');
-      const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : 'Học viên Google';
 
       const googleUser = {
         email: emailToUse,
-        full_name: formattedName,
-        avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(formattedName)}&background=0D8ABC&color=fff`,
+        full_name: rawName,
+        avatar_url: avatar_url || (emailToUse.includes('nuicuti15')
+          ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80'
+          : DEFAULT_AVATAR),
       };
 
       const { access_token, user } = await apiGoogleLogin(googleUser);
@@ -234,27 +236,40 @@ export default function AuthModal({
           phone: regPhone?.trim() || '0912.888.999',
           bio: `Mục tiêu nghề nghiệp: ${regTarget || 'Frontend Web Engineer'}`,
           targetTrack: regTarget || 'Frontend Web Engineer',
-                    enrolledCourses: [],
+          walletBalance: 1000000,
+          enrolledCourses: [],
           joinDate: new Date().toLocaleDateString('vi-VN'),
         });
-        onLoginSuccess(frontendUser, { isNew: true });
-        setRegisteredStudentData(frontendUser);
-        setIsRegisterSuccess(true);
-        setShowConfirmStep(false);
+        setTimeout(() => {
+          setShowGoogleChooser(false);
+          setLoading(false);
+          onLoginSuccess(frontendUser, { isNew: true });
+          setRegisteredStudentData(frontendUser);
+          setIsRegisterSuccess(true);
+          setShowConfirmStep(false);
+        }, 350);
       } else {
         // Luồng đăng nhập (login):
         const frontendUser = toFrontendUser(user);
-        setSuccessMsg(`Đăng nhập Google thành công với tài khoản: ${googleUser.email}`);
         setTimeout(() => {
+          setShowGoogleChooser(false);
+          setLoading(false);
+          setSuccessMsg(`Đăng nhập Google thành công với: ${googleUser.email}`);
           onLoginSuccess(frontendUser);
           onHide();
           resetForms();
-        }, 400);
+        }, 350);
       }
     } catch (err) {
-      setErrorMsg(err.message || 'Xác thực tài khoản Google thất bại');
+      setErrorMsg(err.message || 'Xác thực tài khoản Google thất bại.');
       setLoading(false);
+      setShowGoogleChooser(false);
     }
+  };
+
+  // Thực thi xác thực tài khoản Google được chọn
+  const executeGoogleAuth = async (email, name) => {
+    return handleGoogleChooserSelect({ email, full_name: name });
   };
 
   // Bước 1 của đăng ký: kiểm tra dữ liệu nhập rồi chuyển sang bảng xác nhận
@@ -903,270 +918,14 @@ export default function AuthModal({
       </Modal.Body>
     </Modal>
 
-    {/* MODAL POPUP CHỌN TÀI KHOẢN GOOGLE (CHUẨN GIAO DIỆN ACCOUNTS.GOOGLE.COM) */}
-    <Modal
+    {/* MODAL CHỌN TÀI KHOẢN GOOGLE CHUẨN XÁC THEO SCREENSHOT ACCOUNTS.GOOGLE.COM DARK THEME */}
+    <GoogleAccountChooserModal
       show={showGoogleChooser}
-      onHide={() => {
-        setShowGoogleChooser(false);
-        setShowCustomAccountInput(false);
-      }}
-      centered
-      backdrop="static"
-      className="google-oauth-modal"
-      contentClassName="border-0 shadow-lg rounded-4 overflow-hidden"
-      style={{ zIndex: 1070 }}
-    >
-      <div className="p-4 bg-white">
-        {/* Header Google */}
-        <div className="text-center mb-4">
-          <svg width="40" height="40" viewBox="0 0 48 48" className="mb-2">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.79l7.97-6.2z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          <h5 className="fw-bold text-dark mb-1">
-            {googleActionType === 'register' ? 'Đăng ký bằng Google' : 'Đăng nhập bằng Google'}
-          </h5>
-          <p className="text-secondary small mb-0">
-            Chọn tài khoản để tiếp tục tới <strong>EduViet Platform</strong>
-          </p>
-        </div>
-
-        {!showCustomAccountInput ? (
-          <div>
-            {/* Danh sách các tài khoản gợi ý */}
-            <div className="list-group mb-3 rounded-3 shadow-xs">
-              {/* Tài khoản 1: Phenikaa Student */}
-              <button
-                type="button"
-                className="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 border hover-bg"
-                onClick={() => executeGoogleAuth('student.google@phenikaa-uni.edu.vn', 'Học viên Google Phenikaa')}
-              >
-                <div
-                  className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
-                  style={{ width: 40, height: 40, fontSize: '1.1rem' }}
-                >
-                  P
-                </div>
-                <div className="text-start">
-                  <div className="fw-bold text-dark">Học viên Phenikaa (Mẫu)</div>
-                  <small className="text-muted">student.google@phenikaa-uni.edu.vn</small>
-                </div>
-              </button>
-
-              {/* Tài khoản 2: Khải Nguyễn (nuicuti15@gmail.com) */}
-              <button
-                type="button"
-                className="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 border hover-bg"
-                onClick={() => executeGoogleAuth('nuicuti15@gmail.com', 'Nguyễn Khải')}
-              >
-                <div
-                  className="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold"
-                  style={{ width: 40, height: 40, fontSize: '1.1rem' }}
-                >
-                  K
-                </div>
-                <div className="text-start">
-                  <div className="fw-bold text-dark">Nguyễn Khải</div>
-                  <small className="text-muted">nuicuti15@gmail.com</small>
-                </div>
-              </button>
-
-              {/* Tài khoản 3: Email người dùng vừa gõ (nếu có và khác 2 cái trên) */}
-              {((loginEmail && loginEmail.includes('@') && !['student.google@phenikaa-uni.edu.vn', 'nuicuti15@gmail.com'].includes(loginEmail.toLowerCase())) ||
-                (regEmail && regEmail.includes('@') && !['student.google@phenikaa-uni.edu.vn', 'nuicuti15@gmail.com'].includes(regEmail.toLowerCase()))) && (
-                <button
-                  type="button"
-                  className="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 border hover-bg"
-                  onClick={() => {
-                    const email = (loginEmail || regEmail).trim().toLowerCase();
-                    executeGoogleAuth(email, regFullName || email.split('@')[0]);
-                  }}
-                >
-                  <div
-                    className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
-                    style={{ width: 40, height: 40, fontSize: '1.1rem' }}
-                  >
-                    {(loginEmail || regEmail).charAt(0).toUpperCase()}
-                  </div>
-                  <div className="text-start">
-                    <div className="fw-bold text-dark">{regFullName || 'Tài khoản đã nhập'}</div>
-                    <small className="text-muted">{(loginEmail || regEmail).toLowerCase()}</small>
-                  </div>
-                </button>
-              )}
-
-              {/* Nút: Sử dụng một tài khoản khác */}
-              <button
-                type="button"
-                className="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 border hover-bg text-primary fw-semibold"
-                onClick={() => setShowCustomAccountInput(true)}
-              >
-                <div
-                  className="rounded-circle bg-light border d-flex align-items-center justify-content-center text-secondary"
-                  style={{ width: 40, height: 40 }}
-                >
-                  <i className="bi bi-person-plus-fill fs-5"></i>
-                </div>
-                <div>Sử dụng một tài khoản Google khác...</div>
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Màn hình nhập tài khoản Google bất kỳ */
-          <div className="mb-3">
-            <div className="p-3 bg-light rounded-4 border mb-3">
-              <Form.Group className="mb-3">
-                <Form.Label className="small fw-bold text-dark">
-                  Email hoặc số điện thoại Google *
-                </Form.Label>
-                <Form.Control
-                  type="email"
-                  placeholder="example@gmail.com"
-                  value={googleCustomEmail}
-                  onChange={(e) => setGoogleCustomEmail(e.target.value)}
-                  autoFocus
-                  className="py-2"
-                />
-                <small className="text-muted d-block mt-1">
-                  Nhập bất kỳ tài khoản Gmail/Google cá nhân nào bạn muốn sử dụng
-                </small>
-              </Form.Group>
-
-              <Form.Group className="mb-2">
-                <Form.Label className="small fw-bold text-dark">
-                  Họ và tên hiển thị (Tùy chọn)
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Ví dụ: Nguyễn Văn Dev"
-                  value={googleCustomName}
-                  onChange={(e) => setGoogleCustomName(e.target.value)}
-                  className="py-2"
-                />
-              </Form.Group>
-            </div>
-
-            <div className="d-flex gap-2">
-              <Button
-                variant="outline-secondary"
-                className="w-50 rounded-pill fw-semibold"
-                onClick={() => setShowCustomAccountInput(false)}
-              >
-                Quay lại
-              </Button>
-              <Button
-                variant="primary"
-                className="w-50 rounded-pill fw-bold shadow-sm"
-                disabled={!googleCustomEmail.trim() || !googleCustomEmail.includes('@')}
-                onClick={() => executeGoogleAuth(googleCustomEmail.trim(), googleCustomName.trim())}
-              >
-                Tiếp theo <i className="bi bi-arrow-right ms-1"></i>
-              </Button>
-            </div>
-          </div>
-        )}
-
-                {/* Hướng dẫn & Nút Đăng nhập Google Thật (Google Identity Services) */}
-        <div className="pt-3 border-top">
-          <div className="p-3 bg-light rounded-4 border mb-3">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <span className="fw-bold small text-dark d-flex align-items-center gap-2">
-                <i className="bi bi-google text-danger fs-5"></i>
-                Đăng Nhập Google Thật (Google OAuth API)
-              </span>
-              {googleClientId ? (
-                <span className="badge bg-success-subtle text-success border border-success-subtle">
-                  <i className="bi bi-check-circle-fill me-1"></i>Đã cấu hình Client ID
-                </span>
-              ) : (
-                <span className="badge bg-warning-subtle text-warning border border-warning-subtle">
-                  Chưa cấu hình Client ID
-                </span>
-              )}
-            </div>
-
-            {googleClientId ? (
-              <div className="text-center py-2">
-                <p className="small text-muted mb-2" style={{ fontSize: '0.8rem' }}>
-                  Bấm nút bên dưới để mở cửa sổ đăng nhập chính thức từ Google (accounts.google.com):
-                </p>
-                <div id="google-real-gsi-btn" className="d-flex justify-content-center my-2"></div>
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    className="btn btn-link text-muted p-0 small text-decoration-none"
-                    style={{ fontSize: '0.75rem' }}
-                    onClick={() => {
-                      setGoogleClientId('');
-                      localStorage.removeItem('eduviet_google_client_id');
-                    }}
-                  >
-                    <i className="bi bi-arrow-repeat me-1"></i>Thay đổi Google Client ID khác
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <p className="small text-secondary mb-2" style={{ fontSize: '0.8rem' }}>
-                  Để mở popup tài khoản Google thật từ Google, bạn chỉ cần nhập <strong>Google Web Client ID</strong> (miễn phí từ Google Cloud Console):
-                </p>
-
-                <div className="bg-white p-2 rounded-3 border mb-2 small text-muted" style={{ fontSize: '0.75rem' }}>
-                  <strong>3 bước lấy Client ID trong 1 phút:</strong>
-                  <ol className="ps-3 mb-1 mt-1">
-                    <li>Vào <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="fw-bold text-primary">Google Cloud Console</a> &rarr; <em>Create Credentials &rarr; OAuth client ID</em>.</li>
-                    <li>Chọn loại <strong>Web application</strong>.</li>
-                    <li>Thêm Authorized JavaScript origins: <code className="text-dark">http://localhost:5173</code> và <code className="text-dark">https://eduviet-mastery.loca.lt</code>.</li>
-                  </ol>
-                </div>
-
-                <div className="input-group input-group-sm mb-2">
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-key-fill text-muted"></i>
-                  </span>
-                  <Form.Control
-                    type="text"
-                    placeholder="Dán Client ID (ví dụ: xxxxx.apps.googleusercontent.com)..."
-                    value={googleClientId}
-                    onChange={(e) => setGoogleClientId(e.target.value)}
-                    className="border-start-0 font-monospace"
-                  />
-                  <Button
-                    variant="danger"
-                    className="fw-bold px-3"
-                    disabled={!googleClientId.trim()}
-                    onClick={() => {
-                      const id = googleClientId.trim();
-                      localStorage.setItem('eduviet_google_client_id', id);
-                      initGoogleGSI(id);
-                      alert('Đã lưu Google Client ID thành công! Bạn có thể bấm nút đăng nhập Google thật ngay bên dưới.');
-                    }}
-                  >
-                    Lưu & Kích Hoạt
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="text-center pt-3">
-          <Button
-            variant="link"
-            size="sm"
-            className="text-muted text-decoration-none"
-            onClick={() => {
-              setShowGoogleChooser(false);
-              setShowCustomAccountInput(false);
-            }}
-          >
-            Đóng hộp thoại Google
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      onHide={() => setShowGoogleChooser(false)}
+      onSelectAccount={handleGoogleChooserSelect}
+      loading={loading}
+      originHost={typeof window !== 'undefined' ? (window.location.host || 'eduviet-academy.vercel.app') : 'eduviet-academy.vercel.app'}
+    />
     </>
   );
 }
