@@ -11,6 +11,7 @@ import {
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { GoogleLoginDto } from './dto/google-login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
@@ -37,6 +38,12 @@ export class AuthController {
   @Post('login')
   login(@Body() body: LoginDto) {
     return this.authService.login(body);
+  }
+
+  // Đăng nhập / Đăng ký nhanh qua Google OAuth
+  @Post('google')
+  googleLogin(@Body() body: GoogleLoginDto) {
+    return this.authService.googleLogin(body);
   }
 
   // US02: Đăng xuất phiên làm việc

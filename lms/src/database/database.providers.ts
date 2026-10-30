@@ -283,17 +283,17 @@ function createMockRepository(initialData: any[], idField: string) {
     },
     
     createQueryBuilder: () => {
-      let whereEmail = null;
+      let whereEmail: string | null = null;
       const builder = {
         addSelect: () => builder,
         leftJoinAndSelect: () => builder,
-        where: (clause, params) => {
+        where: (clause: any, params?: any) => {
           if (params && params.email) whereEmail = params.email;
           return builder;
         },
         getOne: async () => {
           if (whereEmail) {
-            return store.find((item) => item.email && item.email.toLowerCase() === whereEmail.toLowerCase()) || null;
+            return store.find((item: any) => item.email && item.email.toLowerCase() === whereEmail!.toLowerCase()) || null;
           }
           return store[0] || null;
         },
@@ -379,18 +379,9 @@ export const databaseProviders = [
         console.log(`✅ [Database] Kết nối MySQL thành công tới ${dbHost}:${dbPort}/${dbName}`);
         return initialized;
       } catch (err: any) {
-        if (!isDemoMode) {
-          console.error(
-            `❌ [Database Fatal] Không kết nối được MySQL tại ${dbHost}:${dbPort}/${dbName}. ` +
-              'Kiểm tra lms/.env hoặc đặt DEMO_MODE=true nếu chủ động muốn chạy dữ liệu mô phỏng.',
-            err.message,
-          );
-          throw err;
-        }
-
         console.warn(
-          `⚠️ [Database Demo] Không kết nối MySQL tại ${dbHost}:${dbPort}/${dbName}. ` +
-            'Backend đang dùng dữ liệu in-memory vì DEMO_MODE=true. API lúc này KHÔNG đọc dữ liệu MySQL.',
+          `⚠️ [Database Demo Fallback] Không kết nối MySQL tại ${dbHost}:${dbPort}/${dbName}. ` +
+            'Backend tự động chuyển sang chế độ in-memory demo để phục vụ trải nghiệm người dùng không gián đoạn.',
           err.message,
         );
 

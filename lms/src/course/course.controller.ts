@@ -66,7 +66,7 @@ export class CourseController {
     if (authHeader?.startsWith('Bearer ')) {
       try {
         const token = authHeader.slice(7);
-        currentUser = verifyToken(token, getJwtSecret());
+        currentUser = verifyToken(token, getJwtSecret()) ?? undefined;
       } catch {
         // Token không hợp lệ thì coi như khách vãng lai
       }

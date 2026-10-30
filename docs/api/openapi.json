@@ -146,6 +146,31 @@
         }
       }
     },
+    "/auth/google": {
+      "post": {
+        "summary": "Đăng nhập hoặc đăng ký tài khoản nhanh qua Google OAuth",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id_token": { "type": "string", "description": "Google JWT ID token" },
+                  "email": { "type": "string", "format": "email", "example": "student.google@phenikaa-uni.edu.vn" },
+                  "full_name": { "type": "string", "example": "Học viên Google Phenikaa" },
+                  "avatar_url": { "type": "string", "example": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Xác thực Google thành công, trả về access_token và profile" },
+          "401": { "description": "Tài khoản bị khóa bởi quản trị viên" }
+        }
+      }
+    },
     "/auth/me": {
       "get": {
         "summary": "Lấy thông tin tài khoản đang đăng nhập",

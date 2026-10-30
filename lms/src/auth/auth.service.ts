@@ -14,6 +14,7 @@ import { User } from '../user/user.entity.js';
 import { Role } from '../role/role.entity.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { GoogleLoginDto } from './dto/google-login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
@@ -93,6 +94,76 @@ export class AuthService {
 
     const roles = user.roles ? user.roles.map((r) => r.role_name) : ['Student'];
     return this.buildResponse(user.user_id, user.full_name, user.email, roles);
+  }
+
+  // Đăng nhập / Đăng ký tài khoản qua Google OAuth
+  async googleLogin(dto: GoogleLoginDto) {
+    let email = dto.email?.trim().toLowerCase();
+    let fullName = dto.full_name?.trim();
+
+    // Nếu có gửi id_token từ Google, giải mã payload JWT
+    if (dto.id_token) {
+      try {
+        const parts = dto.id_token.split('.');
+        if (parts.length === 3) {
+          const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
+          const payload = JSON.parse(payloadJson);
+          if (payload.email) {
+            email = payload.email.trim().toLowerCase();
+          }
+          if (payload.name && !fullName) {
+            fullName = payload.name.trim();
+          }
+        }
+      } catch {
+        // Tiếp tục với email trực tiếp nếu giải mã token thất bại
+      }
+    }
+
+    if (!email) {
+      throw new BadRequestException('Thông tin xác thực Google không hợp lệ hoặc thiếu email');
+    }
+
+    let user: User | null = null;
+    if (typeof this.userRepository.createQueryBuilder === 'function') {
+      user = await this.userRepository
+        .createQueryBuilder('u')
+        .leftJoinAndSelect('u.roles', 'r')
+        .where('u.email = :email', { email })
+        .getOne();
+    } else {
+      user = await this.userRepository.findOne({
+        where: { email },
+        relations: { roles: true },
+      });
+    }
+
+    // Nếu người dùng đã tồn tại trong CSDL
+    if (user) {
+      if (user.is_active === false) {
+        throw new UnauthorizedException('Tài khoản đã bị khóa bởi quản trị viên');
+      }
+      const roles = user.roles ? user.roles.map((r) => r.role_name) : ['Student'];
+      return this.buildResponse(user.user_id, user.full_name, user.email, roles);
+    }
+
+    // Người dùng mới: tự động cấp vai trò Student
+    const studentRole = await this.roleRepository.findOneBy({ role_name: 'Student' });
+    if (!studentRole) {
+      throw new InternalServerErrorException('Chưa có vai trò Student trong CSDL');
+    }
+
+    const newUser = await this.userRepository.save(
+      this.userRepository.create({
+        full_name: fullName || email.split('@')[0],
+        email,
+        password_hash: hashPassword(randomBytes(16).toString('hex')),
+        is_active: true,
+        roles: [studentRole],
+      }),
+    );
+
+    return this.buildResponse(newUser.user_id, newUser.full_name, newUser.email, ['Student']);
   }
 
   // US02: Đăng xuất phiên làm việc

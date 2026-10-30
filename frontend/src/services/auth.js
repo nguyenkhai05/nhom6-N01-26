@@ -84,6 +84,13 @@ export function apiLogin(email, password) {
   return callAuth('/auth/login', { method: 'POST', body: { email, password } });
 }
 
+export function apiGoogleLogin({ id_token, email, full_name, avatar_url }) {
+  return callAuth('/auth/google', {
+    method: 'POST',
+    body: { id_token, email, full_name, avatar_url },
+  });
+}
+
 export function apiRegister({ full_name, email, password }) {
   return callAuth('/auth/register', { method: 'POST', body: { full_name, email, password } });
 }

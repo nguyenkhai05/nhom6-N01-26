@@ -300,4 +300,34 @@ describe('AuthService Unit Tests (UT01, UT02, UT03, UT04, UT31)', () => {
       expect(res.roles).toContain('Student');
     });
   });
+
+  // Google OAuth Login
+  describe('Google OAuth Login', () => {
+    it('Đăng nhập Google với email mới tự động tạo tài khoản học viên và trả JWT', async () => {
+      const res = await authService.googleLogin({
+        email: 'newbie.google@gmail.com',
+        full_name: 'Google Newbie',
+      });
+      expect(res.access_token).toBeDefined();
+      expect(res.user.email).toBe('newbie.google@gmail.com');
+      expect(res.user.roles).toContain('Student');
+    });
+
+    it('Đăng nhập Google với tài khoản đã tồn tại trả về phiên đăng nhập', async () => {
+      const res = await authService.googleLogin({
+        email: 'admin@eduviet.vn',
+      });
+      expect(res.access_token).toBeDefined();
+      expect(res.user.user_id).toBe(1);
+      expect(res.user.roles).toContain('Admin');
+    });
+
+    it('Chặn đăng nhập Google nếu tài khoản bị khóa (UnauthorizedException)', async () => {
+      await expect(
+        authService.googleLogin({
+          email: 'dev.nguyen@gmail.com',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
 });
