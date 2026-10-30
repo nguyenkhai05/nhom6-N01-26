@@ -1,0 +1,324 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EduViet LMS Platform API Specification",
+    "description": "Tài liệu đặc tả toàn bộ RESTful API hệ thống EduViet phục vụ đồ án môn Phát triển Web Nâng cao - Phenikaa University. Dự án nhóm 6: Phù Ngọc Hào (23010384), Nguyễn Quốc Khải (23010403), Nguyễn Hoàng Sơn (23010878). GVHD: TS Nguyễn Lệ Thu.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Nhóm 6 - Đại học Phenikaa",
+      "email": "23010403@st.phenikaa-uni.edu.vn"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Máy chủ cục bộ phát triển (Development Server)"
+    },
+    {
+      "url": "https://api.eduviet.vn",
+      "description": "Máy chủ triển khai sản phẩm (Production)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Truyền mã định danh JWT dạng Bearer <token> trong header Authorization"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "user_id": { "type": "integer", "example": 3 },
+          "full_name": { "type": "string", "example": "Nguyễn Văn Dev" },
+          "email": { "type": "string", "format": "email", "example": "dev.nguyen@gmail.com" },
+          "avatar_url": { "type": "string", "nullable": true },
+          "is_active": { "type": "boolean", "example": true },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Student"]
+          }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "course_id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "Lập Trình Web Frontend Chuyên Sâu với ReactJS & Next.js" },
+          "slug": { "type": "string", "example": "lap-trinh-web-frontend-reactjs" },
+          "description": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "price": { "type": "number", "example": 890000 },
+          "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] },
+          "status": { "type": "string", "enum": ["Draft", "Published", "Archived"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "integer", "example": 1 },
+          "order_code": { "type": "string", "example": "ORD_3_1730260000" },
+          "total_amount": { "type": "number", "example": 890000 },
+          "discount_amount": { "type": "number", "example": 178000 },
+          "final_amount": { "type": "number", "example": 712000 },
+          "status": { "type": "string", "enum": ["PENDING", "PAID", "CANCELLED", "REFUNDED"] },
+          "payment_method": { "type": "string", "example": "WALLET" },
+          "paid_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "wallet_id": { "type": "integer", "example": 1 },
+          "user_id": { "type": "integer", "example": 3 },
+          "balance": { "type": "number", "example": 1500000 },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WalletLedger": {
+        "type": "object",
+        "properties": {
+          "ledger_id": { "type": "integer", "example": 1 },
+          "type": { "type": "string", "enum": ["DEPOSIT", "PURCHASE", "REFUND"] },
+          "amount": { "type": "number", "example": 500000 },
+          "balance_before": { "type": "number", "example": 1000000 },
+          "balance_after": { "type": "number", "example": 1500000 },
+          "reference_type": { "type": "string", "example": "TOPUP" },
+          "reference_id": { "type": "string", "example": "TOPUP_3_1730261111_1234" },
+          "description": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Đăng ký tài khoản người dùng mới (US01)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["full_name", "email", "password"],
+                "properties": {
+                  "full_name": { "type": "string", "example": "Nguyễn Văn Dev" },
+                  "email": { "type": "string", "format": "email", "example": "dev.nguyen@gmail.com" },
+                  "password": { "type": "string", "minLength": 6, "example": "Eduviet@2026" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Tạo tài khoản thành công và cấp JWT token" },
+          "409": { "description": "Email đã tồn tại trong hệ thống" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Đăng nhập và nhận Bearer token (US02)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "admin@eduviet.vn" },
+                  "password": { "type": "string", "example": "Eduenglish123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công, trả về access_token và profile" },
+          "401": { "description": "Sai email, mật khẩu hoặc tài khoản đã bị khóa" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Lấy thông tin tài khoản đang đăng nhập",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Trả về dữ liệu người dùng" },
+          "401": { "description": "Chưa xác thực hoặc token hết hạn" }
+        }
+      }
+    },
+    "/courses": {
+      "get": {
+        "summary": "Tìm kiếm, lọc và phân trang khóa học đã Published (US05)",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Từ khóa tìm kiếm theo tên/mô tả" },
+          { "name": "category_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "level", "in": "query", "schema": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] } },
+          { "name": "min_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["newest", "popular", "price_asc", "price_desc"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 12 } }
+        ],
+        "responses": {
+          "200": { "description": "Danh sách khóa học và thông tin phân trang" },
+          "400": { "description": "Dải giá min_price > max_price không hợp lệ" }
+        }
+      }
+    },
+    "/courses/{id}": {
+      "get": {
+        "summary": "Xem chi tiết khóa học, đề cương và bài học thử (US06)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thông tin chi tiết khóa học (bảo vệ che link bài không preview)" },
+          "404": { "description": "Không tìm thấy khóa học" }
+        }
+      }
+    },
+    "/commerce/cart": {
+      "get": {
+        "summary": "Lấy giỏ hàng của học viên (US08)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Danh sách các khóa học trong giỏ hàng" }
+        }
+      },
+      "post": {
+        "summary": "Thêm khóa học vào giỏ hàng (US08)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["course_id"],
+                "properties": { "course_id": { "type": "integer" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Thêm vào giỏ thành công" },
+          "409": { "description": "Khóa học đã có trong giỏ hoặc học viên đã sở hữu" }
+        }
+      }
+    },
+    "/commerce/quote": {
+      "post": {
+        "summary": "Tính toán báo giá server-side và áp dụng mã ưu đãi (US09)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "code": { "type": "string", "example": "GIAM20" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Báo giá chính xác gồm tổng tiền, giảm giá và giá cuối cùng" },
+          "400": { "description": "Mã ưu đãi không hợp lệ, hết hạn hoặc chưa đạt giá trị đơn tối thiểu" }
+        }
+      }
+    },
+    "/commerce/checkout": {
+      "post": {
+        "summary": "Thanh toán giỏ hàng bằng số dư ví điện tử (US11)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "voucher_code": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Thanh toán thành công, trừ ví, ghi sổ cái và kích hoạt Enrollment" },
+          "400": { "description": "Số dư ví không đủ hoặc giỏ hàng trống" }
+        }
+      }
+    },
+    "/learning/courses/{courseId}/lessons/{lessonId}/progress": {
+      "put": {
+        "summary": "Lưu vị trí dừng và cập nhật hợp các khoảng thời gian đã xem (US15, FIX06)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "courseId", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "lessonId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["resume_position_seconds"],
+                "properties": {
+                  "resume_position_seconds": { "type": "integer", "example": 120 },
+                  "watched_interval": {
+                    "type": "array",
+                    "items": { "type": "integer" },
+                    "example": [60, 120]
+                  },
+                  "duration_seconds": { "type": "integer", "example": 300 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cập nhật tiến độ thành công, tính toán tỷ lệ hoàn thành" }
+        }
+      }
+    },
+    "/learning/lessons/{lessonId}/quiz/submit": {
+      "post": {
+        "summary": "Nộp bài thi trắc nghiệm và nhận điểm số chuẩn hóa 0-100 (US19)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "lessonId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["answers"],
+                "properties": {
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": { "type": "integer" },
+                    "example": { "1": 1, "2": 2 }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Điểm số được chấm tại server theo trọng số câu hỏi, đánh giá pass/fail" }
+        }
+      }
+    }
+  }
+}
