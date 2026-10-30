@@ -5,6 +5,19 @@ import { getBundles, getBundleQuote, checkoutBundle } from '../../services/hubAp
 const SNOOZE_STORAGE_KEY = 'eduviet_combo_notice_snooze_v2';
 const SNOOZE_HOURS = 4;
 
+// Kiểm tra xem có đang trong thời gian 4 tiếng ẩn hay không
+const checkIsSnoozed = () => {
+  try {
+    const snoozedUntil = localStorage.getItem(SNOOZE_STORAGE_KEY);
+    if (snoozedUntil && Date.now() < Number(snoozedUntil)) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+};
+
 export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNavigate }) {
   const [bundles, setBundles] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -16,19 +29,6 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
   const [alertInfo, setAlertInfo] = useState(null);
   const [remainingText, setRemainingText] = useState('');
   const [isTopBannerDismissed, setIsTopBannerDismissed] = useState(checkIsSnoozed);
-
-  // Kiểm tra xem có đang trong thời gian 4 tiếng ẩn hay không
-  const checkIsSnoozed = () => {
-    try {
-      const snoozedUntil = localStorage.getItem(SNOOZE_STORAGE_KEY);
-      if (snoozedUntil && Date.now() < Number(snoozedUntil)) {
-        return true;
-      }
-    } catch {
-      return false;
-    }
-    return false;
-  };
 
   const updateRemainingText = () => {
     try {
