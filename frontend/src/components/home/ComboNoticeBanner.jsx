@@ -2,19 +2,20 @@ import { useState, useEffect } from 'react';
 import { Badge, Button, Modal, Row, Col, Alert, Spinner, Table, Form } from 'react-bootstrap';
 import { getBundles, getBundleQuote, checkoutBundle } from '../../services/hubApi';
 
-const SNOOZE_STORAGE_KEY = 'eduviet_combo_notice_snooze_until';
+const SNOOZE_STORAGE_KEY = 'eduviet_combo_notice_snooze_v2';
 const SNOOZE_HOURS = 4;
 
 export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNavigate }) {
   const [bundles, setBundles] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [snoozeCheckbox, setSnoozeCheckbox] = useState(true);
+  const [snoozeCheckbox, setSnoozeCheckbox] = useState(false);
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [quote, setQuote] = useState(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [alertInfo, setAlertInfo] = useState(null);
   const [remainingText, setRemainingText] = useState('');
+  const [isTopBannerDismissed, setIsTopBannerDismissed] = useState(checkIsSnoozed);
 
   // Kiểm tra xem có đang trong thời gian 4 tiếng ẩn hay không
   const checkIsSnoozed = () => {
@@ -57,16 +58,17 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
       })
       .catch((err) => console.error('Lỗi tải thông báo combo:', err));
 
-    // Kiểm tra tự động POP RA khi vào đầu trang
+    // Kiểm tra tự động POP RA khi vào đầu trang và hiển thị thanh banner
     const isSnoozed = checkIsSnoozed();
+    setIsTopBannerDismissed(isSnoozed);
     if (isSnoozed) {
       setIsOpen(false);
       updateRemainingText();
     } else {
-      // Chưa bị ẩn: Tự động pop-up sau 500ms để trải nghiệm mượt mà
+      // Chưa bị ẩn: Tự động pop-up sau 400ms để trải nghiệm mượt mà
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 500);
+      }, 400);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -80,13 +82,35 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
       } catch (err) {
         console.error(err);
       }
+      setIsTopBannerDismissed(true);
       setRemainingText('Ẩn 4h');
     }
     setIsOpen(false);
   };
 
-  // Mở lại modal thủ công từ nút ghim nổi
+  // Nút ẩn 4 tiếng trực tiếp từ thanh đầu trang
+  const handleSnooze4Hours = (e) => {
+    if (e) e.stopPropagation();
+    const until = Date.now() + SNOOZE_HOURS * 60 * 60 * 1000;
+    try {
+      localStorage.setItem(SNOOZE_STORAGE_KEY, String(until));
+    } catch (err) {
+      console.error(err);
+    }
+    setIsTopBannerDismissed(true);
+    setIsOpen(false);
+    setRemainingText('Ẩn 4h');
+  };
+
+  // Mở lại modal & thanh thông báo thủ công từ nút ghim nổi
   const handleReopen = () => {
+    try {
+      localStorage.removeItem(SNOOZE_STORAGE_KEY);
+    } catch (err) {
+      console.error(err);
+    }
+    setIsTopBannerDismissed(false);
+    setRemainingText('');
     setIsOpen(true);
   };
 
@@ -137,7 +161,55 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
 
   return (
     <>
-      {/* 1. MODAL POP-UP NỔI Ở ĐẦU TRANG (Chuẩn phong cách EduViet Popup) */}
+      {/* 1. THANH THÔNG BÁO GIẢM GIÁ LUÔN XUẤT HIỆN Ở ĐẦU TRANG */}
+      {!isTopBannerDismissed && (
+        <div
+          className="combo-announcement-bar py-2 px-3 border-bottom shadow-sm"
+          style={{
+            background: 'linear-gradient(90deg, #0d3b66 0%, #174276 50%, #001e3d 100%)',
+            color: '#ffffff',
+            position: 'relative',
+            zIndex: 1040,
+          }}
+        >
+          <div className="container-fluid px-lg-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div className="d-flex align-items-center flex-wrap gap-2">
+              <span
+                className="badge rounded-pill text-dark fw-bold px-3 py-1 shadow-sm"
+                style={{ backgroundColor: '#ffb700' }}
+              >
+                <i className="bi bi-megaphone-fill me-1"></i> THÔNG BÁO ƯU ĐÃI
+              </span>
+              <span className="fw-semibold">
+                🔥 Tiết kiệm lên tới <strong>{maxSaving}%</strong> khi mua combo các khóa học lập trình thực chiến EduViet!
+              </span>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <Button
+                variant="warning"
+                size="sm"
+                className="fw-bold rounded-pill text-dark px-3 shadow-sm"
+                onClick={() => {
+                  if (bundles.length > 0 && !selectedBundle) setSelectedBundle(bundles[0]);
+                  setIsOpen(true);
+                }}
+              >
+                <i className="bi bi-gift-fill me-1"></i> Xem Chi Tiết Giảm Giá
+              </Button>
+              <button
+                type="button"
+                className="btn btn-sm btn-link text-white text-decoration-none"
+                onClick={handleSnooze4Hours}
+                title="Tạm ẩn thông báo này trong 4 tiếng"
+              >
+                <i className="bi bi-clock-history me-1"></i> Ẩn 4 tiếng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. MODAL POP-UP NỔI Ở ĐẦU TRANG (Chuẩn phong cách EduViet Popup) */}
       <Modal
         show={isOpen}
         onHide={() => handleClose(null, false)}

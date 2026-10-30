@@ -646,10 +646,10 @@ export default function App() {
               }}
             />
 
-            {/* Bốn Thẻ Truy Cập Nhanh Theo Chuẩn Điều Hướng 5 Cột Trụ Codecademy */}
+            {/* Thẻ Truy Cập Nhanh: 5 Cột Trụ Lập Trình & Cộng Đồng */}
             <div className="app-container my-4">
-              <div className="row g-3">
-                <div className="col-md-3 col-6">
+              <div className="row g-3 row-cols-2 row-cols-md-3 row-cols-lg-5">
+                <div className="col">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
                     onClick={() => setCurrentRoute('courses')}
@@ -662,7 +662,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="col-md-3 col-6">
+                <div className="col">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
                     onClick={() => setCurrentRoute('try')}
@@ -671,11 +671,11 @@ export default function App() {
                       <i className="bi bi-play-circle fs-3"></i>
                     </div>
                     <h6 className="fw-bold text-dark mb-1">Học Thử Tương Tác</h6>
-                    <small className="text-muted d-block">Code 3 Vùng & Runner</small>
+                    <small className="text-muted d-block">Code 3 Vùng & Sandbox</small>
                   </div>
                 </div>
 
-                <div className="col-md-3 col-6">
+                <div className="col">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
                     onClick={() => setCurrentRoute('practice')}
@@ -688,7 +688,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="col-md-3 col-6">
+                <div className="col">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
                     onClick={() => setCurrentRoute('find-course')}
@@ -698,6 +698,19 @@ export default function App() {
                     </div>
                     <h6 className="fw-bold text-dark mb-1">Chọn Khóa Phù Hợp</h6>
                     <small className="text-muted d-block">Gợi Ý 4 Câu & So Sánh</small>
+                  </div>
+                </div>
+
+                <div className="col">
+                  <div
+                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
+                    onClick={() => setCurrentRoute('community')}
+                  >
+                    <div className="p-3 bg-danger-subtle text-danger rounded-circle d-inline-block mb-2">
+                      <i className="bi bi-chat-dots fs-3"></i>
+                    </div>
+                    <h6 className="fw-bold text-dark mb-1">Hỏi Đáp Cộng Đồng</h6>
+                    <small className="text-muted d-block">Hỏi Đáp & Bài Viết</small>
                   </div>
                 </div>
               </div>

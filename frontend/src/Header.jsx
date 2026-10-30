@@ -89,6 +89,14 @@ export default function Header({
               </li>
               <li className="nav-item">
                 <button
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'community' || currentRoute === 'articles' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('community')}
+                >
+                  <i className="bi bi-chat-square-text me-1 text-info"></i> Cộng đồng & Bài viết
+                </button>
+              </li>
+              <li className="nav-item">
+                <button
                   className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'help' ? 'active text-primary fw-bold' : ''}`}
                   onClick={() => onNavigate('help')}
                 >

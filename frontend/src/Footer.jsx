@@ -6,6 +6,7 @@ const QUICK_LINKS = [
   { label: 'Học thử tương tác', route: 'try' },
   { label: 'Trung tâm luyện tập', route: 'practice' },
   { label: 'Chọn khóa phù hợp', route: 'find-course' },
+  { label: 'Cộng đồng & Bài viết', route: 'community' },
   { label: 'Trung tâm hỗ trợ & FAQ', route: 'help' },
   { label: 'Góc học tập của tôi', route: 'my-learning' },
 ];
@@ -16,6 +17,7 @@ const COLUMNS = [
     { label: 'Học thử tương tác Sandbox', route: 'try' },
     { label: 'Kho bài tập & Sửa lỗi code', route: 'practice' },
     { label: 'Bộ chọn khóa theo nhu cầu', route: 'find-course' },
+    { label: 'Cộng đồng & Bài viết công nghệ', route: 'community' },
     { label: 'Trung tâm trợ giúp học viên', route: 'help' },
   ] },
   { title: 'Hỗ trợ học viên', links: [
