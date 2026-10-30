@@ -38,3 +38,7 @@ Thumbs.db
 
 # Internal / AI Architecture config
 GEMINI.md
+
+# Python
+__pycache__/
+*.pyc
