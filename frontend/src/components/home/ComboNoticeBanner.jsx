@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Badge, Button, Modal, Row, Col, Alert, Spinner, Table } from 'react-bootstrap';
+import { Badge, Button, Modal, Row, Col, Alert, Spinner, Table, Form } from 'react-bootstrap';
 import { getBundles, getBundleQuote, checkoutBundle } from '../../services/hubApi';
 
 const SNOOZE_STORAGE_KEY = 'eduviet_combo_notice_snooze_until';
@@ -7,14 +7,16 @@ const SNOOZE_HOURS = 4;
 
 export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNavigate }) {
   const [bundles, setBundles] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [snoozeCheckbox, setSnoozeCheckbox] = useState(true);
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [quote, setQuote] = useState(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [alertInfo, setAlertInfo] = useState(null);
+  const [remainingText, setRemainingText] = useState('');
 
-  // Kiểm tra trạng thái ẩn 4 tiếng
+  // Kiểm tra xem có đang trong thời gian 4 tiếng ẩn hay không
   const checkIsSnoozed = () => {
     try {
       const snoozedUntil = localStorage.getItem(SNOOZE_STORAGE_KEY);
@@ -27,10 +29,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
     return false;
   };
 
-  const [isDismissed, setIsDismissed] = useState(checkIsSnoozed);
-  const [remainingText, setRemainingText] = useState('');
-
-  const updateRemainingTime = () => {
+  const updateRemainingText = () => {
     try {
       const snoozedUntil = localStorage.getItem(SNOOZE_STORAGE_KEY);
       if (snoozedUntil) {
@@ -48,48 +47,50 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
   };
 
   useEffect(() => {
-    // Luôn kiểm tra khi xuất hiện ở đầu trang: nếu đã hết hạn 4 tiếng thì hiển thị lại
-    const snoozed = checkIsSnoozed();
-    setIsDismissed(snoozed);
-    if (snoozed) {
-      updateRemainingTime();
-    }
-
-    let isMounted = true;
+    // Tải danh sách bundles từ backend
     getBundles()
       .then((data) => {
-        if (isMounted && Array.isArray(data)) {
+        if (Array.isArray(data)) {
           setBundles(data);
+          if (data.length > 0) setSelectedBundle(data[0]);
         }
       })
       .catch((err) => console.error('Lỗi tải thông báo combo:', err));
-    return () => {
-      isMounted = false;
-    };
+
+    // Kiểm tra tự động POP RA khi vào đầu trang
+    const isSnoozed = checkIsSnoozed();
+    if (isSnoozed) {
+      setIsOpen(false);
+      updateRemainingText();
+    } else {
+      // Chưa bị ẩn: Tự động pop-up sau 500ms để trải nghiệm mượt mà
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
-  const handleSnooze4Hours = (e) => {
-    if (e) e.stopPropagation();
-    const until = Date.now() + SNOOZE_HOURS * 60 * 60 * 1000;
-    try {
-      localStorage.setItem(SNOOZE_STORAGE_KEY, String(until));
-    } catch (err) {
-      console.error(err);
+  // Xử lý đóng modal
+  const handleClose = (e, forceSnooze = false) => {
+    if (forceSnooze || snoozeCheckbox) {
+      const until = Date.now() + SNOOZE_HOURS * 60 * 60 * 1000;
+      try {
+        localStorage.setItem(SNOOZE_STORAGE_KEY, String(until));
+      } catch (err) {
+        console.error(err);
+      }
+      setRemainingText('Ẩn 4h');
     }
-    setIsDismissed(true);
-    setRemainingText('Ẩn 4h');
+    setIsOpen(false);
   };
 
-  const handleReopenNotice = () => {
-    try {
-      localStorage.removeItem(SNOOZE_STORAGE_KEY);
-    } catch (err) {
-      console.error(err);
-    }
-    setIsDismissed(false);
-    setRemainingText('');
+  // Mở lại modal thủ công từ nút ghim nổi
+  const handleReopen = () => {
+    setIsOpen(true);
   };
 
+  // Lấy báo giá Smart Quote
   const handleOpenQuote = async (bundle) => {
     setSelectedBundle(bundle);
     setQuote(null);
@@ -105,6 +106,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
     }
   };
 
+  // Thanh toán combo
   const handleCheckout = async () => {
     if (!currentUser) {
       alert('Vui lòng đăng nhập để thực hiện mua gói combo.');
@@ -119,8 +121,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
         currentUser.walletBalance = res.balance_after;
       }
       setTimeout(() => {
-        setShowModal(false);
-        setSelectedBundle(null);
+        setIsOpen(false);
         onNavigate?.('my-learning');
       }, 1500);
     } catch (err) {
@@ -136,276 +137,282 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
 
   return (
     <>
-      {/* 1. Thanh Thông Báo Luôn Xuất Hiện Ở Đầu Trang */}
-      {!isDismissed ? (
-        <div
-          className="combo-announcement-bar py-2 px-3 border-bottom shadow-sm"
-          style={{
-            background: 'linear-gradient(90deg, #0d3b66 0%, #174276 50%, #001e3d 100%)',
-            color: '#ffffff',
-            position: 'relative',
-            zIndex: 1040,
-          }}
-        >
-          <div className="container-fluid px-lg-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <div className="d-flex align-items-center flex-wrap gap-2">
-              <span
-                className="badge rounded-pill text-dark fw-bold px-3 py-1 shadow-sm"
-                style={{ backgroundColor: '#ffb700' }}
-              >
-                <i className="bi bi-megaphone-fill me-1"></i> THÔNG BÁO ƯU ĐÃI
-              </span>
-              <span className="small fw-semibold text-white">
-                🔥 <strong>Tiết kiệm đến {maxSaving}%</strong> khi đăng ký học theo <strong>Gói Combo</strong> (Fullstack Web, Flutter Mobile, DevOps & AI).
-              </span>
-              <span className="small text-light d-none d-lg-inline opacity-75">
-                | Thuật toán Smart Quote tự động khấu trừ học phí các khóa bạn đã sở hữu!
-              </span>
-            </div>
-
-            <div className="d-flex align-items-center gap-2 ms-auto">
-              <button
-                type="button"
-                className="btn btn-sm fw-bold px-3 py-1 rounded-pill shadow-sm"
-                style={{ backgroundColor: '#ffb700', color: '#0d3b66', border: 'none' }}
-                onClick={() => {
-                  setShowModal(true);
-                  if (bundles.length > 0 && !selectedBundle) {
-                    handleOpenQuote(bundles[0]);
-                  }
+      {/* 1. MODAL POP-UP NỔI Ở ĐẦU TRANG (Chuẩn phong cách EduViet Popup) */}
+      <Modal
+        show={isOpen}
+        onHide={() => handleClose(null, false)}
+        centered
+        backdrop="static"
+        keyboard={true}
+        className="combo-popup-modal"
+        contentClassName="border-0 shadow-lg"
+        style={{ zIndex: 1060 }}
+      >
+        <div className="p-4" style={{ borderRadius: '24px', backgroundColor: '#ffffff' }}>
+          {/* Header với Icon Badge phong cách EduViet */}
+          <div className="d-flex justify-content-between align-items-start mb-3">
+            <div className="d-flex align-items-center gap-3">
+              <div
+                className="d-flex align-items-center justify-content-center text-white shadow-sm"
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #0d6efd 0%, #0d3b66 100%)',
+                  fontSize: '1.25rem',
                 }}
               >
-                <i className="bi bi-tag-fill me-1"></i> Xem Chi Tiết Combo
-              </button>
-
-              {/* Mục ẩn thông báo trong 4 tiếng */}
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-light rounded-pill px-2 py-1 small d-flex align-items-center gap-1 opacity-75 hover-opacity-100"
-                onClick={handleSnooze4Hours}
-                title="Tạm ẩn thông báo này trong vòng 4 tiếng"
-                style={{ fontSize: '0.8rem', lineHeight: 1.2 }}
-              >
-                <i className="bi bi-clock-history"></i>
-                <span className="d-none d-sm-inline">Ẩn 4 tiếng</span>
-              </button>
-
-              {/* Nút đóng & ẩn 4 tiếng */}
-              <button
-                type="button"
-                className="btn btn-sm btn-link text-white-50 p-0 text-decoration-none ms-1"
-                onClick={handleSnooze4Hours}
-                title="Đóng thông báo (ẩn trong 4 tiếng)"
-                style={{ fontSize: '1.25rem', lineHeight: 1 }}
-              >
-                &times;
-              </button>
+                <i className="bi bi-gift-fill text-warning"></i>
+              </div>
+              <div>
+                <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                  EduViet Promotion
+                  <Badge bg="danger" className="rounded-pill px-2 py-1 small">
+                    HOT -{maxSaving}%
+                  </Badge>
+                </h5>
+                <small className="text-muted">Thông báo ưu đãi combo khóa học đặc biệt</small>
+              </div>
             </div>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-light rounded-circle p-2 text-muted shadow-sm hover-shadow"
+              onClick={() => handleClose(null, false)}
+              style={{ width: '36px', height: '36px', lineHeight: 1 }}
+              title="Đóng"
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
           </div>
-        </div>
-      ) : (
-        /* Nút Ghim Nhỏ Mở Lại Khi Học Viên Muốn Xem */
-        <div className="position-fixed bottom-0 start-0 m-3" style={{ zIndex: 1050 }}>
-          <button
-            type="button"
-            className="btn btn-sm rounded-pill shadow-lg d-flex align-items-center gap-2 px-3 py-2 fw-semibold border"
-            style={{ backgroundColor: '#0d3b66', color: '#ffb700', borderColor: '#ffb700' }}
-            onClick={handleReopenNotice}
-            title="Nhấn để mở lại thanh thông báo ưu đãi"
+
+          {/* Banner Giới Thiệu Ưu Đãi */}
+          <div
+            className="p-3 rounded-4 mb-3 text-white"
+            style={{
+              background: 'linear-gradient(135deg, #0d3b66 0%, #174276 50%, #001e3d 100%)',
+              border: '2px solid #ffb700',
+            }}
           >
-            <i className="bi bi-bell-fill"></i>
-            <span>Ưu Đãi Combo (-{maxSaving}%)</span>
-            {remainingText && (
-              <span className="badge bg-warning text-dark ms-1 small">{remainingText}</span>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* 2. Modal Thông Báo Chi Tiết & Báo Giá Smart Quote */}
-      <Modal
-        show={showModal}
-        onHide={() => setShowModal(false)}
-        size="lg"
-        centered
-        className="combo-notice-modal"
-      >
-        <Modal.Header
-          closeButton
-          style={{ background: 'linear-gradient(135deg, #0d3b66 0%, #001e3d 100%)', color: '#fff' }}
-        >
-          <Modal.Title className="fs-5 fw-bold d-flex align-items-center gap-2">
-            <i className="bi bi-tags-fill text-warning"></i>
-            Thông Báo Ưu Đãi: Các Gói Combo Đang Mở Bán
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="alert alert-info py-2 px-3 rounded-3 small d-flex align-items-center gap-2 mb-3">
-            <i className="bi bi-info-circle-fill fs-5 text-primary"></i>
-            <div>
-              <strong>Chính sách giá minh bạch:</strong> Khi đăng ký gói Combo, nếu bạn đã từng mua 1 hoặc nhiều khóa học trong gói, hệ thống sẽ <strong>tự động trừ tiền tương ứng</strong>, bạn chỉ cần trả phần chênh lệch ưu đãi!
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <span className="badge bg-warning text-dark fw-bold px-2 py-1">
+                <i className="bi bi-stars me-1"></i> TIẾT KIỆM ĐẾN {maxSaving}%
+              </span>
+              <span className="small text-warning fw-semibold">Thuật toán Smart Quote</span>
             </div>
+            <p className="small mb-0 text-light" style={{ lineHeight: 1.5 }}>
+              Đăng ký trọn gói lộ trình Fullstack, Mobile hoặc DevOps. Hệ thống <strong>tự động khấu trừ tiền các khóa bạn đã sở hữu</strong>, không bao giờ phải trả phí 2 lần!
+            </p>
           </div>
 
-          {/* Danh Sách Chọn Gói Combo */}
-          <div className="mb-4">
-            <label className="fw-bold small text-muted text-uppercase mb-2">
-              Chọn gói Combo bạn quan tâm:
+          {/* Danh Sách Các Gói Combo Đang Bán */}
+          <div className="mb-3">
+            <label className="fw-bold small text-muted text-uppercase mb-2 d-flex justify-content-between align-items-center">
+              <span>Chọn gói Combo đang mở bán:</span>
+              <span className="x-small text-primary">{bundles.length} gói ưu đãi</span>
             </label>
             <Row className="g-2">
-              {bundles.map((b) => (
-                <Col key={b.bundle_id} md={4} sm={6}>
-                  <div
-                    className={`p-3 rounded-3 border h-100 cursor-pointer transition ${selectedBundle?.bundle_id === b.bundle_id ? 'border-primary bg-primary-subtle shadow-sm' : 'bg-white hover-shadow'}`}
-                    onClick={() => handleOpenQuote(b)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="d-flex justify-content-between align-items-start mb-1">
-                      <Badge bg="danger" className="rounded-pill">-{b.savings_percent}%</Badge>
-                      <small className="text-muted">{b.items?.length || 2} khóa</small>
+              {bundles.map((b) => {
+                const isSelected = selectedBundle?.bundle_id === b.bundle_id;
+                return (
+                  <Col key={b.bundle_id} xs={12}>
+                    <div
+                      className={`p-2 px-3 rounded-3 border transition d-flex align-items-center justify-content-between cursor-pointer ${isSelected ? 'border-primary bg-primary-subtle shadow-sm' : 'bg-white hover-shadow'}`}
+                      onClick={() => handleOpenQuote(b)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="d-flex align-items-center gap-2" style={{ maxWidth: '65%' }}>
+                        <Badge bg="danger" className="rounded-pill">-{b.savings_percent}%</Badge>
+                        <div>
+                          <strong className="d-block text-dark small text-truncate" title={b.title}>
+                            {b.title}
+                          </strong>
+                          <span className="text-muted x-small">
+                            {b.items?.length || 2} khóa học · Tiết kiệm {Number(b.savings_amount).toLocaleString('vi-VN')} đ
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-end">
+                        <span className="fw-bold text-primary d-block small">
+                          {Number(b.bundle_price).toLocaleString('vi-VN')} đ
+                        </span>
+                        <s className="text-muted x-small">
+                          {Number(b.retail_total).toLocaleString('vi-VN')} đ
+                        </s>
+                      </div>
                     </div>
-                    <div className="fw-bold text-dark small mb-1" style={{ minHeight: '38px', lineHeight: 1.3 }}>
-                      {b.title}
-                    </div>
-                    <div className="d-flex align-items-baseline gap-1 mt-2">
-                      <span className="fw-bold text-primary">{Number(b.bundle_price).toLocaleString('vi-VN')} đ</span>
-                      <s className="text-muted x-small">{Number(b.retail_total).toLocaleString('vi-VN')} đ</s>
-                    </div>
-                  </div>
-                </Col>
-              ))}
+                  </Col>
+                );
+              })}
             </Row>
           </div>
 
-          {/* Chi Tiết Báo Giá Smart Quote */}
-          {selectedBundle && (
-            <div className="border rounded-4 p-3 bg-light">
+          {/* Chi Tiết Báo Giá Smart Quote (Nếu Đã Chọn) */}
+          {selectedBundle && quote && (
+            <div className="border rounded-3 p-3 bg-light mb-3">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <span className="fw-bold small text-dark d-flex align-items-center gap-1">
                   <i className="bi bi-calculator text-primary"></i>
-                  Báo Giá Trực Tiếp Từ Máy Chủ (Smart Quote)
-                </h6>
-                <Badge bg="success" className="px-2 py-1">
-                  Tiết kiệm {Number(selectedBundle.savings_amount).toLocaleString('vi-VN')} đ
-                </Badge>
+                  Chiết khấu Smart Quote:
+                </span>
+                <span className="badge bg-success">
+                  Học phí thực trả: {Number(quote.final_amount).toLocaleString('vi-VN')} đ
+                </span>
               </div>
 
-              {quoteLoading ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" size="sm" variant="primary" />
-                  <span className="ms-2 small text-muted">Đang phân bổ chiết khấu máy chủ...</span>
+              {quote.owned_count > 0 && (
+                <div className="text-success small mb-2 d-flex align-items-center gap-1">
+                  <i className="bi bi-check-circle-fill"></i>
+                  Đã tự động trừ {quote.owned_count} khóa học bạn đang có!
                 </div>
-              ) : quote ? (
-                <div>
-                  <Table responsive size="sm" className="mb-3 bg-white rounded border">
-                    <thead className="table-light">
-                      <tr className="small">
-                        <th>Khóa học trong gói</th>
-                        <th className="text-end">Giá gốc</th>
-                        <th className="text-center">Trạng thái</th>
-                        <th className="text-end">Giá phân bổ</th>
-                      </tr>
-                    </thead>
-                    <tbody className="small">
-                      {quote.items?.map((it) => (
-                        <tr key={it.course_id}>
-                          <td>{it.title}</td>
-                          <td className="text-end text-muted">{Number(it.original_price).toLocaleString('vi-VN')} đ</td>
-                          <td className="text-center">
-                            {it.is_already_owned ? (
-                              <Badge bg="secondary">Đã sở hữu (-100%)</Badge>
-                            ) : (
-                              <Badge bg="success-subtle" className="text-success border border-success-subtle">
-                                Trong gói
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="text-end fw-bold">
-                            {it.is_already_owned ? (
-                              <span className="text-success">0 đ (Đã trừ)</span>
-                            ) : (
-                              `${Number(it.final_price).toLocaleString('vi-VN')} đ`
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
+              )}
 
-                  <div className="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 border mb-3">
-                    <div>
-                      <small className="text-muted d-block">Tổng học phí cần thanh toán:</small>
-                      <span className="fs-4 fw-bold text-danger">
-                        {Number(quote.final_amount).toLocaleString('vi-VN')} đ
-                      </span>
-                      {quote.owned_count > 0 && (
-                        <small className="text-success d-block">
-                          Đã tự động giảm trừ {quote.owned_count} khóa học bạn đã có!
-                        </small>
-                      )}
-                    </div>
+              {alertInfo && (
+                <Alert variant={alertInfo.variant} className="py-1 small mb-2">
+                  {alertInfo.message}
+                </Alert>
+              )}
 
-                    <div className="text-end">
-                      <small className="text-muted d-block">
-                        Số dư ví hiện tại: <strong>{Number(currentUser?.walletBalance || 0).toLocaleString('vi-VN')} đ</strong>
-                      </small>
-                      {currentUser && currentUser.walletBalance < quote.final_amount && (
-                        <Button
-                          variant="outline-warning"
-                          size="sm"
-                          className="mt-1 fw-bold text-dark"
-                          onClick={() => {
-                            setShowModal(false);
-                            onOpenDeposit?.();
-                          }}
-                        >
-                          <i className="bi bi-wallet2 me-1"></i> Nạp thêm ví
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+              <div className="d-flex justify-content-between align-items-center pt-2 border-top">
+                <small className="text-muted">
+                  Ví của bạn: <strong>{Number(currentUser?.walletBalance || 0).toLocaleString('vi-VN')} đ</strong>
+                </small>
 
-                  {alertInfo && (
-                    <Alert variant={alertInfo.variant} className="py-2 small">
-                      {alertInfo.message}
-                    </Alert>
-                  )}
-
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => setShowModal(false)}>
-                      Để sau
-                    </Button>
-                    {!currentUser ? (
-                      <Button variant="primary" size="sm" className="fw-bold" onClick={() => alert('Vui lòng đăng nhập để thanh toán combo')}>
-                        <i className="bi bi-box-arrow-in-right me-1"></i> Đăng nhập để mua
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="success"
-                        size="sm"
-                        className="fw-bold px-4"
-                        disabled={checkoutLoading || currentUser.walletBalance < quote.final_amount}
-                        onClick={handleCheckout}
-                      >
-                        {checkoutLoading ? (
-                          <>
-                            <Spinner animation="border" size="sm" className="me-1" />
-                            Đang xử lý giao dịch...
-                          </>
-                        ) : (
-                          <>
-                            <i className="bi bi-check2-circle me-1"></i> Thanh Toán Gói Ngay
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : null}
+                {!currentUser ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="fw-bold rounded-pill px-3"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onNavigate?.('bundles');
+                    }}
+                  >
+                    Xem chi tiết gói
+                  </Button>
+                ) : currentUser.walletBalance < quote.final_amount ? (
+                  <Button
+                    variant="outline-warning"
+                    size="sm"
+                    className="fw-bold text-dark rounded-pill px-3"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onOpenDeposit?.();
+                    }}
+                  >
+                    <i className="bi bi-wallet2 me-1"></i> Nạp thêm ví
+                  </Button>
+                ) : (
+                  <Button
+                    variant="success"
+                    size="sm"
+                    className="fw-bold rounded-pill px-3"
+                    disabled={checkoutLoading}
+                    onClick={handleCheckout}
+                  >
+                    {checkoutLoading ? 'Đang mua...' : 'Thanh toán ngay'}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
-        </Modal.Body>
+
+          {/* Dải Nút Hành Động & Lựa Chọn Ẩn 4 Tiếng (Giống Mẫu Auth) */}
+          <div className="pt-2 border-top">
+            {/* Checkbox ẩn thông báo 4 tiếng */}
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <Form.Check
+                type="checkbox"
+                id="snooze-4h-checkbox"
+                checked={snoozeCheckbox}
+                onChange={(e) => setSnoozeCheckbox(e.target.checked)}
+                label={
+                  <span className="small text-muted fw-semibold">
+                    Không hiển thị lại thông báo này trong 4 tiếng
+                  </span>
+                }
+                className="user-select-none"
+              />
+
+              <Button
+                variant="link"
+                size="sm"
+                className="text-muted p-0 small text-decoration-none"
+                onClick={() => handleClose(null, true)}
+                title="Ẩn ngay thông báo trong 4 tiếng"
+              >
+                <i className="bi bi-clock-history me-1"></i> Ẩn 4 tiếng
+              </Button>
+            </div>
+
+            {/* Các Nút Hành Động Chính */}
+            <div className="d-grid gap-2">
+              <Button
+                variant="primary"
+                size="lg"
+                className="fw-bold rounded-3 shadow-sm py-2 d-flex align-items-center justify-content-center gap-2"
+                onClick={() => {
+                  if (!quote && selectedBundle) {
+                    handleOpenQuote(selectedBundle);
+                  } else {
+                    setIsOpen(false);
+                    onNavigate?.('bundles');
+                  }
+                }}
+              >
+                {quoteLoading ? (
+                  <>
+                    <Spinner animation="border" size="sm" />
+                    Đang tính giá ưu đãi...
+                  </>
+                ) : quote ? (
+                  <>
+                    <i className="bi bi-tags-fill text-warning"></i>
+                    Đến Trang Chi Tiết Combo
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-tag-fill text-warning"></i>
+                    Nhận Báo Giá Thông Minh & Xem Gói
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="light"
+                size="sm"
+                className="text-muted border-0 fw-semibold py-2"
+                onClick={() => handleClose(null, false)}
+              >
+                Để xem sau, tiếp tục duyệt khóa học
+              </Button>
+            </div>
+          </div>
+        </div>
       </Modal>
+
+      {/* 2. NÚT GHIM NỔI Ở GÓC MÀN HÌNH (Để mở lại bất cứ lúc nào) */}
+      <div className="position-fixed bottom-0 start-0 m-3" style={{ zIndex: 1040 }}>
+        <button
+          type="button"
+          className="btn btn-sm rounded-pill shadow-lg d-flex align-items-center gap-2 px-3 py-2 fw-semibold border transition hover-shadow"
+          style={{
+            backgroundColor: '#0d3b66',
+            color: '#ffb700',
+            borderColor: '#ffb700',
+            cursor: 'pointer',
+          }}
+          onClick={handleReopen}
+          title="Nhấn để mở xem thông báo ưu đãi Combo"
+        >
+          <i className="bi bi-bell-fill text-warning"></i>
+          <span>Ưu Đãi Combo (-{maxSaving}%)</span>
+          {remainingText && (
+            <span className="badge bg-warning text-dark ms-1 small">{remainingText}</span>
+          )}
+        </button>
+      </div>
     </>
   );
 }
