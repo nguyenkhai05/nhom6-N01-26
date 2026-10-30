@@ -119,6 +119,27 @@ describe('Codecademy-Inspired Features Unit Tests (Compare, Course Finder, Trial
       });
 
       expect(res.items[0].missingPrerequisites.length).toBeGreaterThan(0);
+      expect(res.needsPreparation.length).toBeGreaterThan(0);
+    });
+
+    it('CF-T04: Chế độ STRICT loại bỏ các khóa vượt quá ngân sách tối đa', async () => {
+      const res = await finderService.getRecommendations({
+        goal: 'FRONTEND',
+        budgetMaxVnd: 500000,
+        budgetMode: 'STRICT',
+      });
+      // Khóa React giá 890.000đ > 500.000đ bị loại
+      expect(res.items.length).toBe(0);
+    });
+
+    it('CF-T06: Chế độ FLEXIBLE giữ khóa vượt ngân sách và bổ sung lý do cảnh báo', async () => {
+      const res = await finderService.getRecommendations({
+        goal: 'FRONTEND',
+        budgetMaxVnd: 500000,
+        budgetMode: 'FLEXIBLE',
+      });
+      expect(res.items.length).toBeGreaterThan(0);
+      expect(res.items[0].reasons.some((r: string) => r.includes('vượt mức ngân sách'))).toBe(true);
     });
   });
 

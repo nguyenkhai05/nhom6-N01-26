@@ -10,6 +10,8 @@
 
 Bản này viết lại nội dung tổng hợp để dùng đồng thời cho **định hướng sản phẩm, giao AI triển khai và chuẩn bị báo cáo**. Không chỉ liệt kê tên menu: mỗi mục được làm rõ về màn hình, hành vi, dữ liệu, quản trị, tình huống lỗi và điều kiện nghiệm thu.
 
+**Bổ sung chuyên sâu ngày 30/10/2026:** [Chọn khóa phù hợp, Luyện tập và Học thử](C:/Users/nuicu/vibe_coder/nhom6-N01-26-main/DAC_TA_CHI_TIET_CHON_KHOA_LUYEN_TAP_HOC_THU_EDUVIET.md). Phụ lục này đọc thêm ba module ở HEAD `37959a4`, có thuật toán, hợp đồng dữ liệu, màn hình và tiêu chí kiểm chứng chi tiết. Các quan sát HT trong bản tổng hợp này vẫn thuộc baseline `31549af`; phải kiểm tra lại ở HEAD mới trước khi kết luận lỗi còn tồn tại hoặc giao AI sửa lại.
+
 Giữ nguyên bản gốc để đối chiếu. Bản mới **không tự nhận mọi chức năng mô tả đã hoàn thành**.
 
 ### 1.1 Phân biệt ba loại thông tin

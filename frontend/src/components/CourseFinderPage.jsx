@@ -396,6 +396,39 @@ export default function CourseFinderPage({ currentUser, onNavigate, onCourseSele
                     );
                   })}
                 </div>
+
+                {/* Danh mục khóa học cần chuẩn bị thêm nền tảng (CF03 / NEEDS_FOUNDATION) */}
+                {results.needsPreparation?.length > 0 && (
+                  <div className="mt-4 pt-3 border-top">
+                    <h6 className="fw-bold text-muted d-flex align-items-center gap-2 mb-3">
+                      <i className="bi bi-mortarboard text-warning"></i>
+                      Khóa học cần chuẩn bị thêm nền tảng ({results.needsPreparation.length})
+                    </h6>
+                    <div className="d-flex flex-column gap-3">
+                      {results.needsPreparation.map((item) => (
+                        <Card key={item.course.course_id} className="border-warning shadow-sm rounded-4 p-3 bg-warning-subtle bg-opacity-10">
+                          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                              <strong className="text-dark d-block">{item.course.title}</strong>
+                              <div className="text-danger small mt-1">
+                                <i className="bi bi-exclamation-triangle-fill me-1"></i>
+                                <strong>Thiếu kỹ năng tiên quyết:</strong> {item.missingPrerequisites?.join(', ')}
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              className="rounded-pill px-3 fw-bold"
+                              onClick={() => (onCourseSelect ? onCourseSelect(item.course) : onNavigate('courses'))}
+                            >
+                              Xem lộ trình
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </Col>

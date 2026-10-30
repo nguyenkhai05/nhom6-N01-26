@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Card, Badge, Button, Nav, Form, Spinner, Alert, ProgressBar, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Nav, Form, Spinner, Alert, ProgressBar, Modal, Table } from 'react-bootstrap';
 import { getPracticeExercises, getSkillAssessments, getSkillAssessment, submitSkillAssessment, getWeeklyChallenge } from '../services/hubApi';
+import { runCodeInSandbox, checkTestCasesInSandbox } from '../utils/codeRunner';
 
 export default function PracticeHub({ currentUser }) {
   const [activeTab, setActiveTab] = useState('exercises'); // 'exercises' | 'bug-fixing' | 'assessment' | 'review' | 'challenge'
@@ -16,6 +17,8 @@ export default function PracticeHub({ currentUser }) {
   const [userCode, setUserCode] = useState('');
   const [codeOutput, setCodeOutput] = useState('');
   const [runningCode, setRunningCode] = useState(false);
+  const [testResults, setTestResults] = useState(null);
+  const [weakAreas, setWeakAreas] = useState([]);
 
   // Assessment flow
   const [activeAssessment, setActiveAssessment] = useState(null);
@@ -23,7 +26,7 @@ export default function PracticeHub({ currentUser }) {
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [submittingAssessment, setSubmittingAssessment] = useState(false);
 
-  const workerRef = useRef(null);
+  const activeRunnerRef = useRef(null);
 
   useEffect(() => {
     loadData();
@@ -43,6 +46,14 @@ export default function PracticeHub({ currentUser }) {
       if (exData && exData.length > 0) {
         selectExercise(exData[0]);
       }
+      // Load saved weak areas for student
+      const weakKey = `eduviet_weak_areas_${currentUser?.userId || 'guest'}`;
+      try {
+        const stored = JSON.parse(localStorage.getItem(weakKey) || '[]');
+        setWeakAreas(stored);
+      } catch {
+        setWeakAreas([]);
+      }
     } catch (err) {
       console.error('Lỗi nạp dữ liệu Luyện tập:', err);
     } finally {
@@ -54,56 +65,93 @@ export default function PracticeHub({ currentUser }) {
     setActiveExercise(ex);
     setUserCode(ex.initial_code || '');
     setCodeOutput('');
+    setTestResults(null);
   };
 
-  // Chạy code an toàn qua Web Worker Sandbox kèm Watchdog 2000ms
-  const handleRunCode = () => {
+  // Dừng thực thi sandbox
+  const handleStopCode = () => {
+    if (activeRunnerRef.current) {
+      activeRunnerRef.current.cancel();
+      activeRunnerRef.current = null;
+    }
+    setRunningCode(false);
+    setCodeOutput((prev) => (prev ? prev + '\n' : '') + '⏹️ Đã dừng thực thi theo yêu cầu người dùng.');
+  };
+
+  // Chạy code an toàn qua Web Worker Sandbox kèm Watchdog 3000ms
+  const handleRunCode = async () => {
     if (!userCode.trim()) return;
+    if (activeRunnerRef.current) {
+      activeRunnerRef.current.cancel();
+    }
     setRunningCode(true);
     setCodeOutput('Đang thực thi mã nguồn trong Web Worker Sandbox...');
+    setTestResults(null);
 
-    if (workerRef.current) {
-      workerRef.current.terminate();
-    }
+    const runner = runCodeInSandbox({ code: userCode, timeoutMs: 3000 });
+    activeRunnerRef.current = runner;
 
-    const workerCode = `
-      self.onmessage = function(e) {
-        let logs = [];
-        const originalLog = console.log;
-        console.log = function(...args) {
-          logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        };
-        try {
-          const runFn = new Function(e.data);
-          runFn();
-          self.postMessage({ success: true, logs: logs.join('\\n') });
-        } catch (err) {
-          self.postMessage({ success: false, error: err.toString() });
-        }
-      };
-    `;
-
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    const worker = new Worker(URL.createObjectURL(blob));
-    workerRef.current = worker;
-
-    const timer = setTimeout(() => {
-      worker.terminate();
+    try {
+      const res = await runner.promise;
       setRunningCode(false);
-      setCodeOutput('⚠️ Quá thời gian thực thi (Watchdog Timeout 2000ms). Mã nguồn có thể chứa vòng lặp vô hạn!');
-    }, 2000);
+      activeRunnerRef.current = null;
 
-    worker.onmessage = (e) => {
-      clearTimeout(timer);
-      setRunningCode(false);
-      if (e.data.success) {
-        setCodeOutput(e.data.logs || 'Thực thi thành công (Không có đầu ra console).');
+      if (res.success) {
+        setCodeOutput((res.logs || []).join('\n') || 'Thực thi thành công (Không có đầu ra console).');
       } else {
-        setCodeOutput(`❌ Lỗi thực thi: ${e.data.error}`);
+        setCodeOutput([...(res.logs || []), `❌ Lỗi: ${res.error}`].join('\n'));
       }
-    };
+    } catch (err) {
+      setRunningCode(false);
+      activeRunnerRef.current = null;
+      setCodeOutput(`❌ Lỗi thực thi Sandbox: ${err.message}`);
+    }
+  };
 
-    worker.postMessage(userCode);
+  // Kiểm tra đáp án thực tế với bộ Test Cases
+  const handleCheckExercise = async () => {
+    if (!activeExercise?.test_cases?.length) {
+      setCodeOutput('Bài tập này không có test cases tự động.');
+      return;
+    }
+    if (activeRunnerRef.current) {
+      activeRunnerRef.current.cancel();
+    }
+    setRunningCode(true);
+    setCodeOutput('Đang kiểm tra mã nguồn với bộ Test Cases chuẩn...');
+    setTestResults(null);
+
+    const runner = checkTestCasesInSandbox({
+      code: userCode,
+      testCases: activeExercise.test_cases,
+      timeoutMs: 3500,
+    });
+    activeRunnerRef.current = runner;
+
+    try {
+      const data = await runner.promise;
+      setRunningCode(false);
+      activeRunnerRef.current = null;
+
+      if (data.results) {
+        setTestResults({
+          passedCount: data.passedCount || 0,
+          total: data.total || activeExercise.test_cases.length,
+          results: data.results,
+        });
+        if (data.passedCount === (data.total || activeExercise.test_cases.length)) {
+          setCodeOutput('🎉 Chúc mừng! Toàn bộ Test Cases đã vượt qua thành công 100%.');
+        } else {
+          setCodeOutput(`⚠️ Đã hoàn thành kiểm tra: Vượt qua ${data.passedCount}/${data.total} test cases.`);
+        }
+      } else {
+        setCodeOutput(`❌ Kiểm tra thất bại: ${data.error || 'Lỗi không xác định'}`);
+      }
+    } catch (err) {
+      setRunningCode(false);
+      activeRunnerRef.current = null;
+      setCodeOutput(`❌ Lỗi Sandbox: ${err.message}`);
+    }
   };
 
   // Bắt đầu làm bài đánh giá năng lực
@@ -135,6 +183,27 @@ export default function PracticeHub({ currentUser }) {
       }));
       const res = await submitSkillAssessment(activeAssessment.assessment_id, answersArray);
       setAssessmentResult(res);
+
+      // Lưu lại các câu sai vào lịch sử ôn tập điểm yếu (Weak Areas)
+      if (res.detailed_results) {
+        const missed = res.detailed_results
+          .filter((r) => !r.is_correct)
+          .map((r) => ({
+            id: r.question_id,
+            assessmentTitle: activeAssessment.title,
+            questionText: r.question_text,
+            skillCategory: r.skill_category,
+            explanation: r.explanation,
+            timestamp: new Date().toLocaleDateString('vi-VN'),
+          }));
+        if (missed.length > 0) {
+          const weakKey = `eduviet_weak_areas_${currentUser?.userId || 'guest'}`;
+          const prev = JSON.parse(localStorage.getItem(weakKey) || '[]');
+          const combined = [...missed, ...prev.filter((p) => !missed.some((m) => m.id === p.id))].slice(0, 15);
+          localStorage.setItem(weakKey, JSON.stringify(combined));
+          setWeakAreas(combined);
+        }
+      }
     } catch (err) {
       alert(err.message || 'Lỗi khi nộp bài');
     } finally {
@@ -274,20 +343,44 @@ export default function PracticeHub({ currentUser }) {
             <Col lg={8}>
               {activeExercise ? (
                 <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
-                  <div className="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                  <div className="bg-dark text-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
                       <h5 className="fw-bold mb-0">{activeExercise.title}</h5>
                       <small className="text-secondary">{activeExercise.skill} · Cấp độ: {activeExercise.difficulty}</small>
                     </div>
-                    <Button
-                      variant="success"
-                      className="fw-bold px-4 rounded-pill shadow-sm"
-                      disabled={runningCode}
-                      onClick={handleRunCode}
-                    >
-                      {runningCode ? <Spinner size="sm" animation="border" className="me-2" /> : <i className="bi bi-play-fill me-1"></i>}
-                      Chạy Thử Nghiệm
-                    </Button>
+                    <div className="d-flex gap-2">
+                      {runningCode && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="fw-bold px-3 rounded-pill shadow-sm"
+                          onClick={handleStopCode}
+                        >
+                          <i className="bi bi-stop-circle-fill me-1"></i> Dừng
+                        </Button>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="fw-bold px-3 rounded-pill"
+                        disabled={runningCode}
+                        onClick={handleRunCode}
+                      >
+                        <i className="bi bi-play-fill me-1"></i> Chạy Thử
+                      </Button>
+                      {activeExercise.test_cases?.length > 0 && (
+                        <Button
+                          variant="success"
+                          size="sm"
+                          className="fw-bold px-4 rounded-pill shadow-sm"
+                          disabled={runningCode}
+                          onClick={handleCheckExercise}
+                        >
+                          {runningCode ? <Spinner size="sm" animation="border" className="me-1" /> : <i className="bi bi-check2-circle me-1"></i>}
+                          Kiểm Tra Đáp Án
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <Card.Body className="p-4">
@@ -314,14 +407,58 @@ export default function PracticeHub({ currentUser }) {
                     </Form.Group>
 
                     {/* Console Output */}
-                    <div>
+                    <div className="mb-3">
                       <Form.Label className="small fw-bold text-secondary">
                         <i className="bi bi-display me-1"></i> Kết quả thực thi (Console Output):
                       </Form.Label>
                       <pre className="bg-dark text-light p-3 rounded-3 small mb-0" style={{ minHeight: 80, maxHeight: 150, overflowY: 'auto' }}>
-                        {codeOutput || '// Nhấn "Chạy Thử Nghiệm" để xem kết quả xuất ra màn hình console...'}
+                        {codeOutput || '// Nhấn "Chạy Thử" để xem log console hoặc "Kiểm Tra Đáp Án" để chạy test cases...'}
                       </pre>
                     </div>
+
+                    {/* Bảng kết quả Test Cases (Actual vs Expected) */}
+                    {testResults && (
+                      <div className="mt-3">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <Form.Label className="small fw-bold text-secondary mb-0">
+                            <i className="bi bi-check2-all me-1"></i> Kết quả kiểm thử ({testResults.passedCount}/{testResults.total} đạt):
+                          </Form.Label>
+                          <Badge bg={testResults.passedCount === testResults.total ? 'success' : 'warning'}>
+                            {testResults.passedCount === testResults.total ? 'TOÀN BỘ ĐẠT' : 'CHƯA ĐẠT HẾT'}
+                          </Badge>
+                        </div>
+                        <div className="table-responsive">
+                          <Table size="sm" bordered hover className="small mb-0 align-middle">
+                            <thead className="table-light">
+                              <tr>
+                                <th>#</th>
+                                <th>Mô tả</th>
+                                <th>Đầu vào (Input)</th>
+                                <th>Kỳ vọng (Expected)</th>
+                                <th>Thực tế (Actual)</th>
+                                <th>Kết quả</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {testResults.results.map((tr, idx) => (
+                                <tr key={idx} className={tr.passed ? 'table-success-subtle' : 'table-danger-subtle'}>
+                                  <td>{idx + 1}</td>
+                                  <td>{tr.description || 'Test case'}</td>
+                                  <td className="font-monospace">{tr.input}</td>
+                                  <td className="font-monospace text-success">{tr.expected_output}</td>
+                                  <td className="font-monospace">{tr.actual}</td>
+                                  <td>
+                                    <Badge bg={tr.passed ? 'success' : 'danger'}>
+                                      {tr.passed ? 'PASSED' : 'FAILED'}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      </div>
+                    )}
                   </Card.Body>
                 </Card>
               ) : null}
@@ -455,18 +592,85 @@ export default function PracticeHub({ currentUser }) {
 
         {/* TAB 3: ÔN TẬP ĐIỂM YẾU */}
         {activeTab === 'review' && (
-          <Card className="border-0 shadow-sm rounded-4 p-5 text-center bg-light">
-            <i className="bi bi-shield-check text-success display-3 mb-3 d-block"></i>
-            <h4 className="fw-bold text-dark mb-2">Trung Tâm Ôn Tập Lỗ Hổng Kiến Thức</h4>
-            <p className="text-muted mx-auto mb-4" style={{ maxWidth: 600 }}>
-              Hệ thống tự động theo dõi các câu hỏi trắc nghiệm bạn trả lời sai trong các bài kiểm tra năng lực và phòng học trực tuyến để tạo các bài ôn luyện chuyên sâu.
-            </p>
-            <div>
-              <Button variant="primary" className="fw-bold rounded-pill px-4" onClick={() => setActiveTab('assessment')}>
-                Kiểm Tra Năng Lực Ngay
-              </Button>
-            </div>
-          </Card>
+          <div>
+            {weakAreas.length === 0 ? (
+              <Card className="border-0 shadow-sm rounded-4 p-5 text-center bg-light">
+                <i className="bi bi-shield-check text-success display-3 mb-3 d-block"></i>
+                <h4 className="fw-bold text-dark mb-2">Trung Tâm Ôn Tập Lỗ Hổng Kiến Thức</h4>
+                <p className="text-muted mx-auto mb-4" style={{ maxWidth: 600 }}>
+                  Hiện tại bạn chưa có câu hỏi nào bị trả lời sai hoặc cần ôn tập bổ sung. Hãy làm bài kiểm tra năng lực để hệ thống tự động phân tích và tạo lộ trình ôn tập cá nhân hóa!
+                </p>
+                <div>
+                  <Button variant="primary" className="fw-bold rounded-pill px-4" onClick={() => setActiveTab('assessment')}>
+                    Làm Bài Kiểm Tra Năng Lực Ngay
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                  <div>
+                    <h4 className="fw-bold text-dark mb-1">
+                      <i className="bi bi-bullseye text-danger me-2"></i>
+                      Danh Mục Câu Hỏi Cần Củng Cố ({weakAreas.length})
+                    </h4>
+                    <p className="text-muted small mb-0">
+                      Được ghi nhận tự động từ các câu trả lời chưa chính xác trong các bài đánh giá năng lực gần đây.
+                    </p>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      className="rounded-pill"
+                      onClick={() => {
+                        if (window.confirm('Bạn có chắc muốn xóa lịch sử các câu hỏi cần ôn tập?')) {
+                          const weakKey = `eduviet_weak_areas_${currentUser?.userId || 'guest'}`;
+                          localStorage.removeItem(weakKey);
+                          setWeakAreas([]);
+                        }
+                      }}
+                    >
+                      <i className="bi bi-trash me-1"></i> Xóa lịch sử
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="rounded-pill fw-bold"
+                      onClick={() => setActiveTab('assessment')}
+                    >
+                      <i className="bi bi-arrow-repeat me-1"></i> Kiểm tra lại
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="d-flex flex-column gap-3">
+                  {weakAreas.map((w, idx) => (
+                    <Card key={idx} className="border-0 shadow-sm rounded-4 p-4 border-start border-4 border-warning">
+                      <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <div className="d-flex align-items-center gap-2">
+                          <Badge bg="warning-subtle" text="warning" className="px-3 py-1 rounded-pill fw-bold border border-warning-subtle">
+                            {w.skillCategory || 'Chuyên đề'}
+                          </Badge>
+                          <small className="text-muted">{w.assessmentTitle}</small>
+                        </div>
+                        <small className="text-muted">{w.timestamp}</small>
+                      </div>
+                      <h6 className="fw-bold text-dark mb-2">{w.questionText}</h6>
+                      {w.explanation && (
+                        <div className="p-3 bg-light rounded-3 small text-secondary border">
+                          <strong className="text-dark d-block mb-1">
+                            <i className="bi bi-lightbulb-fill text-warning me-1"></i> Giải thích kiến thức trọng tâm:
+                          </strong>
+                          {w.explanation}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* TAB 4: THỬ THÁCH TUẦN & LEADERBOARD */}

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, Accordion, Modal } from 'react-bootstrap';
 import { getTrials, getTrial } from '../services/hubApi';
+import { runCodeInSandbox, checkTestCasesInSandbox } from '../utils/codeRunner';
 
 export default function InteractiveTrialPage({ currentUser, onNavigate, onCourseSelect }) {
   const [trials, setTrials] = useState([]);
@@ -15,6 +16,7 @@ export default function InteractiveTrialPage({ currentUser, onNavigate, onCourse
   const [testResults, setTestResults] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const activeRunnerRef = useRef(null);
 
   useEffect(() => {
     loadTrials();
@@ -59,211 +61,99 @@ export default function InteractiveTrialPage({ currentUser, onNavigate, onCourse
     }
   };
 
-  // Chạy mã nguồn an toàn bằng Web Worker
-  const handleRunCode = () => {
+  // Dừng thực thi nếu sinh viên bấm "Dừng" hoặc code bị lặp
+  const handleStopExecution = () => {
+    if (activeRunnerRef.current) {
+      activeRunnerRef.current.cancel();
+      activeRunnerRef.current = null;
+    }
+    setIsRunning(false);
+    setOutputLogs((prev) => [...prev, '⏹️ Đã dừng thực thi theo yêu cầu người dùng.']);
+  };
+
+  // Chạy mã nguồn an toàn bằng Web Worker Sandbox
+  const handleRunCode = async () => {
+    if (activeRunnerRef.current) {
+      activeRunnerRef.current.cancel();
+    }
     setIsRunning(true);
-    setOutputLogs(['[Đang thực thi mã nguồn...]']);
+    setOutputLogs(['[Đang thực thi mã nguồn trong Web Worker Sandbox...]']);
     setTestResults(null);
 
-    const workerScript = `
-      self.onmessage = function(e) {
-        const code = e.data.code;
-        const logs = [];
-        const originalLog = console.log;
-        console.log = function(...args) {
-          logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        };
-
-        try {
-          const run = new Function(code);
-          run();
-          self.postMessage({ success: true, logs: logs.length ? logs : ['(Thực thi thành công, không có log)'] });
-        } catch (err) {
-          self.postMessage({ success: false, error: err.message, logs: logs });
-        }
-      };
-    `;
+    const runner = runCodeInSandbox({ code: userCode, timeoutMs: 3000 });
+    activeRunnerRef.current = runner;
 
     try {
-      const blob = new Blob([workerScript], { type: 'application/javascript' });
-      const workerUrl = URL.createObjectURL(blob);
-      const worker = new Worker(workerUrl);
+      const res = await runner.promise;
+      setIsRunning(false);
+      activeRunnerRef.current = null;
 
-      const timeoutId = setTimeout(() => {
-        worker.terminate();
-        URL.revokeObjectURL(workerUrl);
-        setIsRunning(false);
-        setOutputLogs(['Lỗi: Quá thời gian thực thi (Timeout 3000ms). Vui lòng kiểm tra vòng lặp vô tận.']);
-      }, 3000);
-
-      worker.onmessage = (e) => {
-        clearTimeout(timeoutId);
-        worker.terminate();
-        URL.revokeObjectURL(workerUrl);
-        setIsRunning(false);
-
-        if (e.data.success) {
-          setOutputLogs(e.data.logs);
-        } else {
-          setOutputLogs([...(e.data.logs || []), `Lỗi thực thi: ${e.data.error}`]);
-        }
-      };
-
-      worker.postMessage({ code: userCode });
+      if (res.success) {
+        setOutputLogs(res.logs || ['(Thực thi hoàn tất)']);
+      } else {
+        setOutputLogs([...(res.logs || []), `Lỗi thực thi: ${res.error}`]);
+      }
     } catch (err) {
       setIsRunning(false);
-      setOutputLogs([`Lỗi khởi tạo sandbox: ${err.message}`]);
+      activeRunnerRef.current = null;
+      setOutputLogs([`Lỗi sandbox: ${err.message}`]);
     }
   };
 
   // Kiểm tra đáp án thực tế qua Web Worker Sandbox (Thực thi test cases thật, không giả lập chuỗi)
-  const handleCheckSolution = () => {
+  const handleCheckSolution = async () => {
     if (!activeTrial?.test_cases?.length) {
       setOutputLogs(['Bài học này không có test cases tự động. Bạn hãy xem mục Gợi ý để kiểm tra.']);
       return;
     }
 
+    if (activeRunnerRef.current) {
+      activeRunnerRef.current.cancel();
+    }
+
     setIsRunning(true);
-    setOutputLogs(['[Đang nạp mã nguồn vào Sandbox và thực thi từng Test Case thực tế...]']);
+    setOutputLogs(['[Đang nạp mã nguồn vào Sandbox và kiểm tra từng Test Case...]']);
     setTestResults(null);
 
-    const workerScript = `
-      self.onmessage = function(e) {
-        const { code, testCases, trialId } = e.data;
-        const results = [];
-        let passedCount = 0;
-
-        try {
-          const fnScope = new Function(\`
-            \${code};
-            return {
-              WelcomeCard: typeof WelcomeCard !== 'undefined' ? WelcomeCard : undefined,
-              getCourseOverview: typeof getCourseOverview !== 'undefined' ? getCourseOverview : undefined,
-              calculateAverageScore: typeof calculateAverageScore !== 'undefined' ? calculateAverageScore : (typeof calculate_average_score !== 'undefined' ? calculate_average_score : undefined),
-              validateDevOpsPipeline: typeof validateDevOpsPipeline !== 'undefined' ? validateDevOpsPipeline : undefined,
-              __eval: function(expr) { return eval(expr); }
-            };
-          \`);
-          const exports = fnScope();
-
-          for (let i = 0; i < testCases.length; i++) {
-            const tc = testCases[i];
-            let actualVal;
-            let passed = false;
-
-            try {
-              let result;
-              if (trialId === 1 && typeof exports.WelcomeCard === 'function') {
-                const args = new Function('return (' + tc.input + ')')();
-                result = exports.WelcomeCard(args);
-              } else if (trialId === 2 && typeof exports.getCourseOverview === 'function') {
-                result = exports.__eval(tc.input);
-              } else if (trialId === 3 && (typeof exports.calculateAverageScore === 'function' || typeof exports.calculate_average_score === 'function')) {
-                const fn = exports.calculateAverageScore || exports.calculate_average_score;
-                const args = new Function('return (' + tc.input + ')')();
-                result = fn(args);
-              } else if (trialId === 4 && typeof exports.validateDevOpsPipeline === 'function') {
-                const args = new Function('return (' + tc.input + ')')();
-                result = exports.validateDevOpsPipeline(args);
-              } else {
-                result = exports.__eval(tc.input);
-              }
-
-              const actualStr = typeof result === 'object' && result !== null ? JSON.stringify(result) : String(result);
-              actualVal = actualStr;
-
-              const expTrim = String(tc.expected_output).trim();
-              const actTrim = actualStr.trim();
-
-              if ((actTrim.startsWith('{') || actTrim.startsWith('[')) && (expTrim.startsWith('{') || expTrim.startsWith('['))) {
-                try {
-                  passed = JSON.stringify(JSON.parse(actTrim)) === JSON.stringify(JSON.parse(expTrim));
-                } catch {
-                  passed = actTrim === expTrim;
-                }
-              } else {
-                passed = actTrim === expTrim;
-              }
-            } catch (execErr) {
-              actualVal = 'Lỗi thực thi: ' + execErr.message;
-              passed = false;
-            }
-
-            if (passed) passedCount++;
-            results.push({
-              ...tc,
-              passed,
-              actual: actualVal,
-            });
-          }
-
-          self.postMessage({
-            success: true,
-            passedCount,
-            total: testCases.length,
-            results,
-          });
-        } catch (syntaxErr) {
-          self.postMessage({
-            success: false,
-            error: 'Lỗi cú pháp (SyntaxError): ' + syntaxErr.message,
-            results: testCases.map(tc => ({ ...tc, passed: false, actual: 'Lỗi cú pháp: ' + syntaxErr.message })),
-          });
-        }
-      };
-    `;
+    const runner = checkTestCasesInSandbox({
+      code: userCode,
+      testCases: activeTrial.test_cases,
+      trialId: activeTrial.trial_id,
+      timeoutMs: 3500,
+    });
+    activeRunnerRef.current = runner;
 
     try {
-      const blob = new Blob([workerScript], { type: 'application/javascript' });
-      const workerUrl = URL.createObjectURL(blob);
-      const worker = new Worker(workerUrl);
+      const data = await runner.promise;
+      setIsRunning(false);
+      activeRunnerRef.current = null;
 
-      const timeoutId = setTimeout(() => {
-        worker.terminate();
-        URL.revokeObjectURL(workerUrl);
-        setIsRunning(false);
-        setOutputLogs(['Lỗi: Quá thời gian thực thi (Timeout 3000ms). Vui lòng kiểm tra vòng lặp vô tận.']);
-      }, 3000);
+      if (data.results) {
+        setTestResults({
+          passedCount: data.passedCount || 0,
+          total: data.total || activeTrial.test_cases.length,
+          results: data.results,
+        });
 
-      worker.onmessage = (e) => {
-        clearTimeout(timeoutId);
-        worker.terminate();
-        URL.revokeObjectURL(workerUrl);
-        setIsRunning(false);
-
-        const data = e.data;
-        if (data.results) {
-          setTestResults({
-            passedCount: data.passedCount || 0,
-            total: data.total || activeTrial.test_cases.length,
-            results: data.results,
-          });
-
-          if (data.passedCount === (data.total || activeTrial.test_cases.length)) {
-            setOutputLogs([
-              '🎉 Chúc mừng! Toàn bộ Test Cases đã vượt qua thành công.',
-              'Mã nguồn của bạn đã thực thi chuẩn xác và trả về kết quả khớp với toàn bộ điều kiện kiểm thử!',
-            ]);
-            setTimeout(() => setShowCompletionModal(true), 800);
-          } else {
-            setOutputLogs([
-              '⚠️ Một số Test Cases chưa vượt qua kết quả thực tế.',
-              data.error || 'Hãy xem mục Chi tiết Test Cases bên dưới để đối chiếu Actual vs Expected.',
-            ]);
-          }
+        if (data.passedCount === (data.total || activeTrial.test_cases.length)) {
+          setOutputLogs([
+            '🎉 Chúc mừng! Toàn bộ Test Cases đã vượt qua thành công.',
+            'Mã nguồn của bạn đã thực thi chuẩn xác và trả về kết quả khớp với toàn bộ điều kiện kiểm thử!',
+          ]);
+          setTimeout(() => setShowCompletionModal(true), 800);
         } else {
-          setOutputLogs([data.error || 'Kiểm tra thất bại.']);
+          setOutputLogs([
+            '⚠️ Một số Test Cases chưa vượt qua kết quả thực tế.',
+            data.error || 'Hãy xem mục Chi tiết Test Cases bên dưới để đối chiếu Actual vs Expected.',
+          ]);
         }
-      };
-
-      worker.postMessage({
-        code: userCode,
-        testCases: activeTrial.test_cases || [],
-        trialId: activeTrial.trial_id,
-      });
+      } else {
+        setOutputLogs([data.error || 'Kiểm tra thất bại.']);
+      }
     } catch (err) {
       setIsRunning(false);
-      setOutputLogs([`Lỗi khởi tạo sandbox: ${err.message}`]);
+      activeRunnerRef.current = null;
+      setOutputLogs([`Lỗi sandbox: ${err.message}`]);
     }
   };
 
@@ -438,6 +328,16 @@ export default function InteractiveTrialPage({ currentUser, onNavigate, onCourse
                     </small>
 
                     <div className="d-flex gap-2">
+                      {isRunning && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="fw-bold rounded-pill px-3 shadow-sm"
+                          onClick={handleStopExecution}
+                        >
+                          <i className="bi bi-stop-circle-fill me-1"></i> Dừng
+                        </Button>
+                      )}
                       <Button
                         variant="secondary"
                         size="sm"
