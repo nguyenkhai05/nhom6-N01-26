@@ -89,10 +89,10 @@ export default function Header({
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'bundles' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('bundles')}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'articles' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('articles')}
                 >
-                  <i className="bi bi-tags-fill me-1 text-danger"></i> Combo ưu đãi
+                  <i className="bi bi-journal-text me-1 text-danger"></i> Bài viết
                 </button>
               </li>
               {currentUser?.role === 'ADMIN'  && (

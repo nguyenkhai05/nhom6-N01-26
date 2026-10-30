@@ -6,7 +6,7 @@ const QUICK_LINKS = [
   { label: 'Trung tâm luyện tập', route: 'practice' },
   { label: 'Dự án thực tế', route: 'projects' },
   { label: 'Cộng đồng học viên', route: 'community' },
-  { label: 'Combo ưu đãi trọn gói', route: 'bundles' },
+  { label: 'Bài viết & Cẩm nang', route: 'articles' },
   { label: 'Khóa học của tôi', route: 'my-learning' },
 ];
 
@@ -16,7 +16,7 @@ const COLUMNS = [
     { label: 'Kho bài tập & Thử thách', route: 'practice' },
     { label: 'Dự án thực chiến có Rubric', route: 'projects' },
     { label: 'Cộng đồng trao đổi Q&A', route: 'community' },
-    { label: 'Combo tiết kiệm học phí', route: 'bundles' },
+    { label: 'Bài viết công nghệ thực chiến', route: 'articles' },
   ] },
   { title: 'Hỗ trợ học viên', links: [
     { label: 'Khóa học của tôi', route: 'my-learning' },

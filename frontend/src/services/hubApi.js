@@ -56,3 +56,11 @@ export const createCommunityPost = (body) => request('/community/posts', { metho
 export const createCommunityReply = (postId, content) => request(`/community/posts/${postId}/replies`, { method: 'POST', body: JSON.stringify({ content }) });
 export const acceptCommunityReply = (postId, replyId) => request(`/community/posts/${postId}/accept-reply`, { method: 'POST', body: JSON.stringify({ reply_id: replyId }) });
 export const reportContent = (body) => request('/community/reports', { method: 'POST', body: JSON.stringify(body) });
+
+// 5. Bài Viết & Cẩm Nang Công Nghệ (Articles)
+export const getArticles = (query = {}) => {
+  const params = new URLSearchParams(query);
+  return request(`/articles?${params.toString()}`);
+};
+export const getArticle = (idOrSlug) => request(`/articles/${idOrSlug}`);
+export const likeArticle = (id) => request(`/articles/${id}/like`, { method: 'POST' });

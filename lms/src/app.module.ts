@@ -11,6 +11,7 @@ import { BundleModule } from './bundle/bundle.module.js';
 import { ProjectModule } from './project/project.module.js';
 import { PracticeModule } from './practice/practice.module.js';
 import { CommunityModule } from './community/community.module.js';
+import { ArticleModule } from './article/article.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CommunityModule } from './community/community.module.js';
     ProjectModule,
     PracticeModule,
     CommunityModule,
+    ArticleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

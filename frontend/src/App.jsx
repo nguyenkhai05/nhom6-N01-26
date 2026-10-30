@@ -10,6 +10,7 @@ import BundlesPage from './components/BundlesPage';
 import ProjectsHub from './components/ProjectsHub';
 import PracticeHub from './components/PracticeHub';
 import CommunityHub from './components/CommunityHub';
+import ArticlesHub from './components/ArticlesHub';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import { apiMe, clearToken, getToken, saveExtras, toFrontendUser } from './services/auth';
@@ -27,6 +28,7 @@ import PlanSection from './components/home/PlanSection';
 import BrowseSections from './components/home/BrowseSections';
 import DealsSection from './components/home/DealsSection';
 import SavingsAndPopular from './components/home/SavingsAndPopular';
+import ComboNoticeBanner from './components/home/ComboNoticeBanner';
 import './home-sections.css';
 
 // Dữ liệu khóa học lập trình thực chiến EduViet
@@ -613,6 +615,11 @@ export default function App() {
       <main className="flex-grow-1">
         {currentRoute === 'home' && (
           <div className="page-fade-in">
+            <ComboNoticeBanner
+              currentUser={currentUser}
+              onOpenDeposit={() => setShowDepositModal(true)}
+              onNavigate={setCurrentRoute}
+            />
             <Her onSearch={handleSearch} />
             {catalog.status === 'error' && (
               <div className="app-container pt-3">
@@ -780,6 +787,10 @@ export default function App() {
 
         {currentRoute === 'community' && (
           <CommunityHub currentUser={currentUser} />
+        )}
+
+        {currentRoute === 'articles' && (
+          <ArticlesHub onNavigate={setCurrentRoute} onCourseSelect={openCourseDetail} />
         )}
 
         {currentRoute === 'bundles' && (

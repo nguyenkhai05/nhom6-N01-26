@@ -10,6 +10,7 @@ const proxyConfig = {
   '/projects': { target: 'http://localhost:3000', changeOrigin: true },
   '/practice': { target: 'http://localhost:3000', changeOrigin: true },
   '/community': { target: 'http://localhost:3000', changeOrigin: true },
+  '/articles': { target: 'http://localhost:3000', changeOrigin: true },
   '/commerce': { target: 'http://localhost:3000', changeOrigin: true },
   '/learning': { target: 'http://localhost:3000', changeOrigin: true },
 };

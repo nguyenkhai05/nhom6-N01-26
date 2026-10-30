@@ -27,6 +27,7 @@ import { PracticeExercise } from '../practice/entities/practice-exercise.entity.
 import { SkillAssessment } from '../practice/entities/skill-assessment.entity.js';
 import { CommunityPost } from '../community/entities/community-post.entity.js';
 import { CommunityReply } from '../community/entities/community-reply.entity.js';
+import { Article } from '../article/entities/article.entity.js';
 
 export const INITIAL_QUIZ_QUESTIONS = [
   {
@@ -385,6 +386,7 @@ export const databaseProviders = [
           SkillAssessment,
           CommunityPost,
           CommunityReply,
+          Article,
         ],
         // R02: Tắt synchronize: true mặc định để bảo vệ schema CSDL và không drop cột users.created_at
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
@@ -429,6 +431,7 @@ export const databaseProviders = [
         const assessmentRepo = createMockRepository([], 'assessment_id');
         const communityPostRepo = createMockRepository([], 'post_id');
         const communityReplyRepo = createMockRepository([], 'reply_id');
+        const articleRepo = createMockRepository([], 'article_id');
         const defaultRepo = createMockRepository([], 'id');
 
         return {
@@ -462,6 +465,7 @@ export const databaseProviders = [
             if (entity === SkillAssessment || entity?.name === 'SkillAssessment') return assessmentRepo;
             if (entity === CommunityPost || entity?.name === 'CommunityPost') return communityPostRepo;
             if (entity === CommunityReply || entity?.name === 'CommunityReply') return communityReplyRepo;
+            if (entity === Article || entity?.name === 'Article') return articleRepo;
             return defaultRepo;
           },
         } as unknown as DataSource;
