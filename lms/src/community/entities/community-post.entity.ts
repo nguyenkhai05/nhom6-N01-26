@@ -31,8 +31,8 @@ export class CommunityPost {
   @Column({ default: false })
   is_solved: boolean;
 
-  @Column({ nullable: true })
-  accepted_reply_id: number;
+  @Column({ type: 'int', nullable: true })
+  accepted_reply_id: number | null;
 
   @ManyToOne('User', { eager: true })
   @JoinColumn({ name: 'user_id' })

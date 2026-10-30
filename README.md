@@ -11,29 +11,29 @@
 
 - **Khách vãng lai (Guest)**: Xem danh mục khóa học, tìm kiếm theo công nghệ/độ khó, xem đề cương bài giảng và học thử miễn phí.
 - **Học viên chính thức (Student / User)**:
-  - Đăng ký tài khoản nhận ngay **1.000.000 đ** vào ví học tập.
-  - Quản lý ví điện tử: Nạp tiền tự động qua **Vietcombank QR (VietQR 24/7)** và **Ví MoMo Auto-Pay**.
-  - Xem lịch sử biến động số dư ví, nạp tiền và hóa đơn điện tử.
-  - Sở hữu khóa học trọn đời, cấp chứng chỉ tốt nghiệp điện tử có mã QR xác thực.
+  - Đăng ký tài khoản nhận ngay **1.000.000 đ** vào ví học tập qua sổ cái bất biến trên máy chủ.
+  - Hỗ trợ đăng nhập / đăng ký nhanh bằng Google OAuth (Google Account Chooser Modal chuẩn giao diện `accounts.google.com`).
+  - Quản lý ví điện tử: Nạp tiền mô phỏng tự động qua **Vietcombank QR (VietQR 24/7)** và **Ví MoMo Auto-Pay**.
+  - Xem lịch sử biến động số dư ví (Wallet Ledger), đơn hàng đã mua và tiến độ học tập thực tế đồng bộ từ backend.
+  - Sở hữu khóa học trọn đời, phòng học trực tuyến lưu mốc thời gian xem video và ghi chú bài giảng.
 - **Quản trị viên (Admin Singleton)**:
-  - Tài khoản quản trị độc quyền: `admin` / `Eduenglish123`.
+  - Tài khoản quản trị độc quyền: `admin@eduviet.vn` / `Eduenglish123`.
   - Nghiêm cấm mọi hành vi tự do đăng ký tài khoản quyền Admin qua form ngoài.
-  - Toàn quyền CRUD khóa học, duyệt đơn hàng thanh toán chuyển khoản, nạp/trừ ví học viên và quản lý mã giảm giá Voucher.
+  - Toàn quyền CRUD khóa học (`POST/PUT/DELETE /courses`), quản lý danh sách học viên (`/admin/users`), duyệt đơn hàng đối soát và xem báo cáo giao dịch.
 
 ### 2. 📝 Bộ Modal Xác Nhận & Chúc Mừng Chi Tiết (Detailed Confirmations)
 
-- **Bảng Xác Nhận Đăng Ký Tài Khoản**: Rà soát đầy đủ họ tên, email Gmail, số điện thoại, lộ trình theo đuổi, mật khẩu mã hóa SHA-256, thẻ định danh học viên `STU-xxxxxx` và quà tặng chào mừng.
-- **Bảng Xác Nhận Đăng Ký Khóa Học**: Đối soát học phí, số dư ví hiện có, số dư còn lại sau khi thanh toán, quyền lợi học trọn đời và cam kết hoàn tiền 100% trong 7 ngày.
-- **Bảng Xác Nhận Nạp Tiền Vào Ví**: Quy trình 2 bước trực quan, tự động miễn phí 100% cổng thanh toán, sinh mã tham chiếu `DEP-xxxxx`.
+- **Bảng Xác Nhận Đăng Ký Tài Khoản**: Rà soát đầy đủ họ tên, email, số điện thoại, lộ trình theo đuổi, thẻ định danh học viên `STU-xxxxxx` và quà tặng chào mừng.
+- **Bảng Xác Nhận Đăng Ký Khóa Học**: Đối soát học phí, số dư ví hiện có, số dư còn lại sau khi thanh toán, quyền lợi học trọn đời và cam kết chất lượng.
+- **Bảng Xác Nhận Nạp Tiền Vào Ví**: Quy trình 2 bước trực quan, tự động cập nhật số dư ví và lưu sổ cái giao dịch máy chủ.
 - **Màn Hình Chúc Mừng Vinh Danh**: Thông báo hoàn tất kèm biên lai điện tử và nút **"Vào Học Ngay Lập Tức"**.
 
-### 3. 💻 Phòng Học Trực Tuyến Tương Tác (Course Learning Room)
+### 3. 💻 Phòng Học Trực Tuyến & Bộ Công Cụ Tương Tác
 
-- **Trình chiếu Video bài giảng**: Tích hợp danh sách bài học chia theo chương, theo dõi tiến độ hoàn thành tự động theo tỉ lệ phần trăm.
-- **EduViet Live Interactive Code Studio**:
-  - Khung soạn thảo code trực tiếp trên trình duyệt (JavaScript / Node.js 20).
-  - Tích hợp Terminal Console Output biên dịch code trực tuyến tức thì.
-- **Mục "Quóa Học Của Tôi"**: Tự động chuyển đổi nút sang **"Vào Học Ngay"** và **"Giáo Trình & Tài Liệu"** cho những khóa học đã sở hữu.
+- **Trình chiếu Video bài giảng YouTube IFrame API**: Tích hợp danh sách bài học chia theo chương, theo dõi tiến độ hoàn thành tự động theo tỉ lệ phần trăm và autosave lên máy chủ (`PUT /learning/courses/:id/lessons/:id/progress`).
+- **Ghi chú bài giảng đồng bộ server**: Học viên có thể ghi chú tại từng bài học, dữ liệu lưu trữ trực tiếp vào bảng `lesson_notes`.
+- **Học thử tương tác (`/try`)**: Web Worker Sandbox chạy mã nguồn an toàn, watchdog 3000ms tự ngắt vòng lặp vô tận, kiểm thử Actual vs Expected không lộ đáp án.
+- **Trung tâm luyện tập (`/practice`)**: Bài tập thuật toán, sửa lỗi bất đồng bộ/đột biến state và trung tâm ôn tập lỗ hổng kiến thức tự động ghi nhận câu sai.
 
 ---
 
@@ -42,95 +42,76 @@
 ```text
 nhom6-N01-26/
 ├── frontend/                     # Ứng dụng Single Page App (React 19 + Vite + Bootstrap 5)
-│   ├── public/                   # Tài nguyên tĩnh, favicon, icons
 │   ├── src/
-│   │   ├── assets/               # Hình ảnh, logo, vector
 │   │   ├── components/
-│   │   │   ├── AdminDashboard.jsx        # Bảng điều khiển quản trị hệ thống
-│   │   │   ├── AuthModal.jsx             # Đăng nhập / Đăng ký & Bảng xác nhận hồ sơ
-│   │   │   ├── CareerRoadmap.jsx         # Lộ trình nghề nghiệp Frontend/Backend/AI
+│   │   │   ├── AdminDashboard.jsx        # Bảng điều khiển quản trị (nối API /admin/users, /commerce/admin)
+│   │   │   ├── AuthModal.jsx             # Đăng nhập/Đăng ký & Google Account Chooser
 │   │   │   ├── CartPage.jsx              # Giỏ hàng khóa học & Mã giảm giá
-│   │   │   ├── ChatSupport.jsx           # Trợ lý ảo AI & Hỗ trợ kỹ thuật 24/7
 │   │   │   ├── CheckoutPage.jsx          # Thanh toán & Bảng xác nhận đơn hàng
-│   │   │   ├── CodeArena.jsx             # Đấu trường luyện thuật toán trực tuyến
-│   │   │   ├── ConversionTriggers.jsx    # Ưu đãi khuyến mãi & Đếm ngược Voucher
-│   │   │   ├── CourseCard.jsx            # Thẻ khóa học thông minh đa trạng thái
-│   │   │   ├── CourseLearningRoom.jsx    # Phòng học bài giảng & Live Code Studio
-│   │   │   ├── CourseList.jsx            # Danh sách khóa học có bộ lọc công nghệ
-│   │   │   ├── DepositHistoryModal.jsx   # Sổ giao dịch nạp ví & Hóa đơn điện tử
-│   │   │   ├── home/                     # Các khối trang chủ theo mẫu Booking.com
-│   │   │   │   ├── ScrollRow.jsx             # Hàng thẻ cuộn ngang + nút mũi tên tròn
-│   │   │   │   ├── PlanSection.jsx           # Tab chuyên ngành + "Lộ trình nghề nghiệp"
-│   │   │   │   ├── BrowseSections.jsx        # Tìm theo trình độ & Khám phá chuyên ngành
-│   │   │   │   ├── DealsSection.jsx          # Thẻ ưu đãi & Khóa học yêu thích (nút tim)
-│   │   │   │   └── SavingsAndPopular.jsx     # Banner đăng nhập & Lưới liên kết phổ biến
-│   │   │   └── UserProfile.jsx           # Hồ sơ cá nhân & Quản lý khóa học của tôi
-│   │   ├── hooks/
-│   │   │   └── useCatalog.js             # Tải khóa học + danh mục từ backend (loading/ready/error)
+│   │   │   ├── CourseLearningRoom.jsx    # Phòng học bài giảng, lưu tiến độ & ghi chú server
+│   │   │   ├── CourseFinderPage.jsx      # Tìm khóa phù hợp (thuật toán 3 tiêu chí G, P, B)
+│   │   │   ├── InteractiveTrialPage.jsx  # Học thử tương tác Web Worker Sandbox
+│   │   │   ├── PracticeHub.jsx           # Luyện thuật toán & Ôn tập điểm yếu
+│   │   │   ├── CommunityHub.jsx          # Diễn đàn hỏi đáp lập trình
+│   │   │   ├── ArticlesHub.jsx           # Bài viết kiến thức chuyên sâu
+│   │   │   └── home/                     # Các khối giao diện trang chủ Booking.com style
 │   │   ├── services/
-│   │   │   └── api.js                    # Gọi API NestJS (GET /courses, /categories), chuẩn hóa dữ liệu
-│   │   ├── utils/
-│   │   │   └── catalog.js                # Nhãn trình độ, định dạng giá, gom danh mục
-│   │   ├── App.jsx                       # Điều hướng chính, State Store & Modals
-│   │   ├── Header.jsx                    # Header Full-Width & Dropdown tài khoản
-│   │   ├── Her.jsx                       # Booking.com style Search Bar (Viền vàng 3px)
-│   │   ├── Offers.jsx                    # Khối "Vì sao chọn EduViet?"
-│   │   ├── Footer.jsx                    # Chân trang 5 cột + dải liên kết nhanh (kiểu Booking.com)
-│   │   ├── home-sections.css             # CSS các khối trang chủ (tiền tố bv-)
-│   │   └── main.jsx                      # Điểm khởi chạy React DOM
-│   ├── .env.example                  # Mẫu biến môi trường (VITE_API_URL)
+│   │   │   ├── api.js                    # Khóa học & danh mục
+│   │   │   ├── auth.js                   # Xác thực JWT, Google Login, thông tin người dùng
+│   │   │   ├── commerceApi.js            # Ví tiền, giỏ hàng, checkout, tiến độ học, quản trị admin
+│   │   │   └── hubApi.js                 # API học thử, bài viết, cộng đồng, gợi ý khóa
+│   │   └── utils/
+│   │       └── codeRunner.js             # Bộ thực thi sandbox Web Worker dùng chung
 │   ├── package.json
 │   └── vite.config.js
 │
 ├── lms/                          # Backend API Services (NestJS 12 + TypeORM + MySQL)
 │   ├── src/
-│   │   ├── category/             # Module quản lý danh mục khóa học
-│   │   ├── course/               # Module API khóa học (kèm danh mục + giảng viên, lọc category_id/level/q)
-│   │   ├── course-module/        # Module chương mục bài học
-│   │   ├── enrollment/           # Module đăng ký & phân quyền học viên
-│   │   ├── student/              # Module hồ sơ học viên & ví tiền
-│   │   ├── user/                 # Module xác thực người dùng
-│   │   └── database/             # Kết nối cơ sở dữ liệu MySQL
-│   ├── .env.example              # Mẫu cấu hình kết nối MySQL (copy thành .env)
-│   ├── package.json
-│   └── tsconfig.json
+│   │   ├── auth/                 # Đăng nhập, đăng ký, JWT Guard, Google OAuth, Admin User controller
+│   │   ├── category/             # Quản lý danh mục
+│   │   ├── course/               # CRUD khóa học, đề cương, lọc theo công nghệ/trình độ
+│   │   ├── commerce/             # Ví học tập, giỏ hàng, mã giảm giá, checkout, nạp tiền, hoàn tiền
+│   │   ├── learning/             # Tiến độ bài học, ghi chú, trắc nghiệm, khóa học của tôi
+│   │   ├── bundle/               # Gói combo khóa học
+│   │   ├── project/              # Đồ án thực chiến & nộp bài
+│   │   ├── practice/             # Kho bài tập thuật toán, sửa lỗi & đánh giá năng lực
+│   │   ├── community/            # Bài viết cộng đồng, bình luận & duyệt bài
+│   │   ├── article/              # Chuyên mục bài viết công nghệ
+│   │   ├── course-finder/        # Thuật toán gợi ý khóa học thích ứng
+│   │   ├── trial/                # Học thử tương tác
+│   │   ├── help/                 # Trung tâm hỗ trợ & quản lý ticket
+│   │   └── database/             # Kết nối TypeORM MySQL & Fallback Demo in-memory
+│   ├── test/unit/                # 10 test suites (117 unit tests đạt 100%)
+│   ├── .env.example              # Mẫu cấu hình biến môi trường
+│   └── package.json
 │
-├── .devcontainer/                # Cấu hình môi trường ảo Docker Dev Containers
-├── lms_db.sql                    # Script CSDL MySQL khởi tạo bảng và dữ liệu mẫu
-├── GEMINI.md                     # Bản đặc tả kiến trúc EduEnglish Master Template
-└── README.md                     # Tài liệu hướng dẫn dự án
+└── lms_db.sql                    # Script CSDL MySQL đầy đủ 30 bảng kèm dữ liệu mẫu
 ```
 
 ---
 
 ## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
 
-### Yêu Cầu Môi Trường
-
-- **Node.js**: Phiên bản 18.x trở lên (khuyên dùng LTS 20.x hoặc 22.x)
-- **Git**
-- **Trình duyệt**: Chrome, Edge, Firefox hoặc Safari mới nhất
-
----
-
-### 1. Chuẩn bị MySQL (bắt buộc để kiểm tra dữ liệu thật)
+### 1. Chuẩn bị Cơ Sở Dữ Liệu MySQL
 
 1. Mở MySQL bằng MySQL Workbench, XAMPP hoặc phpMyAdmin.
-2. Import file `lms_db.sql` ở thư mục gốc. Script sẽ tạo database `lms_db` cùng dữ liệu mẫu.
-3. Sao chép `lms/.env.example` thành `lms/.env` và cập nhật thông tin kết nối MySQL:
+2. Import file **`lms_db.sql`** tại thư mục gốc. Script tự động khởi tạo database `lms_db` cùng **30 bảng** đồng bộ 100% với TypeORM entities và nạp sẵn dữ liệu mẫu.
+3. Sao chép `lms/.env.example` thành `lms/.env`:
 
-   ```env
-   PORT=3000
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USERNAME=root
-   DB_PASSWORD=
-   DB_DATABASE=lms_db
-   DB_SYNCHRONIZE=false
-   DEMO_MODE=false
-   ```
+```env
+PORT=3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=
+DB_DATABASE=lms_db
+DB_SYNCHRONIZE=false
+DEMO_MODE=false
+```
 
-   **Lưu ý:** để xác minh dữ liệu MySQL thật, giữ `DEMO_MODE=false`. Nếu kết nối MySQL lỗi, backend sẽ dừng khởi động thay vì âm thầm chuyển sang dữ liệu mô phỏng. Chỉ đặt `DEMO_MODE=true` khi chủ động muốn demo bằng dữ liệu in-memory.
+> **Ghi chú về `DEMO_MODE`:**
+> - `DEMO_MODE=false`: Kết nối CSDL MySQL thật (khuyến nghị khi nộp bài và chấm điểm bảo vệ).
+> - `DEMO_MODE=true`: Tự động kích hoạt bộ giả lập in-memory demo (dùng khi máy chấm chưa cài đặt dịch vụ MySQL).
 
 ### 2. Khởi chạy Backend (NestJS)
 
@@ -138,65 +119,72 @@ nhom6-N01-26/
 cd lms
 npm install
 npm run start:dev
+# Hoặc chạy bản build sẵn: node dist/main.js
 ```
 
-Backend mặc định chạy tại `http://localhost:3000`. Giữ terminal này mở.
+Backend mặc định lắng nghe tại: `http://localhost:3000`.
 
-### 3. Kiểm thử API bằng script có sẵn
-
-Mở terminal khác, từ thư mục gốc chạy:
+### 3. Khởi chạy Frontend (React + Vite)
 
 ```bash
-cd lms
-npm run test:api
-```
-
-Script kiểm tra `GET /courses`, `GET /courses/:id`, `GET /categories`, và xác nhận khóa học có kèm tên danh mục/giảng viên. Kết quả thành công chỉ có ý nghĩa khi backend đang chạy với `DEMO_MODE=false` và kết nối MySQL thật.
-
-Có thể gọi thủ công bằng trình duyệt hoặc Postman:
-
-- `http://localhost:3000/courses`
-- `http://localhost:3000/courses/1`
-- `http://localhost:3000/categories`
-
-### 4. Khởi chạy Ứng Dụng Frontend (React + Vite)
-
-```bash
-# Di chuyển vào thư mục frontend
 cd frontend
-
-# Cài đặt thư viện dependencies
 npm install
-
-# Khởi chạy máy chủ phát triển
 npm run dev
 ```
 
-Sau khi chạy lệnh trên, ứng dụng sẽ hoạt động tại:  
-👉 **`http://localhost:5173`** (hoặc địa chỉ IP hiển thị trên terminal).
-
-> Trang chủ lấy khóa học và danh mục từ backend. Nếu backend chưa bật, trang hiện cảnh báo và dùng dữ liệu lưu sẵn. Nếu backend chạy ở địa chỉ khác, sao chép `frontend/.env.example` thành `frontend/.env` và sửa `VITE_API_URL`.
+Giao diện web sẵn sàng tại: 👉 **`http://localhost:5173`**.
 
 ---
 
-| Endpoint           | Mô tả                                          |
-| :----------------- | :--------------------------------------------- |
-| `GET /courses`     | Danh sách khóa học, kèm danh mục và giảng viên |
-| `GET /courses/:id` | Chi tiết một khóa học (404 nếu không tồn tại)  |
-| `GET /categories`  | Danh sách danh mục                             |
+## 📡 Danh Mục API Endpoints Chính
 
-## 🔑 Tài Khoản Thử Nghiệm Hệ Thống
+| Phân Hệ | Phương Thức & Đường Dẫn | Chức Năng |
+| :--- | :--- | :--- |
+| **Xác thực** | `POST /auth/login` | Đăng nhập tài khoản, trả về JWT Token |
+| | `POST /auth/register` | Đăng ký học viên mới, cấp ví 1.000.000đ |
+| | `POST /auth/google` | Đăng nhập / đăng ký nhanh qua Google |
+| | `GET /auth/me` | Lấy thông tin tài khoản hiện tại |
+| | `GET /admin/users` | Quản trị viên xem danh sách học viên |
+| | `PUT /admin/users/:id/status` | Khóa / mở khóa tài khoản học viên |
+| **Khóa học** | `GET /courses` | Danh sách khóa học (lọc từ khóa, level, danh mục) |
+| | `GET /courses/:id` | Chi tiết khóa học và đề cương chương mục |
+| | `POST /courses` | Thêm khóa học mới (Admin/Instructor) |
+| | `PUT /courses/:id` | Cập nhật thông tin khóa học |
+| | `DELETE /courses/:id` | Xóa khóa học |
+| **Thương mại** | `GET /commerce/wallet` | Xem số dư ví học tập thực tế |
+| | `GET /commerce/wallet/ledger` | Xem lịch sử sổ cái biến động số dư |
+| | `POST /commerce/topup` | Nạp tiền ví học tập |
+| | `GET /commerce/cart` | Lấy danh sách khóa học trong giỏ |
+| | `POST /commerce/cart` | Thêm khóa học vào giỏ |
+| | `DELETE /commerce/cart/:id` | Xóa khóa học khỏi giỏ |
+| | `POST /commerce/checkout` | Thanh toán đơn hàng trừ số dư ví |
+| | `GET /commerce/orders` | Danh sách đơn hàng cá nhân |
+| | `GET /commerce/admin/orders` | Quản trị viên đối soát toàn bộ đơn hàng |
+| **Học tập** | `GET /learning/my-courses` | Danh sách khóa học đã thanh toán sở hữu |
+| | `PUT /learning/courses/:cId/lessons/:lId/progress` | Cập nhật tiến độ học và mốc video |
+| | `GET /learning/lessons/:id/notes` | Lấy danh sách ghi chú bài học |
+| | `POST /learning/lessons/:id/notes` | Tạo ghi chú bài học mới |
+| **Tính năng Hub** | `POST /course-finder/recommendations` | Thuật toán gợi ý khóa học theo điểm số |
+| | `GET /trials` / `GET /trials/:id` | Danh sách và chi tiết bài học thử sandbox |
+| | `GET /practice/exercises` | Kho bài tập luyện kỹ năng và sửa lỗi code |
+| | `GET /community/posts` | Danh sách thảo luận hỏi đáp cộng đồng |
+| | `GET /articles` | Danh sách bài viết chuyên môn |
 
-| Vai Trò                   | Email / Tên Đăng Nhập  | Mật Khẩu                  | Quyền Hạn                                                                        |
-| :------------------------ | :--------------------- | :------------------------ | :------------------------------------------------------------------------------- |
-| **Quản Trị Viên (Admin)** | `admin`                | `Eduenglish123`           | Toàn quyền quản trị CSDL, thêm/sửa/xóa khóa học, duyệt đơn hàng, nạp ví học viên |
-| **Học Viên (Student)**    | `dev.nguyen@gmail.com` | `123456`                  | Số dư sẵn có, sở hữu khóa học, học trực tuyến                                    |
-| **Đăng Ký Mới**           | _(Bất kỳ Gmail nào)_   | _(Tự chọn $\ge$ 6 ký tự)_ | Nhận ngay **1.000.000 đ** vào ví học tập khi hoàn tất đăng ký                    |
+---
+
+## 🔑 Tài Khoản Thử Nghiệm
+
+| Vai Trò | Email / Đăng Nhập | Mật Khẩu | Đặc Quyền |
+| :--- | :--- | :--- | :--- |
+| **Quản Trị Viên (Admin)** | `admin@eduviet.vn` hoặc `admin` | `Eduenglish123` | Toàn quyền quản trị khóa học, học viên, đối soát đơn hàng |
+| **Giảng Viên (Instructor)** | `giangvien@eduviet.vn` | `Giangvien@123` | Quản lý khóa học được phân công giảng dạy |
+| **Học Viên Đã Có Sẵn** | `dev.nguyen@gmail.com` | `Hocvien@123` | Ví sẵn 1.000.000đ, sở hữu khóa học và tiến độ học |
+| **Đăng Ký Mới** | _(Bất kỳ Gmail nào)_ | _(Tối thiểu 8 ký tự)_ | Tặng ngay **1.000.000 đ** vào ví học tập khi kích hoạt |
+| **Google Sign-In** | Chọn tài khoản qua Google Modal | Một chạm | Đăng nhập/Đăng ký tức thì, tự động đồng bộ ví |
 
 ---
 
 ## 👥 Nhóm Thực Hiện
-
-- **Dự án**: Hệ thống quản lý học tập & kinh doanh khóa học lập trình trực tuyến EduViet LMS
+- **Dự án**: Nền tảng học lập trình trực tuyến EduViet LMS
 - **Đơn vị**: Nhóm 6 - Lớp N01-26
-- **Công nghệ chính**: React 19, Vite, Bootstrap 5, NestJS 12, TypeORM, MySQL, Git
+- **Công nghệ**: React 19, Vite, Bootstrap 5, NestJS 12, TypeORM, MySQL 8, Web Worker Sandbox

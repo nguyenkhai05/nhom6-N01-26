@@ -214,16 +214,41 @@ export class CommerceService {
   async createTopupRequest(userId: number, dto: CreateTopupDto) {
     const transactionRef = `TOPUP_${userId}_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const isAutoConfirm = Boolean(dto.auto_confirm);
     const req = this.topupRepo.create({
       user_id: userId,
       amount: dto.amount,
-      status: TopupStatus.PENDING,
+      status: isAutoConfirm ? TopupStatus.CONFIRMED : TopupStatus.PENDING,
       payment_method: dto.payment_method ?? 'DEMO_BANK',
       transaction_ref: transactionRef,
-      admin_note: 'Mô phỏng nạp tiền học tập — EduViet Sandbox',
+      confirmed_at: isAutoConfirm ? new Date() : undefined,
+      admin_note: isAutoConfirm ? 'Tự động duyệt nạp ví học tập EduViet Sandbox' : 'Mô phỏng nạp tiền học tập — EduViet Sandbox',
     });
 
     const saved = await this.topupRepo.save(req);
+
+    let updatedWallet = null;
+    if (isAutoConfirm) {
+      const wallet = await this.getOrCreateWallet(userId);
+      const balanceBefore = Number(wallet.balance);
+      const amount = Number(dto.amount);
+      const balanceAfter = balanceBefore + amount;
+      wallet.balance = balanceAfter;
+      updatedWallet = await this.walletRepo.save(wallet);
+
+      const ledger = this.ledgerRepo.create({
+        wallet_id: wallet.wallet_id,
+        user_id: userId,
+        type: LedgerType.DEPOSIT,
+        amount,
+        balance_before: balanceBefore,
+        balance_after: balanceAfter,
+        reference_type: 'TOPUP',
+        reference_id: transactionRef,
+        description: `Nạp tiền ví thành công qua ${dto.payment_method || 'DEMO_BANK'} (Ref: ${transactionRef})`,
+      });
+      await this.ledgerRepo.save(ledger);
+    }
 
     return {
       request_id: saved.request_id,
@@ -234,6 +259,7 @@ export class CommerceService {
       account_number: '0987654321',
       account_holder: 'CONG TY CP CONG NGHE EDUVIET',
       transfer_syntax: saved.transaction_ref,
+      wallet_balance: updatedWallet ? Number(updatedWallet.balance) : undefined,
       notice: 'Hệ thống hỗ trợ nạp tiền thử nghiệm phục vụ học tập và đánh giá.',
     };
   }

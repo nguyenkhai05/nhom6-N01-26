@@ -18,6 +18,21 @@ import MyLearningDashboard from './components/MyLearningDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import { apiMe, clearToken, getToken, saveExtras, toFrontendUser } from './services/auth';
+import {
+  apiGetWallet,
+  apiGetWalletLedger,
+  apiTopupWallet,
+  apiGetCart,
+  apiAddToCart,
+  apiRemoveFromCart,
+  apiClearCart,
+  apiCheckout,
+  apiGetMyOrders,
+  apiGetMyCourses,
+  apiAdminCreateCourse,
+  apiAdminUpdateCourse,
+  apiAdminDeleteCourse,
+} from './services/commerceApi';
 import UserProfile from './components/UserProfile';
 import DepositHistoryModal from './components/DepositHistoryModal';
 import ConversionTriggers from './components/ConversionTriggers';
@@ -292,6 +307,61 @@ export default function App() {
 
   // Mở trang: nếu có token thì hỏi máy chủ xem còn hiệu lực không (GET /auth/me).
   // 401 = token hết hạn hoặc sai → đăng xuất. Lỗi mạng thì giữ nguyên trạng thái.
+  // Đồng bộ dữ liệu thương mại thật từ backend (Ví, Khóa học đã sở hữu, Đơn hàng, Lịch sử nạp)
+  const syncUserCommerceData = async (user) => {
+    if (!user) return;
+    try {
+      const [walletRes, myCoursesRes, ordersRes, ledgerRes] = await Promise.allSettled([
+        apiGetWallet(),
+        apiGetMyCourses(),
+        apiGetMyOrders(),
+        apiGetWalletLedger(),
+      ]);
+
+      let updatedBalance = user.walletBalance;
+      if (walletRes.status === 'fulfilled' && walletRes.value?.balance !== undefined) {
+        updatedBalance = Number(walletRes.value.balance);
+      }
+
+      let enrolledIds = user.enrolledCourses || [];
+      if (myCoursesRes.status === 'fulfilled' && Array.isArray(myCoursesRes.value)) {
+        enrolledIds = myCoursesRes.value.map((c) => c.course_id);
+      }
+
+      setCurrentUser((prev) => (prev ? {
+        ...prev,
+        walletBalance: updatedBalance,
+        enrolledCourses: enrolledIds,
+      } : null));
+
+      if (ordersRes.status === 'fulfilled' && Array.isArray(ordersRes.value) && ordersRes.value.length > 0) {
+        setOrders(ordersRes.value.map((o) => ({
+          id: o.order_code || `ORD-${o.order_id}`,
+          userEmail: user.email,
+          userName: user.fullName,
+          items: o.items || [],
+          amount: Number(o.final_amount || o.total_amount || 0),
+          method: o.payment_method === 'WALLET' ? 'Ví EduViet' : o.payment_method,
+          status: o.status === 'PAID' ? 'Completed' : o.status,
+          date: o.created_at ? new Date(o.created_at).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN'),
+        })));
+      }
+
+      if (ledgerRes.status === 'fulfilled' && Array.isArray(ledgerRes.value) && ledgerRes.value.length > 0) {
+        setDepositHistory(ledgerRes.value.map((l) => ({
+          id: `DEP-${l.ledger_id}`,
+          amount: Number(l.amount),
+          date: new Date(l.created_at).toLocaleString('vi-VN'),
+          method: l.description?.includes('MoMo') ? 'Ví MoMo Auto-Pay' : 'Vietcombank VietQR 24/7',
+          note: l.description || 'Nạp ví học tập EduViet',
+          status: 'Thành công',
+        })));
+      }
+    } catch (err) {
+      console.warn('Lỗi đồng bộ dữ liệu thương mại từ server:', err);
+    }
+  };
+
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -301,7 +371,11 @@ export default function App() {
     let cancelled = false;
     apiMe(token)
       .then((me) => {
-        if (!cancelled) setCurrentUser(toFrontendUser(me));
+        if (!cancelled) {
+          const user = toFrontendUser(me);
+          setCurrentUser(user);
+          syncUserCommerceData(user);
+        }
       })
       .catch((err) => {
         if (!cancelled && err.status === 401) {
@@ -379,6 +453,7 @@ export default function App() {
   // Gọi khi AuthModal đăng nhập / đăng ký thành công. isNew = tài khoản vừa tạo → ghi nhận quà tặng.
   const handleAuthSuccess = (user, { isNew = false } = {}) => {
     setCurrentUser(user);
+    syncUserCommerceData(user);
     if (isNew) {
       const bonusTx = {
         id: 'DEP-' + Math.floor(10000 + Math.random() * 90000),
@@ -393,28 +468,41 @@ export default function App() {
   };
 
   // Nạp tiền vào ví
-  const handleDeposit = (e) => {
+  const handleDeposit = async (e) => {
     e?.preventDefault?.();
     const amount = Number(depositAmount);
     if (!amount || amount <= 0) return;
 
-    setCurrentUser((prev) => ({
-      ...prev,
-      walletBalance: (prev.walletBalance || 0) + amount,
-    }));
+    try {
+      const res = await apiTopupWallet({
+        amount,
+        payment_method: depositMethod,
+        auto_confirm: true,
+      });
 
-    // Ghi nhận giao dịch vào lịch sử nạp tiền
-    const newTx = {
-      id: 'DEP-' + Math.floor(10000 + Math.random() * 90000),
-      amount,
-      date: new Date().toLocaleString('vi-VN'),
-      method: depositMethod === 'BANK_QR' ? 'Vietcombank VietQR 24/7' : 'Ví MoMo Auto-Pay',
-      note: 'Nạp ví học tập EduViet Platform',
-      status: 'Thành công',
-    };
-    setDepositHistory((prev) => [newTx, ...prev]);
-    setLastDepositTx(newTx);
-    setDepositStep('success');
+      const newBalance = res.wallet_balance !== undefined
+        ? res.wallet_balance
+        : ((currentUser?.walletBalance || 0) + amount);
+
+      setCurrentUser((prev) => ({
+        ...prev,
+        walletBalance: newBalance,
+      }));
+
+      const newTx = {
+        id: res.transaction_ref || ('DEP-' + Math.floor(10000 + Math.random() * 90000)),
+        amount,
+        date: new Date().toLocaleString('vi-VN'),
+        method: depositMethod === 'BANK_QR' ? 'Vietcombank VietQR 24/7' : 'Ví MoMo Auto-Pay',
+        note: 'Nạp ví học tập EduViet Platform',
+        status: 'Thành công',
+      };
+      setDepositHistory((prev) => [newTx, ...prev]);
+      setLastDepositTx(newTx);
+      setDepositStep('success');
+    } catch (err) {
+      alert(err.message || 'Lỗi khi nạp tiền ví');
+    }
   };
 
   // Đăng ký khóa học (Security Matrix: Mở Modal Xác Nhận Chi Tiết)
@@ -433,7 +521,7 @@ export default function App() {
     setShowEnrollConfirmModal(true);
   };
 
-  const handleFinalConfirmEnroll = () => {
+  const handleFinalConfirmEnroll = async () => {
     if (!courseToEnroll || !currentUser) return;
 
     if (currentUser.walletBalance < courseToEnroll.price) {
@@ -447,34 +535,51 @@ export default function App() {
       return;
     }
 
-    setCurrentUser((prev) => ({
-      ...prev,
-      walletBalance: prev.walletBalance - courseToEnroll.price,
-      enrolledCourses: [...(prev.enrolledCourses || []), courseToEnroll.course_id],
-    }));
+    try {
+      // 1. Thêm vào giỏ hàng server nếu chưa có
+      await apiAddToCart(courseToEnroll.course_id).catch(() => {});
 
-    // Thêm vào đơn hàng
-    const autoOrder = {
-      id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-      userEmail: currentUser.email,
-      userName: currentUser.fullName,
-      items: [{ course_id: courseToEnroll.course_id, title: courseToEnroll.title, price: courseToEnroll.price }],
-      amount: courseToEnroll.price,
-      method: 'Ví EduViet',
-      status: 'Completed',
-      date: new Date().toLocaleString('vi-VN'),
-      coupon: null
-    };
-    setOrders((prev) => [autoOrder, ...prev]);
+      // 2. Gọi API thanh toán bằng ví trên server
+      const checkoutRes = await apiCheckout({
+        payment_method: 'WALLET',
+      });
 
-    setShowEnrollConfirmModal(false);
-    setEnrolledCourseSuccess(courseToEnroll);
-    setShowEnrollSuccessModal(true);
-    setCourseToEnroll(null);
+      const newBalance = checkoutRes.wallet_balance !== undefined
+        ? checkoutRes.wallet_balance
+        : (currentUser.walletBalance - courseToEnroll.price);
+
+      setCurrentUser((prev) => ({
+        ...prev,
+        walletBalance: newBalance,
+        enrolledCourses: [...new Set([...(prev.enrolledCourses || []), courseToEnroll.course_id])],
+      }));
+
+      // Thêm vào đơn hàng
+      const autoOrder = {
+        id: checkoutRes.order_code || ('ORD-' + Math.floor(1000 + Math.random() * 9000)),
+        userEmail: currentUser.email,
+        userName: currentUser.fullName,
+        items: [{ course_id: courseToEnroll.course_id, title: courseToEnroll.title, price: courseToEnroll.price }],
+        amount: courseToEnroll.price,
+        method: 'Ví EduViet',
+        status: 'Completed',
+        date: new Date().toLocaleString('vi-VN'),
+        coupon: null
+      };
+      setOrders((prev) => [autoOrder, ...prev]);
+
+      setShowEnrollConfirmModal(false);
+      setEnrolledCourseSuccess(courseToEnroll);
+      setShowEnrollSuccessModal(true);
+      setCourseToEnroll(null);
+    } catch (err) {
+      alert(err.message || 'Thanh toán khóa học thất bại');
+      setShowEnrollConfirmModal(false);
+    }
   };
 
   // Giỏ hàng handlers
-  const handleAddToCart = (course) => {
+  const handleAddToCart = async (course) => {
     if (currentUser?.enrolledCourses?.includes(course.course_id)) {
       alert('Bạn đã sở hữu khóa học này rồi!');
       return;
@@ -482,18 +587,30 @@ export default function App() {
 
     if (cart.some((c) => c.course_id === course.course_id)) {
       setCart((prev) => prev.filter((c) => c.course_id !== course.course_id));
+      if (currentUser) {
+        apiRemoveFromCart(course.course_id).catch(() => {});
+      }
     } else {
       setCart((prev) => [...prev, course]);
+      if (currentUser) {
+        apiAddToCart(course.course_id).catch(() => {});
+      }
     }
   };
 
   const handleRemoveFromCart = (courseId) => {
     setCart((prev) => prev.filter((c) => c.course_id !== courseId));
+    if (currentUser) {
+      apiRemoveFromCart(courseId).catch(() => {});
+    }
   };
 
   const handleClearCart = () => {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) {
       setCart([]);
+      if (currentUser) {
+        apiClearCart().catch(() => {});
+      }
     }
   };
 
@@ -503,38 +620,54 @@ export default function App() {
   };
 
   // Hoàn tất đơn hàng từ trang Checkout
-  const handleCompleteOrder = (order) => {
+  const handleCompleteOrder = async (order) => {
+    try {
+      await apiCheckout({
+        voucher_code: order.coupon?.code,
+        payment_method: order.method === 'Ví EduViet' ? 'WALLET' : 'BANK_QR',
+      }).catch((e) => console.warn('Lỗi thanh toán server checkout:', e));
+    } catch {}
+
     setOrders((prev) => [order, ...prev]);
 
-    // Trừ ví nếu thanh toán bằng ví
+    const newEnrolledIds = order.items.map((it) => it.course_id);
     if (order.method === 'Ví EduViet') {
       setCurrentUser((prev) => ({
         ...prev,
         walletBalance: Math.max(0, (prev.walletBalance || 0) - order.amount),
         enrolledCourses: [
-          ...(prev.enrolledCourses || []),
-          ...order.items.map((it) => it.course_id)
+          ...new Set([...(prev.enrolledCourses || []), ...newEnrolledIds])
         ]
       }));
     } else {
-      // Nếu thanh toán bằng QR / MoMo, trực tiếp mở khóa học
       setCurrentUser((prev) => ({
         ...prev,
         enrolledCourses: [
-          ...(prev.enrolledCourses || []),
-          ...order.items.map((it) => it.course_id)
+          ...new Set([...(prev.enrolledCourses || []), ...newEnrolledIds])
         ]
       }));
     }
 
-    // Xóa giỏ hàng sau khi mua thành công
     setCart([]);
+    if (currentUser) {
+      apiClearCart().catch(() => {});
+    }
   };
 
   // Admin Course Management
-  const handleSaveCourse = (e) => {
+  const handleSaveCourse = async (e) => {
     e.preventDefault();
     if (editingCourse) {
+      try {
+        await apiAdminUpdateCourse(editingCourse.course_id, {
+          title: adminCourseTitle,
+          price: Number(adminCoursePrice),
+          description: adminCourseDesc,
+        });
+      } catch (err) {
+        console.warn('Lỗi cập nhật khóa học trên máy chủ:', err);
+      }
+
       setCourses((prev) =>
         prev.map((c) =>
           c.course_id === editingCourse.course_id
@@ -549,14 +682,27 @@ export default function App() {
         )
       );
     } else {
+      let createdId = Date.now();
+      try {
+        const created = await apiAdminCreateCourse({
+          title: adminCourseTitle,
+          price: Number(adminCoursePrice),
+          description: adminCourseDesc,
+          level: 'Beginner',
+        });
+        if (created?.course_id) createdId = created.course_id;
+      } catch (err) {
+        console.warn('Lỗi tạo khóa học trên máy chủ:', err);
+      }
+
       const newCourse = {
-        course_id: Date.now(),
+        course_id: createdId,
         title: adminCourseTitle,
         slug: adminCourseTitle.toLowerCase().replace(/\s+/g, '-'),
         description: adminCourseDesc,
         price: Number(adminCoursePrice),
         category: { name: adminCourseCategory },
-        instructor: { name: currentUser.fullName },
+        instructor: { name: currentUser?.fullName || 'EduViet Mentor' },
         duration: '40 giờ',
         studentsCount: 0,
         rating: '5.0',
@@ -568,8 +714,13 @@ export default function App() {
     setEditingCourse(null);
   };
 
-  const handleDeleteCourse = (courseId) => {
+  const handleDeleteCourse = async (courseId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa khóa học này không?')) {
+      try {
+        await apiAdminDeleteCourse(courseId);
+      } catch (err) {
+        console.warn('Lỗi xóa khóa học trên máy chủ:', err);
+      }
       setCourses((prev) => prev.filter((c) => c.course_id !== courseId));
     }
   };
@@ -982,14 +1133,51 @@ export default function App() {
           <AdminDashboard
             courses={courses}
             orders={orders}
-            onAddCourse={(newC) => setCourses((prev) => [newC, ...prev])}
-            onUpdateCourse={(updC) =>
+            onAddCourse={async (newC) => {
+              const safeSlug = (newC.title || 'course')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '') || `course-${Date.now()}`;
+              try {
+                const serverC = await apiAdminCreateCourse({
+                  title: newC.title,
+                  slug: `${safeSlug}-${Math.floor(1000 + Math.random() * 9000)}`,
+                  price: Number(newC.price) || 0,
+                  description: newC.description || '',
+                  instructor_id: currentUser?.userId || 1,
+                  level: 'Beginner',
+                });
+                if (serverC?.course_id) {
+                  newC.course_id = serverC.course_id;
+                }
+              } catch (err) {
+                console.warn('Lỗi tạo khóa học trên máy chủ:', err);
+              }
+              setCourses((prev) => [newC, ...prev]);
+            }}
+            onUpdateCourse={async (updC) => {
+              try {
+                await apiAdminUpdateCourse(updC.course_id, {
+                  title: updC.title,
+                  price: Number(updC.price) || 0,
+                  description: updC.description || '',
+                });
+              } catch (err) {
+                console.warn('Lỗi cập nhật khóa học trên máy chủ:', err);
+              }
               setCourses((prev) =>
                 prev.map((c) => (c.course_id === updC.course_id ? updC : c))
-              )
-            }
-            onDeleteCourse={(cId) => {
+              );
+            }}
+            onDeleteCourse={async (cId) => {
               if (window.confirm('Bạn có chắc chắn muốn xóa khóa học này không?')) {
+                try {
+                  await apiAdminDeleteCourse(cId);
+                } catch (err) {
+                  console.warn('Lỗi xóa khóa học trên máy chủ:', err);
+                }
                 setCourses((prev) => prev.filter((c) => c.course_id !== cId));
               }
             }}

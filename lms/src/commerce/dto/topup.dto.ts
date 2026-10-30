@@ -11,6 +11,9 @@ export class CreateTopupDto {
   @IsOptional()
   @IsString()
   payment_method?: string = 'DEMO_BANK';
+
+  @IsOptional()
+  auto_confirm?: boolean;
 }
 
 export class ConfirmTopupDto {

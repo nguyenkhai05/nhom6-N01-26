@@ -28,8 +28,8 @@ export class Course {
   @Column()
   instructor_id: number;
 
-  @Column({ nullable: true })
-  category_id: number;
+  @Column({ type: 'int', nullable: true })
+  category_id: number | null;
 
   @Column({ length: 255 })
   title: string;

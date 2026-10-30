@@ -1,4 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  apiAdminGetUsers,
+  apiAdminUpdateUserStatus,
+  apiAdminGetOrders,
+} from '../services/commerceApi';
 import { Row, Col, Card, Table, Button, Badge, Modal, Form, Tab, Nav, Alert, InputGroup } from 'react-bootstrap';
 
 export default function AdminDashboard({
@@ -32,6 +37,45 @@ export default function AdminDashboard({
     { code: 'DEVNEWBIE', discount: '100.000 đ', usage: '89/200', status: 'Active', expiry: '30/11/2026' },
     { code: 'FULLSTACKVIP', discount: '30%', usage: '12/50', status: 'Active', expiry: '15/11/2026' },
   ]);
+
+  // Nạp dữ liệu thực tế từ backend cho trang Admin
+  useEffect(() => {
+    apiAdminGetUsers()
+      .then((users) => {
+        if (Array.isArray(users) && users.length > 0) {
+          setStudents(
+            users.map((u) => ({
+              id: u.user_id,
+              name: u.full_name,
+              email: u.email,
+              wallet: u.wallet_balance !== undefined ? Number(u.wallet_balance) : 1000000,
+              enrolled: u.enrolled_count || 1,
+              status: u.is_active ? 'Active' : 'Locked',
+              joinDate: u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '10/10/2026',
+            }))
+          );
+        }
+      })
+      .catch((err) => console.warn('Lỗi kết nối API người dùng admin:', err));
+
+    apiAdminGetOrders()
+      .then((serverOrders) => {
+        if (Array.isArray(serverOrders) && serverOrders.length > 0) {
+          setOrders(
+            serverOrders.map((o) => ({
+              id: o.order_code || `ORD-${o.order_id}`,
+              userEmail: o.user?.email || 'hocvien@gmail.com',
+              items: o.items?.map((it) => ({ title: it.course?.title || `Khóa học #${it.course_id}` })) || [{ title: 'Khóa học lập trình' }],
+              amount: Number(o.final_amount || o.total_amount || 0),
+              method: o.payment_method === 'WALLET' ? 'Ví EduViet' : o.payment_method,
+              status: o.status === 'PAID' ? 'Completed' : o.status,
+              date: o.created_at ? new Date(o.created_at).toLocaleString('vi-VN') : '15/10/2026',
+            }))
+          );
+        }
+      })
+      .catch((err) => console.warn('Lỗi kết nối API đơn hàng admin:', err));
+  }, []);
 
   // State Modal Course
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -109,7 +153,21 @@ export default function AdminDashboard({
   };
 
   // Student actions
-  const handleToggleStudentStatus = (studentId) => {
+  const handleToggleStudentStatus = async (studentId) => {
+    const student = students.find((s) => s.id === studentId);
+    if (!student) return;
+    const newStatus = student.status === 'Active' ? false : true;
+    try {
+      await apiAdminUpdateUserStatus(studentId, newStatus);
+    } catch (err) {
+      console.warn('Lỗi cập nhật trạng thái học viên:', err);
+    }
+    setStudents(prev =>
+      prev.map(s => s.id === studentId ? { ...s, status: newStatus ? 'Active' : 'Locked' } : s)
+    );
+    return;
+  };
+  const _oldToggle = (studentId) => {
     setStudents(prev =>
       prev.map(s => s.id === studentId ? { ...s, status: s.status === 'Active' ? 'Locked' : 'Active' } : s)
     );

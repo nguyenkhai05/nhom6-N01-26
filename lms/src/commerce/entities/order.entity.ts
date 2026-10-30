@@ -37,7 +37,7 @@ export class Order {
   })
   final_amount: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   voucher_id: number | null;
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })

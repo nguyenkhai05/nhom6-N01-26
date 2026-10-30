@@ -9,8 +9,8 @@ export class Category {
   @Column({ length: 100 })
   category_name: string;
 
-  @Column({ nullable: true })
-  parent_id: number;
+  @Column({ type: 'int', nullable: true })
+  parent_id: number | null;
 
   @Column({ default: 1 })
   order_index: number;

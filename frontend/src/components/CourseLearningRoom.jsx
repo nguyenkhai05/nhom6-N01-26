@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Row, Col, Card, Button, Badge, ProgressBar, Tab, Nav, Accordion, Form, InputGroup } from 'react-bootstrap';
 import { getCurriculumForCourse } from '../utils/courseCurriculum';
+import { apiUpdateLessonProgress, apiGetLessonNotes, apiCreateLessonNote } from '../services/commerceApi';
 
 export default function CourseLearningRoom({
   course,
@@ -156,7 +157,7 @@ export default function CourseLearningRoom({
             });
           }
 
-          // Autosave vào LocalStorage
+          // Autosave vào LocalStorage và Máy chủ Backend
           const progressPayload = {
             courseId: course?.course_id || 1,
             lastLessonIndex: activeLessonIndex,
@@ -166,6 +167,12 @@ export default function CourseLearningRoom({
             savedAt: new Date().toISOString()
           };
           localStorage.setItem(storageKey, JSON.stringify(progressPayload));
+          if (currentUser) {
+            apiUpdateLessonProgress(course?.course_id || 1, currentLesson?.id || 1, {
+              is_completed: completedLessons.includes(currentLesson?.id),
+              current_position_seconds: currentSec,
+            }).catch(() => {});
+          }
           setIsSavedSync(true);
         } catch (e) {
           // Player có thể đang ở trạng thái chuyển đổi
@@ -279,8 +286,36 @@ export default function CourseLearningRoom({
     };
 
     setNotes((prev) => [newNote, ...prev]);
+    if (currentUser && currentLesson?.id) {
+      apiCreateLessonNote(currentLesson.id, newNoteText.trim()).catch(() => {});
+    }
     setNewNoteText('');
   };
+
+  // Đồng bộ ghi chú từ server cho bài học đang mở
+  useEffect(() => {
+    if (currentUser && currentLesson?.id) {
+      apiGetLessonNotes(currentLesson.id)
+        .then((serverNotes) => {
+          if (Array.isArray(serverNotes) && serverNotes.length > 0) {
+            setNotes((prev) => {
+              const formatted = serverNotes.map((sn) => ({
+                id: sn.note_id,
+                lessonId: sn.lesson_id,
+                lessonTitle: currentLesson.title,
+                timeSeconds: 0,
+                timeLabel: '00:00',
+                content: sn.content,
+                createdAt: sn.created_at ? new Date(sn.created_at).toLocaleDateString('vi-VN') : '',
+              }));
+              const existingIds = new Set(formatted.map((f) => f.id));
+              return [...formatted, ...prev.filter((p) => !existingIds.has(p.id))];
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentLesson?.id, currentUser]);
 
   // Xóa ghi chú
   const handleDeleteNote = (noteId) => {
