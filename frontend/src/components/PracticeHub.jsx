@@ -1,14 +1,50 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Nav, Form, Spinner, Alert, ProgressBar, Modal, Table } from 'react-bootstrap';
 import { getPracticeExercises, getSkillAssessments, getSkillAssessment, submitSkillAssessment, getWeeklyChallenge } from '../services/hubApi';
 import { runCodeInSandbox, checkTestCasesInSandbox } from '../utils/codeRunner';
 
-export default function PracticeHub({ currentUser }) {
+export default function PracticeHub({
+  currentUser,
+  courses = [],
+  onNavigate,
+  onStartLearning,
+  onOpenLogin,
+  onOpenRegister,
+}) {
   const [activeTab, setActiveTab] = useState('exercises'); // 'exercises' | 'bug-fixing' | 'assessment' | 'review' | 'challenge'
   const [exercises, setExercises] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [challenge, setChallenge] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Quyền truy cập phòng luyện tập: Sau khi học xong bài giảng
+  const [forceBypass, setForceBypass] = useState(false);
+  const enrolledCourseIds = currentUser?.enrolledCourses || [];
+  const isPrivileged = currentUser?.role === 'ADMIN' || currentUser?.role === 'INSTRUCTOR';
+
+  // Danh sách các khóa học học viên đã sở hữu
+  const userEnrolledCourses = useMemo(() => {
+    return courses.filter((c) => enrolledCourseIds.includes(c.course_id));
+  }, [courses, enrolledCourseIds]);
+
+  // Đếm tổng số bài học đã hoàn thành thực tế từ tiến độ phòng học
+  const totalCompletedLessons = useMemo(() => {
+    if (!currentUser) return 0;
+    const uId = currentUser?.userId || currentUser?.id || 'demo';
+    let count = 0;
+    for (const cId of enrolledCourseIds) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`eduviet_course_progress_${uId}_${cId}`) || '{}');
+        if (Array.isArray(stored.completedLessons)) {
+          count += stored.completedLessons.length;
+        }
+      } catch {}
+    }
+    return count;
+  }, [currentUser, enrolledCourseIds]);
+
+  // Điều kiện vào phòng luyện tập: Phải đăng nhập, sở hữu khóa học và đã hoàn thành ít nhất 1 bài học (hoặc Admin/Giảng viên)
+  const hasAccess = isPrivileged || forceBypass || (enrolledCourseIds.length > 0 && totalCompletedLessons > 0);
 
   // Exercise filters & active exercise
   const [selectedSkill, setSelectedSkill] = useState('All');
@@ -238,62 +274,280 @@ export default function PracticeHub({ currentUser }) {
       </section>
 
       <Container className="app-container">
-        {/* Navigation Tabs */}
-        <Nav variant="pills" className="bg-light p-1 rounded-4 border mb-4 flex-wrap">
-          <Nav.Item>
-            <Nav.Link
-              active={activeTab === 'exercises'}
-              onClick={() => {
-                setActiveTab('exercises');
-                const firstSkill = exercises.find(e => e.exercise_type !== 'BUG_FIXING');
-                if (firstSkill) selectExercise(firstSkill);
-              }}
-              className="fw-bold px-4 py-2 rounded-3"
-            >
-              <i className="bi bi-code-slash me-2 text-primary"></i> Luyện Kỹ Năng ({exercises.filter(e => e.exercise_type !== 'BUG_FIXING').length})
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link
-              active={activeTab === 'bug-fixing'}
-              onClick={() => {
-                setActiveTab('bug-fixing');
-                const firstBug = exercises.find(e => e.exercise_type === 'BUG_FIXING');
-                if (firstBug) selectExercise(firstBug);
-              }}
-              className="fw-bold px-4 py-2 rounded-3"
-            >
-              <i className="bi bi-bug-fill me-2 text-danger"></i> Sửa Lỗi (Bug Fixing) ({exercises.filter(e => e.exercise_type === 'BUG_FIXING').length})
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link
-              active={activeTab === 'assessment'}
-              onClick={() => { setActiveTab('assessment'); setActiveAssessment(null); }}
-              className="fw-bold px-4 py-2 rounded-3"
-            >
-              <i className="bi bi-clipboard2-check me-2 text-success"></i> Đề Phỏng Vấn & Đánh Giá
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link
-              active={activeTab === 'review'}
-              onClick={() => setActiveTab('review')}
-              className="fw-bold px-4 py-2 rounded-3"
-            >
-              <i className="bi bi-arrow-repeat me-2"></i> Ôn Phần Còn Yếu
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link
-              active={activeTab === 'challenge'}
-              onClick={() => setActiveTab('challenge')}
-              className="fw-bold px-4 py-2 rounded-3"
-            >
-              <i className="bi bi-trophy-fill me-2 text-warning"></i> Thử Thách Tuần
-            </Nav.Link>
-          </Nav.Item>
-        </Nav>
+        {!hasAccess ? (
+          /* ========================================================
+             GATING: YÊU CẦU HỌC XONG BÀI GIẢNG TRƯỚC KHI VÀO LUYỆN TẬP
+             ======================================================== */
+          <div className="py-4 page-fade-in text-center">
+            <Card className="border-0 shadow-sm rounded-4 p-4 p-md-5 mx-auto bg-white" style={{ maxWidth: '820px' }}>
+              {!currentUser ? (
+                /* Trường hợp 1: Khách chưa đăng nhập */
+                <>
+                  <div
+                    className="mx-auto mb-3 p-3 bg-warning-subtle text-warning rounded-circle d-inline-flex align-items-center justify-content-center"
+                    style={{ width: '80px', height: '80px' }}
+                  >
+                    <i className="bi bi-shield-lock-fill fs-1 text-dark"></i>
+                  </div>
+                  <Badge bg="warning" text="dark" className="px-3 py-2 fw-bold rounded-pill mx-auto mb-3 fs-6">
+                    <i className="bi bi-lock-fill me-1"></i> PHÒNG LUYỆN TẬP CÓ ĐIỀU KIỆN
+                  </Badge>
+                  <h2 className="fw-bold text-dark mb-3">Luyện Tập Dành Cho Học Viên Đã Học Xong</h2>
+                  <p className="text-secondary mb-4 mx-auto" style={{ maxWidth: '640px', lineHeight: 1.6 }}>
+                    Tại EduViet, quy trình đào tạo thực chiến là: <strong>"Học lý thuyết & xem video bài giảng trước → Hoàn thành bài học → Vào phòng thực hành luyện tập & sửa lỗi"</strong>. Phòng Luyện tập không dành cho việc test code tự do khi chưa có kiến thức nền tảng.
+                  </p>
+
+                  <div className="row g-3 text-start mb-4">
+                    <div className="col-md-4">
+                      <div className="p-3 bg-light rounded-3 border h-100">
+                        <div className="fw-bold text-primary mb-1">1. Đăng Ký Học Viên</div>
+                        <small className="text-muted">Nhận ngay 1.000.000đ vào ví học tập để kích hoạt khóa học.</small>
+                      </div>
+                    </div>
+                    <div className="col-md-4">
+                      <div className="p-3 bg-light rounded-3 border h-100">
+                        <div className="fw-bold text-primary mb-1">2. Hoàn Thành Bài Học</div>
+                        <small className="text-muted">Xem bài giảng trong Phòng học để tích lũy kiến thức.</small>
+                      </div>
+                    </div>
+                    <div className="col-md-4">
+                      <div className="p-3 bg-light rounded-3 border h-100">
+                        <div className="fw-bold text-success mb-1">3. Mở Khóa Luyện Tập</div>
+                        <small className="text-muted">Giải bài tập, sửa lỗi code và làm bài đánh giá chuẩn hóa.</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-center flex-wrap gap-3">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold shadow-sm"
+                      onClick={() => onOpenLogin?.()}
+                    >
+                      <i className="bi bi-box-arrow-in-right me-2"></i> Đăng Nhập Học Viên
+                    </Button>
+                    <Button
+                      variant="outline-primary"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold"
+                      onClick={() => onOpenRegister?.()}
+                    >
+                      <i className="bi bi-person-plus me-2"></i> Đăng Ký Nhận Ví 1.000.000đ
+                    </Button>
+                    <Button
+                      variant="light"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold border text-secondary"
+                      onClick={() => onNavigate?.('try')}
+                    >
+                      <i className="bi bi-play-circle me-2 text-warning"></i> Trải Nghiệm Tab "Học Thử"
+                    </Button>
+                  </div>
+                </>
+              ) : enrolledCourseIds.length === 0 ? (
+                /* Trường hợp 2: Đã đăng nhập nhưng chưa đăng ký khóa học nào */
+                <>
+                  <div
+                    className="mx-auto mb-3 p-3 bg-info-subtle text-info rounded-circle d-inline-flex align-items-center justify-content-center"
+                    style={{ width: '80px', height: '80px' }}
+                  >
+                    <i className="bi bi-mortarboard-fill fs-1"></i>
+                  </div>
+                  <Badge bg="info" text="dark" className="px-3 py-2 fw-bold rounded-pill mx-auto mb-3 fs-6">
+                    <i className="bi bi-info-circle-fill me-1"></i> CHƯA CÓ KHÓA HỌC ĐƯỢC KÍCH HOẠT
+                  </Badge>
+                  <h2 className="fw-bold text-dark mb-3">Hãy Học Lý Thuyết Trước Khi Luyện Tập!</h2>
+                  <p className="text-secondary mb-4 mx-auto" style={{ maxWidth: '640px', lineHeight: 1.6 }}>
+                    Xin chào <strong>{currentUser.fullName}</strong>! Để tránh việc làm bài tập mò mẫm không hiệu quả, hệ thống yêu cầu bạn đăng ký khóa học và hoàn thành bài giảng trước khi vào phòng Luyện tập.
+                  </p>
+
+                  <div className="d-flex justify-content-center flex-wrap gap-3">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold shadow-sm"
+                      onClick={() => onNavigate?.('courses')}
+                    >
+                      <i className="bi bi-grid-fill me-2"></i> Khám Phá Các Khóa Học
+                    </Button>
+                    <Button
+                      variant="outline-info"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold"
+                      onClick={() => onNavigate?.('find-course')}
+                    >
+                      <i className="bi bi-compass me-2"></i> Chọn Khóa Học Phù Hợp
+                    </Button>
+                    <Button
+                      variant="light"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold border text-secondary"
+                      onClick={() => onNavigate?.('try')}
+                    >
+                      <i className="bi bi-play-circle me-2 text-warning"></i> Học Thử Trải Nghiệm Trước
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                /* Trường hợp 3: Đã đăng ký khóa học nhưng chưa hoàn thành bài học nào */
+                <>
+                  <div
+                    className="mx-auto mb-3 p-3 bg-warning-subtle text-warning rounded-circle d-inline-flex align-items-center justify-content-center"
+                    style={{ width: '80px', height: '80px' }}
+                  >
+                    <i className="bi bi-hourglass-split fs-1 text-dark"></i>
+                  </div>
+                  <Badge bg="warning" text="dark" className="px-3 py-2 fw-bold rounded-pill mx-auto mb-3 fs-6">
+                    <i className="bi bi-exclamation-triangle-fill me-1"></i> CẦN HOÀN THÀNH BÀI HỌC TRƯỚC
+                  </Badge>
+                  <h2 className="fw-bold text-dark mb-3">Bạn Chưa Hoàn Thành Bài Học Nào!</h2>
+                  <p className="text-secondary mb-4 mx-auto" style={{ maxWidth: '640px', lineHeight: 1.6 }}>
+                    Bạn đã sở hữu <strong>{userEnrolledCourses.length || enrolledCourseIds.length}</strong> khóa học trên EduViet. Tuy nhiên, bạn chưa hoàn thành bài giảng lý thuyết nào trong Phòng học. Hãy vào xem video bài giảng và nắm vững cú pháp trước khi vào giải bài tập nhé!
+                  </p>
+
+                  {userEnrolledCourses.length > 0 && (
+                    <div className="row g-3 justify-content-center mb-4 text-start">
+                      {userEnrolledCourses.slice(0, 3).map((c) => (
+                        <div key={c.course_id} className="col-md-6 col-lg-4">
+                          <div className="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-between">
+                            <div>
+                              <span className="badge bg-primary mb-2">{c.category?.name || 'Lập trình'}</span>
+                              <div className="fw-bold text-dark text-truncate" title={c.title}>{c.title}</div>
+                              <small className="text-muted d-block mt-1">Chưa hoàn thành bài học</small>
+                            </div>
+                            <Button
+                              variant="success"
+                              size="sm"
+                              className="rounded-pill mt-3 fw-bold w-100"
+                              onClick={() => (onStartLearning ? onStartLearning(c) : onNavigate?.('courses'))}
+                            >
+                              <i className="bi bi-play-fill me-1"></i> Vào Phòng Học
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="d-flex justify-content-center align-items-center flex-wrap gap-3">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="rounded-pill px-4 fw-bold shadow-sm"
+                      onClick={() => {
+                        if (userEnrolledCourses.length > 0 && onStartLearning) {
+                          onStartLearning(userEnrolledCourses[0]);
+                        } else {
+                          onNavigate?.('courses');
+                        }
+                      }}
+                    >
+                      <i className="bi bi-play-circle-fill me-2"></i> Vào Phòng Học Ngay
+                    </Button>
+                    <button
+                      type="button"
+                      className="btn btn-link text-muted small text-decoration-none"
+                      onClick={() => setForceBypass(true)}
+                    >
+                      Tôi đã nắm vững kiến thức ngoài, muốn mở khóa thử sức ngay →
+                    </button>
+                  </div>
+                </>
+              )}
+            </Card>
+          </div>
+        ) : (
+          /* ========================================================
+             ĐÃ ĐỦ ĐIỀU KIỆN: HIỂN THỊ TRỌN VẸN 5 TABS & WORKSPACE
+             ======================================================== */
+          <>
+            {/* Thanh trạng thái chứng nhận mở khóa */}
+            <div className="bg-success-subtle border border-success-subtle text-success-emphasis p-3 rounded-4 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 page-fade-in">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="bg-success text-white rounded-circle p-2 d-flex align-items-center justify-content-center"
+                  style={{ width: 38, height: 38 }}
+                >
+                  <i className="bi bi-check2-circle fs-4"></i>
+                </div>
+                <div>
+                  <div className="fw-bold">
+                    {isPrivileged
+                      ? 'Quyền Quản Trị / Giảng Viên: Đã Mở Khóa Toàn Bộ Phòng Luyện Tập'
+                      : `Đã Mở Khóa Quyền Luyện Tập: Đã Hoàn Thành ${totalCompletedLessons} Bài Học!`}
+                  </div>
+                  <small className="text-muted">
+                    {isPrivileged
+                      ? 'Bạn có toàn quyền kiểm thử và đánh giá mọi bài tập lập trình.'
+                      : 'Kiến thức lý thuyết từ video bài giảng đã sẵn sàng, hãy tự tin giải bài và sửa lỗi code bên dưới.'}
+                  </small>
+                </div>
+              </div>
+              <Badge bg="success" className="px-3 py-2 rounded-pill fw-semibold">
+                <i className="bi bi-unlock-fill me-1"></i> ĐÃ ĐỦ ĐIỀU KIỆN LUYỆN TẬP
+              </Badge>
+            </div>
+
+            {/* Navigation Tabs */}
+            <Nav variant="pills" className="bg-light p-1 rounded-4 border mb-4 flex-wrap">
+              <Nav.Item>
+                <Nav.Link
+                  active={activeTab === 'exercises'}
+                  onClick={() => {
+                    setActiveTab('exercises');
+                    const firstSkill = exercises.find((e) => e.exercise_type !== 'BUG_FIXING');
+                    if (firstSkill) selectExercise(firstSkill);
+                  }}
+                  className="fw-bold px-4 py-2 rounded-3"
+                >
+                  <i className="bi bi-code-slash me-2 text-primary"></i> Luyện Kỹ Năng ({exercises.filter((e) => e.exercise_type !== 'BUG_FIXING').length})
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  active={activeTab === 'bug-fixing'}
+                  onClick={() => {
+                    setActiveTab('bug-fixing');
+                    const firstBug = exercises.find((e) => e.exercise_type === 'BUG_FIXING');
+                    if (firstBug) selectExercise(firstBug);
+                  }}
+                  className="fw-bold px-4 py-2 rounded-3"
+                >
+                  <i className="bi bi-bug-fill me-2 text-danger"></i> Sửa Lỗi (Bug Fixing) ({exercises.filter((e) => e.exercise_type === 'BUG_FIXING').length})
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  active={activeTab === 'assessment'}
+                  onClick={() => {
+                    setActiveTab('assessment');
+                    setActiveAssessment(null);
+                  }}
+                  className="fw-bold px-4 py-2 rounded-3"
+                >
+                  <i className="bi bi-clipboard2-check me-2 text-success"></i> Đề Phỏng Vấn & Đánh Giá
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  active={activeTab === 'review'}
+                  onClick={() => setActiveTab('review')}
+                  className="fw-bold px-4 py-2 rounded-3"
+                >
+                  <i className="bi bi-arrow-repeat me-2"></i> Ôn Phần Còn Yếu
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  active={activeTab === 'challenge'}
+                  onClick={() => setActiveTab('challenge')}
+                  className="fw-bold px-4 py-2 rounded-3"
+                >
+                  <i className="bi bi-trophy-fill me-2 text-warning"></i> Thử Thách Tuần
+                </Nav.Link>
+              </Nav.Item>
+            </Nav>
 
         {/* TAB 1 & TAB 2: KHO BÀI LUYỆN & SỬA LỖI CODE */}
         {(activeTab === 'exercises' || activeTab === 'bug-fixing') && (
@@ -725,6 +979,8 @@ export default function PracticeHub({ currentUser }) {
               </Card>
             </Col>
           </Row>
+        )}
+          </>
         )}
       </Container>
     </div>

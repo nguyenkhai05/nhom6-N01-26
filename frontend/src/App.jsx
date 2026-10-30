@@ -1092,7 +1092,17 @@ export default function App() {
         )}
 
         {currentRoute === 'practice' && (
-          <PracticeHub currentUser={currentUser} />
+          <PracticeHub
+            currentUser={currentUser}
+            courses={courses}
+            onNavigate={setCurrentRoute}
+            onStartLearning={(course) => {
+              setActiveLearningCourse(course);
+              setCurrentRoute('learning-room');
+            }}
+            onOpenLogin={() => setShowLoginModal(true)}
+            onOpenRegister={() => setShowRegisterModal(true)}
+          />
         )}
 
         {currentRoute === 'projects' && (
