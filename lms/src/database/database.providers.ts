@@ -14,6 +14,32 @@ import { TopupRequest } from '../commerce/entities/topup-request.entity.js';
 import { Order } from '../commerce/entities/order.entity.js';
 import { OrderItem } from '../commerce/entities/order-item.entity.js';
 import { RefundRequest } from '../commerce/entities/refund-request.entity.js';
+import { LessonProgress } from '../learning/entities/lesson-progress.entity.js';
+import { LessonNote } from '../learning/entities/lesson-note.entity.js';
+import { LessonAttachment } from '../learning/entities/lesson-attachment.entity.js';
+import { QuizQuestion } from '../learning/entities/quiz-question.entity.js';
+import { QuizAttempt } from '../learning/entities/quiz-attempt.entity.js';
+
+export const INITIAL_QUIZ_QUESTIONS = [
+  {
+    question_id: 1,
+    lesson_id: 3,
+    question_text: 'Trong React 19, hàm/hook nào được dùng để thực hiện side effects?',
+    options: JSON.stringify(['useState', 'useEffect', 'useMemo', 'useReducer']),
+    correct_answer_index: 1,
+    points: 50,
+    explanation: 'useEffect được dùng để quản lý side-effects trong functional component.',
+  },
+  {
+    question_id: 2,
+    lesson_id: 3,
+    question_text: 'Thực thi typeof null trong JavaScript trả về kết quả gì?',
+    options: JSON.stringify(['"null"', '"undefined"', '"object"', '"boolean"']),
+    correct_answer_index: 2,
+    points: 50,
+    explanation: 'typeof null trả về "object" do thiết kế ban đầu của JavaScript.',
+  },
+];
 
 export const INITIAL_VOUCHERS = [
   {
@@ -338,6 +364,11 @@ export const databaseProviders = [
           Order,
           OrderItem,
           RefundRequest,
+          LessonProgress,
+          LessonNote,
+          LessonAttachment,
+          QuizQuestion,
+          QuizAttempt,
         ],
         // R02: Tắt synchronize: true mặc định để bảo vệ schema CSDL và không drop cột users.created_at
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
@@ -378,6 +409,11 @@ export const databaseProviders = [
         const orderItemRepo = createMockRepository([], 'item_id');
         const refundRepo = createMockRepository([], 'refund_id');
         const enrollmentRepo = createMockRepository([], 'enrollment_id');
+        const progressRepo = createMockRepository([], 'id');
+        const noteRepo = createMockRepository([], 'id');
+        const attachmentRepo = createMockRepository([], 'attachment_id');
+        const quizQuestionRepo = createMockRepository(INITIAL_QUIZ_QUESTIONS, 'question_id');
+        const quizAttemptRepo = createMockRepository([], 'attempt_id');
         const defaultRepo = createMockRepository([], 'id');
 
         return {
@@ -398,6 +434,11 @@ export const databaseProviders = [
             if (entity === OrderItem || entity?.name === 'OrderItem') return orderItemRepo;
             if (entity === RefundRequest || entity?.name === 'RefundRequest') return refundRepo;
             if (entity === Enrollment || entity?.name === 'Enrollment') return enrollmentRepo;
+            if (entity === LessonProgress || entity?.name === 'LessonProgress') return progressRepo;
+            if (entity === LessonNote || entity?.name === 'LessonNote') return noteRepo;
+            if (entity === LessonAttachment || entity?.name === 'LessonAttachment') return attachmentRepo;
+            if (entity === QuizQuestion || entity?.name === 'QuizQuestion') return quizQuestionRepo;
+            if (entity === QuizAttempt || entity?.name === 'QuizAttempt') return quizAttemptRepo;
             return defaultRepo;
           },
         } as unknown as DataSource;

@@ -201,63 +201,138 @@ export default function CodeArena() {
     setTerminalOutput(`// Đã chuyển sang thử thách: ${ch.title}\n// Hãy hoàn thiện code và bấm Chạy thử.`);
   };
 
-  // Thực thi và chấm mã nguồn trực tiếp
+  // Thực thi và chấm mã nguồn trên Web Worker Sandbox cô lập (US18)
   const runCodeTests = () => {
     setIsRunning(true);
-    setTerminalOutput('Đang biên dịch và thực thi trên Web Sandbox...\n');
+    setTerminalOutput('Đang biên dịch và thực thi trên Web Worker Sandbox (cô lập an toàn, timeout 2000ms)...\n');
 
-    setTimeout(() => {
-      try {
-        // Safe evaluation of the function in sandbox scope
-        const functionNameMap = {
-          'two-sum': 'twoSum',
-          'reverse-string': 'reverseString',
-          'fizz-buzz': 'fizzBuzz',
-          'valid-palindrome': 'isPalindrome',
-          'max-subarray': 'maxSubArray',
-        };
-        const targetFn = functionNameMap[selectedChallenge.id] || 'solution';
-        const evalFunction = new Function(`${userCode}; return ${targetFn};`)();
+    const functionNameMap = {
+      'two-sum': 'twoSum',
+      'reverse-string': 'reverseString',
+      'fizz-buzz': 'fizzBuzz',
+      'valid-palindrome': 'isPalindrome',
+      'max-subarray': 'maxSubArray',
+    };
+    const targetFn = functionNameMap[selectedChallenge.id] || 'solution';
 
-        let allPassed = true;
-        const results = selectedChallenge.testCases.map((tc, idx) => {
-          try {
-            const actual = tc.fnCall(evalFunction);
-            const actualStr = JSON.stringify(actual);
-            const passed = actualStr === tc.expected;
-            if (!passed) allPassed = false;
-            return {
-              id: idx + 1,
-              input: tc.input,
-              expected: tc.expected,
-              actual: actualStr,
-              passed
-            };
-          } catch (err) {
-            allPassed = false;
-            return {
-              id: idx + 1,
-              input: tc.input,
-              expected: tc.expected,
-              actual: `Lỗi: ${err.message}`,
-              passed: false
-            };
-          }
-        });
-
-        setTestResults(results);
-        if (allPassed) {
-          setTerminalOutput(`🎉 XUẤT SẮC! Toàn bộ ${results.length}/${results.length} Test cases đã vượt qua!\nĐiểm thưởng: +${selectedChallenge.points} XP vào hồ sơ lập trình viên EduViet.`);
-        } else {
-          setTerminalOutput(`⚠️ Có một số test case chưa vượt qua. Vui lòng kiểm tra lại logic và biên dịch lại.`);
-        }
-      } catch (err) {
-        setTestResults([]);
-        setTerminalOutput(`❌ Lỗi biên dịch JavaScript (SyntaxError / TypeError):\n${err.message}`);
+    const preparedCases = selectedChallenge.testCases.map((tc, idx) => {
+      let arg1 = null;
+      let arg2 = null;
+      if (selectedChallenge.id === 'two-sum') {
+        if (tc.input.includes('9')) { arg1 = [2, 7, 11, 15]; arg2 = 9; }
+        else if (tc.input.includes('4], target = 6')) { arg1 = [3, 2, 4]; arg2 = 6; }
+        else { arg1 = [3, 3]; arg2 = 6; }
+      } else if (selectedChallenge.id === 'reverse-string') {
+        if (tc.input.includes('hello')) arg1 = 'hello';
+        else if (tc.input.includes('EduViet')) arg1 = 'EduViet';
+        else arg1 = 'reactjs';
+      } else if (selectedChallenge.id === 'fizz-buzz') {
+        arg1 = tc.input.includes('5') ? 5 : 3;
+      } else if (selectedChallenge.id === 'valid-palindrome') {
+        if (tc.input.includes('Panama')) arg1 = 'A man, a plan, a canal: Panama';
+        else if (tc.input.includes('race a car')) arg1 = 'race a car';
+        else arg1 = ' ';
+      } else if (selectedChallenge.id === 'max-subarray') {
+        if (tc.input.includes('-2, 1')) arg1 = [-2, 1, -3, 4, -1, 2, 1, -5, 4];
+        else if (tc.input.includes('[1]')) arg1 = [1];
+        else arg1 = [5, 4, -1, 7, 8];
       }
+      return { id: idx + 1, input: tc.input, expected: tc.expected, arg1, arg2 };
+    });
+
+    const workerScript = `
+      self.onmessage = function(e) {
+        var code = e.data.code;
+        var targetFn = e.data.targetFn;
+        var testCases = e.data.testCases;
+        try {
+          var fn = new Function(code + '; return ' + targetFn + ';')();
+          var allPassed = true;
+          var results = testCases.map(function(tc) {
+            try {
+              var actual;
+              if (targetFn === 'twoSum') actual = fn(tc.arg1, tc.arg2);
+              else if (targetFn === 'reverseString' || targetFn === 'isPalindrome') actual = fn(tc.arg1);
+              else if (targetFn === 'fizzBuzz') actual = fn(tc.arg1);
+              else if (targetFn === 'maxSubArray') actual = fn(tc.arg1);
+              else actual = fn(tc.arg1);
+              var actualStr = JSON.stringify(actual);
+              var passed = (actualStr === tc.expected);
+              if (!passed) allPassed = false;
+              return { id: tc.id, input: tc.input, expected: tc.expected, actual: actualStr, passed: passed };
+            } catch (err) {
+              allPassed = false;
+              return { id: tc.id, input: tc.input, expected: tc.expected, actual: 'Lỗi: ' + err.message, passed: false };
+            }
+          });
+          self.postMessage({ success: true, results: results, allPassed: allPassed });
+        } catch (err) {
+          self.postMessage({ success: false, error: err.message });
+        }
+      };
+    `;
+
+    try {
+      const blob = new Blob([workerScript], { type: 'application/javascript' });
+      const workerUrl = URL.createObjectURL(blob);
+      const worker = new Worker(workerUrl);
+
+      let isFinished = false;
+      const timeoutId = setTimeout(() => {
+        if (!isFinished) {
+          isFinished = true;
+          worker.terminate();
+          URL.revokeObjectURL(workerUrl);
+          setIsRunning(false);
+          setTestResults([]);
+          setTerminalOutput('❌ Lỗi: Thời gian thực thi vượt quá 2000ms Timeout. Vòng lặp vô hạn (Infinite Loop) đã bị ngắt tự động.');
+        }
+      }, 2000);
+
+      worker.onmessage = (event) => {
+        if (isFinished) return;
+        isFinished = true;
+        clearTimeout(timeoutId);
+        worker.terminate();
+        URL.revokeObjectURL(workerUrl);
+        setIsRunning(false);
+
+        if (event.data.success) {
+          const { results, allPassed } = event.data;
+          setTestResults(results);
+          if (allPassed) {
+            setTerminalOutput('🎉 XUẤT SẮC! Toàn bộ ' + results.length + '/' + results.length + ' Test cases đã vượt qua!\nĐiểm thưởng: +' + selectedChallenge.points + ' XP vào hồ sơ lập trình viên EduViet.');
+          } else {
+            setTerminalOutput('⚠️ Có một số test case chưa vượt qua. Vui lòng kiểm tra lại logic và biên dịch lại.');
+          }
+        } else {
+          setTestResults([]);
+          setTerminalOutput('❌ Lỗi biên dịch JavaScript (SyntaxError / TypeError):\n' + event.data.error);
+        }
+      };
+
+      worker.onerror = (err) => {
+        if (isFinished) return;
+        isFinished = true;
+        clearTimeout(timeoutId);
+        worker.terminate();
+        URL.revokeObjectURL(workerUrl);
+        setIsRunning(false);
+        setTestResults([]);
+        setTerminalOutput('❌ Lỗi Sandbox Worker: ' + err.message);
+      };
+
+      worker.postMessage({
+        code: userCode,
+        targetFn,
+        testCases: preparedCases,
+      });
+    } catch (workerErr) {
       setIsRunning(false);
-    }, 400);
+      setTerminalOutput('❌ Không thể khởi tạo Sandbox: ' + workerErr.message);
+    }
   };
+
 
   // Nộp bài thi trắc nghiệm
   const handleAnswerQuiz = (qId, optionIdx) => {
