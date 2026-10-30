@@ -22,8 +22,9 @@ export async function getCourses(params = {}, opts) {
   const qs = new URLSearchParams(
     Object.entries(params).filter(([, v]) => v !== undefined && v !== '' && v !== null)
   ).toString();
-  const data = await request(`/courses${qs ? `?${qs}` : ''}`, opts);
-  return data.map(normalizeCourse);
+  const res = await request(`/courses${qs ? `?${qs}` : ''}`, opts);
+  const items = Array.isArray(res) ? res : (res?.data ?? []);
+  return items.map(normalizeCourse);
 }
 
 export async function getCourse(id, opts) {

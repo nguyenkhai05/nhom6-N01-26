@@ -56,6 +56,9 @@ export class Course {
   @Column({ type: 'enum', enum: CourseStatus, default: CourseStatus.DRAFT })
   status: CourseStatus;
 
+  @Column({ type: 'text', nullable: true })
+  rejection_reason: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 

@@ -139,6 +139,29 @@ function matchesCondition(item: any, condition: any): boolean {
   });
 }
 
+export const INITIAL_MODULES = [
+  { module_id: 1, course_id: 1, title: 'Chương 1: Tổng quan & Khởi tạo dự án React 19', order_index: 1 },
+  { module_id: 2, course_id: 1, title: 'Chương 2: Thành thạo Component, Props & State Hooks', order_index: 2 },
+  { module_id: 3, course_id: 1, title: 'Chương 3: State Management với Redux Toolkit & RTK Query', order_index: 3 },
+  { module_id: 4, course_id: 1, title: 'Chương 4: Xây dựng dự án hoàn chỉnh & Tối ưu SEO Next.js', order_index: 4 },
+  { module_id: 5, course_id: 2, title: 'Chương 1: Khởi động NestJS & Clean Architecture', order_index: 1 },
+  { module_id: 6, course_id: 2, title: 'Chương 2: TypeORM, MySQL Migration & Relations', order_index: 2 },
+  { module_id: 7, course_id: 2, title: 'Chương 3: Authentication & Authorization JWT RBAC', order_index: 3 },
+  { module_id: 8, course_id: 3, title: 'Chương 1: Mô hình hóa ERD & Chuẩn hóa 3NF', order_index: 1 },
+  { module_id: 9, course_id: 3, title: 'Chương 2: Kỹ thuật Indexing B-Tree & Query Plan', order_index: 2 },
+];
+
+export const INITIAL_LESSONS = [
+  { lesson_id: 1, module_id: 1, title: '1.1 Giới thiệu lộ trình học và chuẩn bị công cụ', content_type: 'Video', content_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', duration_seconds: 480, is_preview: true, order_index: 1 },
+  { lesson_id: 2, module_id: 1, title: '1.2 Khởi tạo dự án Vite React với TypeScript', content_type: 'Video', content_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', duration_seconds: 720, is_preview: false, order_index: 2 },
+  { lesson_id: 3, module_id: 1, title: '1.3 Bài tập trắc nghiệm kiến thức khởi tạo', content_type: 'Quiz', content_url: '', duration_seconds: 300, is_preview: false, order_index: 3 },
+  { lesson_id: 4, module_id: 2, title: '2.1 Vòng đời Component và UseEffect Hook', content_type: 'Video', content_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', duration_seconds: 900, is_preview: false, order_index: 1 },
+  { lesson_id: 5, module_id: 2, title: '2.2 Custom Hooks và Kỹ thuật Tối ưu Render', content_type: 'Video', content_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', duration_seconds: 1100, is_preview: false, order_index: 2 },
+  { lesson_id: 6, module_id: 2, title: '2.3 Thực hành code sandbox React trực tiếp', content_type: 'Article', content_url: '', duration_seconds: 600, is_preview: false, order_index: 3 },
+  { lesson_id: 7, module_id: 5, title: '1.1 Giới thiệu kiến trúc NestJS Dependency Injection', content_type: 'Video', content_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', duration_seconds: 650, is_preview: true, order_index: 1 },
+  { lesson_id: 8, module_id: 5, title: '1.2 Cấu hình Modules, Controllers và Services', content_type: 'Video', content_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4', duration_seconds: 820, is_preview: false, order_index: 2 },
+];
+
 const INITIAL_ROLES = [
   { role_id: 1, role_name: 'Admin' },
   { role_id: 2, role_name: 'Instructor' },
@@ -179,7 +202,13 @@ const INITIAL_USERS = [
 function createMockRepository(initialData: any[], idField: string) {
   const store = [...initialData];
   return {
-    find: async () => [...store],
+    find: async (options?: any) => {
+      let items = [...store];
+      if (options?.where) {
+        items = items.filter((item) => matchesCondition(item, options.where));
+      }
+      return items;
+    },
     findOne: async (options?: any) => {
       const where = options?.where ?? options;
       if (!where) return store[0] ?? null;
@@ -285,6 +314,8 @@ export const databaseProviders = [
         const categoryRepo = createMockRepository(INITIAL_CATEGORIES, 'category_id');
         const userRepo = createMockRepository(INITIAL_USERS, 'user_id');
         const roleRepo = createMockRepository(INITIAL_ROLES, 'role_id');
+        const moduleRepo = createMockRepository(INITIAL_MODULES, 'module_id');
+        const lessonRepo = createMockRepository(INITIAL_LESSONS, 'lesson_id');
         const defaultRepo = createMockRepository([], 'id');
 
         return {
@@ -294,6 +325,8 @@ export const databaseProviders = [
             if (entity === Category || entity?.name === 'Category') return categoryRepo;
             if (entity === User || entity?.name === 'User') return userRepo;
             if (entity === Role || entity?.name === 'Role') return roleRepo;
+            if (entity === CourseModule || entity?.name === 'CourseModule') return moduleRepo;
+            if (entity === Lesson || entity?.name === 'Lesson') return lessonRepo;
             return defaultRepo;
           },
         } as unknown as DataSource;

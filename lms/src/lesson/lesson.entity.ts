@@ -34,7 +34,7 @@ export class Lesson {
   @Column({ default: 1 })
   order_index: number;
 
-  @ManyToOne(() => CourseModule, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CourseModule, (m) => m.lessons, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'module_id' })
   module: Relation<CourseModule>;
 }
