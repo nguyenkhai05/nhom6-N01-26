@@ -1,49 +1,46 @@
 import { Container } from 'react-bootstrap';
 
 // Chân trang theo mẫu Booking.com: dải liên kết nhanh + 5 cột trên nền xám.
-// Mục có `route` điều hướng trong app; các mục còn lại là liên kết giữ chỗ (chưa có trang đích).
 const QUICK_LINKS = [
   { label: 'Tất cả khóa học', route: 'courses' },
-  { label: 'Lộ trình nghề nghiệp', route: 'roadmap' },
-  { label: 'Sân chơi luyện code', route: 'practice' },
-  { label: 'Tài liệu', route: 'docs' },
+  { label: 'Trung tâm luyện tập', route: 'practice' },
+  { label: 'Dự án thực tế', route: 'projects' },
+  { label: 'Cộng đồng học viên', route: 'community' },
+  { label: 'Combo ưu đãi trọn gói', route: 'bundles' },
   { label: 'Khóa học của tôi', route: 'my-learning' },
-  { label: 'Ưu đãi theo mùa' },
-  { label: 'Bài viết công nghệ' },
 ];
 
 const COLUMNS = [
-  { title: 'Hỗ trợ', links: [
-    { label: 'Quản lý khóa học của bạn', route: 'my-learning' },
-    { label: 'Liên hệ chăm sóc học viên' },
+  { title: 'Học tập & Thực hành', links: [
+    { label: 'Khóa học lập trình', route: 'courses' },
+    { label: 'Kho bài tập & Thử thách', route: 'practice' },
+    { label: 'Dự án thực chiến có Rubric', route: 'projects' },
+    { label: 'Cộng đồng trao đổi Q&A', route: 'community' },
+    { label: 'Combo tiết kiệm học phí', route: 'bundles' },
+  ] },
+  { title: 'Hỗ trợ học viên', links: [
+    { label: 'Khóa học của tôi', route: 'my-learning' },
     { label: 'Trung tâm thông tin bảo mật' },
+    { label: 'Chính sách hoàn phí 7 ngày' },
+    { label: 'Báo cáo vi phạm nội dung' },
   ] },
-  { title: 'Khám phá thêm', links: [
-    { label: 'Chương trình học viên thân thiết' },
-    { label: 'Ưu đãi theo mùa và dịp lễ' },
-    { label: 'Bài viết về công nghệ' },
-    { label: 'EduViet dành cho doanh nghiệp' },
-    { label: 'Lộ trình nghề nghiệp', route: 'roadmap' },
-    { label: 'Sân chơi luyện code', route: 'practice' },
-  ] },
-  { title: 'Điều khoản và cài đặt', links: [
-    { label: 'Chính sách bảo mật' },
+  { title: 'Điều khoản & Quy định', links: [
+    { label: 'Chính sách bảo mật dữ liệu' },
     { label: 'Điều khoản dịch vụ' },
-    { label: 'Chính sách hoàn học phí 7 ngày' },
-    { label: 'Chính sách về quyền riêng tư' },
+    { label: 'Quy tắc cộng đồng học viên' },
+    { label: 'Tiêu chuẩn chất lượng dự án' },
   ] },
   { title: 'Dành cho giảng viên', links: [
-    { label: 'Đăng nhập trang giảng viên' },
-    { label: 'Trợ giúp giảng viên' },
-    { label: 'Đăng khóa học của bạn' },
-    { label: 'Trở thành đối tác' },
+    { label: 'Cổng biên soạn giáo trình' },
+    { label: 'Hệ thống chấm điểm Rubric' },
+    { label: 'Quy chuẩn đăng tải học liệu' },
+    { label: 'Hợp tác phát triển nội dung' },
   ] },
-  { title: 'Về chúng tôi', links: [
-    { label: 'Về EduViet' },
-    { label: 'Chúng tôi hoạt động như thế nào' },
-    { label: 'Cơ hội việc làm' },
-    { label: 'Liên hệ công ty' },
-    { label: 'Hướng dẫn và báo cáo nội dung' },
+  { title: 'Về EduViet', links: [
+    { label: 'Giới thiệu nền tảng EduViet' },
+    { label: 'Phương pháp đào tạo thực chiến' },
+    { label: 'Đội ngũ phát triển (Nhóm 6)' },
+    { label: 'Liên hệ hợp tác doanh nghiệp' },
   ] },
 ];
 
@@ -80,7 +77,7 @@ export default function Footer({ onNavigate }) {
               </nav>
             ))}
           </div>
-          <p className="bv-footer-copy">© 2026 EduViet Code · Dự án nhóm 6 – N01-26, môn Thiết kế web nâng cao.</p>
+          <p className="bv-footer-copy">© 2026 EduViet Platform · Học viện Công nghệ & Lập trình Thực chiến · Nhóm 6.</p>
         </Container>
       </div>
     </footer>

@@ -1,0 +1,58 @@
+import { API_URL } from './api';
+import { getToken } from './auth';
+
+async function request(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const msg = Array.isArray(data?.message) ? data.message.join('. ') : data?.message;
+    throw new Error(msg || `Lỗi máy chủ (${res.status})`);
+  }
+  return data;
+}
+
+// 1. Combo Ưu Đãi (Bundles)
+export const getBundles = () => request('/bundles');
+export const getBundle = (id) => request(`/bundles/${id}`);
+export const getBundleQuote = (id) => request(`/bundles/${id}/quote`, { method: 'POST' });
+export const checkoutBundle = (id) => request(`/bundles/${id}/checkout`, { method: 'POST' });
+
+// 2. Dự Án Thực Tế (Projects)
+export const getProjects = () => request('/projects');
+export const getProject = (id) => request(`/projects/${id}`);
+export const getMyProjectSubmission = (id) => request(`/projects/${id}/my-submission`);
+export const saveProjectSubmission = (id, body) => request(`/projects/${id}/submissions`, { method: 'POST', body: JSON.stringify(body) });
+export const getProjectShowcase = () => request('/projects/showcase');
+
+// 3. Trung Tâm Luyện Tập (Practice)
+export const getPracticeExercises = (query = {}) => {
+  const params = new URLSearchParams(query);
+  return request(`/practice/exercises?${params.toString()}`);
+};
+export const getPracticeExercise = (id) => request(`/practice/exercises/${id}`);
+export const getSkillAssessments = () => request('/practice/assessments');
+export const getSkillAssessment = (id) => request(`/practice/assessments/${id}`);
+export const submitSkillAssessment = (id, answers) => request(`/practice/assessments/${id}/submit`, { method: 'POST', body: JSON.stringify({ answers }) });
+export const getWeeklyChallenge = () => request('/practice/challenges/weekly');
+
+// 4. Cộng Đồng Học Viên (Community)
+export const getCommunityPosts = (query = {}) => {
+  const params = new URLSearchParams(query);
+  return request(`/community/posts?${params.toString()}`);
+};
+export const getCommunityPost = (id) => request(`/community/posts/${id}`);
+export const createCommunityPost = (body) => request('/community/posts', { method: 'POST', body: JSON.stringify(body) });
+export const createCommunityReply = (postId, content) => request(`/community/posts/${postId}/replies`, { method: 'POST', body: JSON.stringify({ content }) });
+export const acceptCommunityReply = (postId, replyId) => request(`/community/posts/${postId}/accept-reply`, { method: 'POST', body: JSON.stringify({ reply_id: replyId }) });
+export const reportContent = (body) => request('/community/reports', { method: 'POST', body: JSON.stringify(body) });

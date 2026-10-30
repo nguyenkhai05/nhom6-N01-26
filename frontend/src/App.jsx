@@ -6,6 +6,10 @@ import Offers from './Offers';
 import CourseList from './components/CourseList';
 import CodeArena from './components/CodeArena';
 import CareerRoadmap from './components/CareerRoadmap';
+import BundlesPage from './components/BundlesPage';
+import ProjectsHub from './components/ProjectsHub';
+import PracticeHub from './components/PracticeHub';
+import CommunityHub from './components/CommunityHub';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import { apiMe, clearToken, getToken, saveExtras, toFrontendUser } from './services/auth';
@@ -626,6 +630,63 @@ export default function App() {
                 }
               }}
             />
+
+            {/* Bốn Thẻ Truy Cập Nhanh Theo Đặc Tả Mới */}
+            <div className="app-container my-4">
+              <div className="row g-3">
+                <div className="col-md-3 col-6">
+                  <div
+                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
+                    onClick={() => setCurrentRoute('practice')}
+                  >
+                    <div className="p-3 bg-success-subtle text-success rounded-circle d-inline-block mb-2">
+                      <i className="bi bi-code-slash fs-3"></i>
+                    </div>
+                    <h6 className="fw-bold text-dark mb-1">Luyện Bài Theo Chủ Đề</h6>
+                    <small className="text-muted d-block">JavaScript, React, SQL</small>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div
+                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
+                    onClick={() => setCurrentRoute('practice')}
+                  >
+                    <div className="p-3 bg-primary-subtle text-primary rounded-circle d-inline-block mb-2">
+                      <i className="bi bi-clipboard2-check fs-3"></i>
+                    </div>
+                    <h6 className="fw-bold text-dark mb-1">Kiểm Tra Năng Lực</h6>
+                    <small className="text-muted d-block">Chấm server & Skill Radar</small>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div
+                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
+                    onClick={() => setCurrentRoute('projects')}
+                  >
+                    <div className="p-3 bg-warning-subtle text-warning-emphasis rounded-circle d-inline-block mb-2">
+                      <i className="bi bi-kanban fs-3"></i>
+                    </div>
+                    <h6 className="fw-bold text-dark mb-1">Làm Dự Án Thực Tế</h6>
+                    <small className="text-muted d-block">Brief, Rubric & Showcase</small>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div
+                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
+                    onClick={() => setCurrentRoute('community')}
+                  >
+                    <div className="p-3 bg-info-subtle text-info-emphasis rounded-circle d-inline-block mb-2">
+                      <i className="bi bi-chat-dots fs-3"></i>
+                    </div>
+                    <h6 className="fw-bold text-dark mb-1">Hỏi Đáp Cộng Đồng</h6>
+                    <small className="text-muted d-block">Hỏi đáp & Kinh nghiệm</small>
+                  </div>
+                </div>
+              </div>
+            </div>
             <CourseList
               courses={filteredCourses}
               onViewDetail={openCourseDetail}
@@ -687,18 +748,15 @@ export default function App() {
         )}
 
         {currentRoute === 'roadmap' && (
-          <CareerRoadmap
-            onSelectCourseTrack={(track) => {
-              if (track === 'frontend') {
-                setSearchFilter({ keyword: 'React', techCategory: 'Frontend', level: 'ALL' });
-              } else if (track === 'backend') {
-                setSearchFilter({ keyword: 'NestJS', techCategory: 'Backend', level: 'ALL' });
-              } else {
-                setSearchFilter({ keyword: 'Python', techCategory: 'ALL', level: 'ALL' });
-              }
-              setCurrentRoute('courses');
-            }}
-          />
+          <div className="app-container py-5 text-center">
+            <Alert variant="info" className="p-4 rounded-4 shadow-sm mx-auto" style={{ maxWidth: 700 }}>
+              <h4 className="fw-bold mb-2"><i className="bi bi-info-circle me-2"></i> Lộ Trình Đã Được Chuyển Sang Combo Ưu Đãi</h4>
+              <p className="mb-3 text-secondary">Các lộ trình nghề nghiệp đã được đóng gói thành các gói Combo ưu đãi có giá tiết kiệm và phân bổ giá thông minh.</p>
+              <Button variant="primary" className="fw-bold px-4 rounded-pill" onClick={() => setCurrentRoute('bundles')}>
+                Khám Phá Các Gói Combo Ngay
+              </Button>
+            </Alert>
+          </div>
         )}
 
         {/* Phòng Học Trực Tuyến Tương Tác (Vào Học Ngay Lập Tức) */}
@@ -711,8 +769,21 @@ export default function App() {
           />
         )}
 
+        {/* 4 Chức năng chính mới theo đặc tả */}
         {currentRoute === 'practice' && (
-          <CodeArena />
+          <PracticeHub currentUser={currentUser} />
+        )}
+
+        {currentRoute === 'projects' && (
+          <ProjectsHub currentUser={currentUser} onNavigate={setCurrentRoute} />
+        )}
+
+        {currentRoute === 'community' && (
+          <CommunityHub currentUser={currentUser} />
+        )}
+
+        {currentRoute === 'bundles' && (
+          <BundlesPage currentUser={currentUser} onNavigate={setCurrentRoute} onCourseSelect={openCourseDetail} />
         )}
 
         {currentRoute === 'docs' && (

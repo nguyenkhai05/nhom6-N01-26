@@ -42,3 +42,6 @@ GEMINI.md
 # Python
 __pycache__/
 *.pyc
+
+# Vite cache
+.vite/

@@ -19,6 +19,14 @@ import { LessonNote } from '../learning/entities/lesson-note.entity.js';
 import { LessonAttachment } from '../learning/entities/lesson-attachment.entity.js';
 import { QuizQuestion } from '../learning/entities/quiz-question.entity.js';
 import { QuizAttempt } from '../learning/entities/quiz-attempt.entity.js';
+import { Bundle } from '../bundle/entities/bundle.entity.js';
+import { BundleItem } from '../bundle/entities/bundle-item.entity.js';
+import { Project } from '../project/entities/project.entity.js';
+import { ProjectSubmission } from '../project/entities/project-submission.entity.js';
+import { PracticeExercise } from '../practice/entities/practice-exercise.entity.js';
+import { SkillAssessment } from '../practice/entities/skill-assessment.entity.js';
+import { CommunityPost } from '../community/entities/community-post.entity.js';
+import { CommunityReply } from '../community/entities/community-reply.entity.js';
 
 export const INITIAL_QUIZ_QUESTIONS = [
   {
@@ -369,6 +377,14 @@ export const databaseProviders = [
           LessonAttachment,
           QuizQuestion,
           QuizAttempt,
+          Bundle,
+          BundleItem,
+          Project,
+          ProjectSubmission,
+          PracticeExercise,
+          SkillAssessment,
+          CommunityPost,
+          CommunityReply,
         ],
         // R02: Tắt synchronize: true mặc định để bảo vệ schema CSDL và không drop cột users.created_at
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
@@ -405,6 +421,14 @@ export const databaseProviders = [
         const attachmentRepo = createMockRepository([], 'attachment_id');
         const quizQuestionRepo = createMockRepository(INITIAL_QUIZ_QUESTIONS, 'question_id');
         const quizAttemptRepo = createMockRepository([], 'attempt_id');
+        const bundleRepo = createMockRepository([], 'bundle_id');
+        const bundleItemRepo = createMockRepository([], 'id');
+        const projectRepo = createMockRepository([], 'project_id');
+        const submissionRepo = createMockRepository([], 'submission_id');
+        const practiceExerciseRepo = createMockRepository([], 'exercise_id');
+        const assessmentRepo = createMockRepository([], 'assessment_id');
+        const communityPostRepo = createMockRepository([], 'post_id');
+        const communityReplyRepo = createMockRepository([], 'reply_id');
         const defaultRepo = createMockRepository([], 'id');
 
         return {
@@ -430,6 +454,14 @@ export const databaseProviders = [
             if (entity === LessonAttachment || entity?.name === 'LessonAttachment') return attachmentRepo;
             if (entity === QuizQuestion || entity?.name === 'QuizQuestion') return quizQuestionRepo;
             if (entity === QuizAttempt || entity?.name === 'QuizAttempt') return quizAttemptRepo;
+            if (entity === Bundle || entity?.name === 'Bundle') return bundleRepo;
+            if (entity === BundleItem || entity?.name === 'BundleItem') return bundleItemRepo;
+            if (entity === Project || entity?.name === 'Project') return projectRepo;
+            if (entity === ProjectSubmission || entity?.name === 'ProjectSubmission') return submissionRepo;
+            if (entity === PracticeExercise || entity?.name === 'PracticeExercise') return practiceExerciseRepo;
+            if (entity === SkillAssessment || entity?.name === 'SkillAssessment') return assessmentRepo;
+            if (entity === CommunityPost || entity?.name === 'CommunityPost') return communityPostRepo;
+            if (entity === CommunityReply || entity?.name === 'CommunityReply') return communityReplyRepo;
             return defaultRepo;
           },
         } as unknown as DataSource;

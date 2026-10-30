@@ -57,45 +57,45 @@ export default function Header({
             <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent ${currentRoute === 'home' ? 'active' : ''}`}
-                  onClick={() => onNavigate('home')}
-                >
-                  <i className="bi bi-house-door me-1"></i> Trang chủ
-                </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link border-0 bg-transparent ${currentRoute === 'courses' ? 'active' : ''}`}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'courses' ? 'active text-primary fw-bold' : ''}`}
                   onClick={() => onNavigate('courses')}
                 >
-                  <i className="bi bi-mortarboard me-1"></i> Khóa học
+                  <i className="bi bi-mortarboard me-1 text-primary"></i> Khóa học
                 </button>
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent ${currentRoute === 'roadmap' ? 'active' : ''}`}
-                  onClick={() => onNavigate('roadmap')}
-                >
-                  <i className="bi bi-signpost-split me-1 text-primary"></i> Lộ trình
-                </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link border-0 bg-transparent ${currentRoute === 'practice' ? 'active' : ''}`}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'practice' ? 'active text-primary fw-bold' : ''}`}
                   onClick={() => onNavigate('practice')}
                 >
-                  <i className="bi bi-terminal me-1 text-success"></i> Luyện Code
+                  <i className="bi bi-code-slash me-1 text-success"></i> Luyện tập
                 </button>
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent ${currentRoute === 'docs' ? 'active' : ''}`}
-                  onClick={() => onNavigate('docs')}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'projects' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('projects')}
                 >
-                  <i className="bi bi-journal-code me-1 text-danger"></i> Tài liệu
+                  <i className="bi bi-kanban me-1 text-warning"></i> Dự án thực tế
                 </button>
               </li>
-              {currentUser?.role === 'ADMIN' && (
+              <li className="nav-item">
+                <button
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'community' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('community')}
+                >
+                  <i className="bi bi-chat-dots me-1 text-info"></i> Cộng đồng
+                </button>
+              </li>
+              <li className="nav-item">
+                <button
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'bundles' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('bundles')}
+                >
+                  <i className="bi bi-tags-fill me-1 text-danger"></i> Combo ưu đãi
+                </button>
+              </li>
+              {currentUser?.role === 'ADMIN'  && (
                 <li className="nav-item">
                   <button
                     className={`nav-link border-0 bg-transparent text-danger fw-bold ${currentRoute === 'admin' ? 'active' : ''}`}

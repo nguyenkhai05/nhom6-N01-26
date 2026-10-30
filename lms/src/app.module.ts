@@ -7,6 +7,10 @@ import { CourseModule } from './course/course.module.js';
 import { CommerceModule } from './commerce/commerce.module.js';
 import { LearningModule } from './learning/learning.module.js';
 import { DatabaseModule } from './database/database.module.js';
+import { BundleModule } from './bundle/bundle.module.js';
+import { ProjectModule } from './project/project.module.js';
+import { PracticeModule } from './practice/practice.module.js';
+import { CommunityModule } from './community/community.module.js';
 
 @Module({
   imports: [
@@ -16,6 +20,10 @@ import { DatabaseModule } from './database/database.module.js';
     CommerceModule,
     LearningModule,
     DatabaseModule,
+    BundleModule,
+    ProjectModule,
+    PracticeModule,
+    CommunityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
