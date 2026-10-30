@@ -12,6 +12,9 @@ import { ProjectModule } from './project/project.module.js';
 import { PracticeModule } from './practice/practice.module.js';
 import { CommunityModule } from './community/community.module.js';
 import { ArticleModule } from './article/article.module.js';
+import { CourseFinderModule } from './course-finder/course-finder.module.js';
+import { TrialModule } from './trial/trial.module.js';
+import { HelpModule } from './help/help.module.js';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { ArticleModule } from './article/article.module.js';
     PracticeModule,
     CommunityModule,
     ArticleModule,
+    CourseFinderModule,
+    TrialModule,
+    HelpModule,
   ],
   controllers: [AppController],
   providers: [AppService],

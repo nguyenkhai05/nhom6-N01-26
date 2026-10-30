@@ -56,6 +56,12 @@ export class CourseController {
     return this.courseService.findForInstructor(user);
   }
 
+  // CA-US03: So sánh tối đa 3 khóa học
+  @Get('compare')
+  async compare(@Query('ids') idsParam?: string) {
+    return this.courseService.compare(idsParam);
+  }
+
   // US06: Chi tiết khóa học và bài học thử (hỗ trợ đọc token nếu có để mở khóa link bài giảng)
   @Get(':id')
   async findOne(

@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Badge, Button, Nav, Form, Spinner, Alert, Pr
 import { getPracticeExercises, getSkillAssessments, getSkillAssessment, submitSkillAssessment, getWeeklyChallenge } from '../services/hubApi';
 
 export default function PracticeHub({ currentUser }) {
-  const [activeTab, setActiveTab] = useState('exercises'); // 'exercises' | 'assessment' | 'review' | 'challenge'
+  const [activeTab, setActiveTab] = useState('exercises'); // 'exercises' | 'bug-fixing' | 'assessment' | 'review' | 'challenge'
   const [exercises, setExercises] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [challenge, setChallenge] = useState(null);
@@ -143,6 +143,11 @@ export default function PracticeHub({ currentUser }) {
   };
 
   const filteredExercises = exercises.filter((ex) => {
+    if (activeTab === 'bug-fixing') {
+      if (ex.exercise_type !== 'BUG_FIXING') return false;
+    } else if (activeTab === 'exercises') {
+      if (ex.exercise_type === 'BUG_FIXING') return false;
+    }
     if (selectedSkill !== 'All' && ex.skill.toLowerCase() !== selectedSkill.toLowerCase()) return false;
     if (selectedDifficulty !== 'All' && ex.difficulty.toLowerCase() !== selectedDifficulty.toLowerCase()) return false;
     return true;
@@ -169,10 +174,27 @@ export default function PracticeHub({ currentUser }) {
           <Nav.Item>
             <Nav.Link
               active={activeTab === 'exercises'}
-              onClick={() => setActiveTab('exercises')}
+              onClick={() => {
+                setActiveTab('exercises');
+                const firstSkill = exercises.find(e => e.exercise_type !== 'BUG_FIXING');
+                if (firstSkill) selectExercise(firstSkill);
+              }}
               className="fw-bold px-4 py-2 rounded-3"
             >
-              <i className="bi bi-braces me-2"></i> Kho Bài Luyện ({exercises.length})
+              <i className="bi bi-code-slash me-2 text-primary"></i> Luyện Kỹ Năng ({exercises.filter(e => e.exercise_type !== 'BUG_FIXING').length})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link
+              active={activeTab === 'bug-fixing'}
+              onClick={() => {
+                setActiveTab('bug-fixing');
+                const firstBug = exercises.find(e => e.exercise_type === 'BUG_FIXING');
+                if (firstBug) selectExercise(firstBug);
+              }}
+              className="fw-bold px-4 py-2 rounded-3"
+            >
+              <i className="bi bi-bug-fill me-2 text-danger"></i> Sửa Lỗi (Bug Fixing) ({exercises.filter(e => e.exercise_type === 'BUG_FIXING').length})
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
@@ -181,7 +203,7 @@ export default function PracticeHub({ currentUser }) {
               onClick={() => { setActiveTab('assessment'); setActiveAssessment(null); }}
               className="fw-bold px-4 py-2 rounded-3"
             >
-              <i className="bi bi-clipboard2-check me-2"></i> Kiểm Tra Năng Lực
+              <i className="bi bi-clipboard2-check me-2 text-success"></i> Đề Phỏng Vấn & Đánh Giá
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
@@ -204,8 +226,8 @@ export default function PracticeHub({ currentUser }) {
           </Nav.Item>
         </Nav>
 
-        {/* TAB 1: KHO BÀI LUYỆN & CODE SANDBOX */}
-        {activeTab === 'exercises' && (
+        {/* TAB 1 & TAB 2: KHO BÀI LUYỆN & SỬA LỖI CODE */}
+        {(activeTab === 'exercises' || activeTab === 'bug-fixing') && (
           <Row className="g-4">
             {/* Sidebar danh sách bài */}
             <Col lg={4}>

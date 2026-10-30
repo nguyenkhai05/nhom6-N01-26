@@ -11,6 +11,10 @@ import ProjectsHub from './components/ProjectsHub';
 import PracticeHub from './components/PracticeHub';
 import CommunityHub from './components/CommunityHub';
 import ArticlesHub from './components/ArticlesHub';
+import CourseFinderPage from './components/CourseFinderPage';
+import InteractiveTrialPage from './components/InteractiveTrialPage';
+import HelpCenterPage from './components/HelpCenterPage';
+import MyLearningDashboard from './components/MyLearningDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import { apiMe, clearToken, getToken, saveExtras, toFrontendUser } from './services/auth';
@@ -642,58 +646,58 @@ export default function App() {
               }}
             />
 
-            {/* Bốn Thẻ Truy Cập Nhanh Theo Đặc Tả Mới */}
+            {/* Bốn Thẻ Truy Cập Nhanh Theo Chuẩn Điều Hướng 5 Cột Trụ Codecademy */}
             <div className="app-container my-4">
               <div className="row g-3">
                 <div className="col-md-3 col-6">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
-                    onClick={() => setCurrentRoute('practice')}
-                  >
-                    <div className="p-3 bg-success-subtle text-success rounded-circle d-inline-block mb-2">
-                      <i className="bi bi-code-slash fs-3"></i>
-                    </div>
-                    <h6 className="fw-bold text-dark mb-1">Luyện Bài Theo Chủ Đề</h6>
-                    <small className="text-muted d-block">JavaScript, React, SQL</small>
-                  </div>
-                </div>
-
-                <div className="col-md-3 col-6">
-                  <div
-                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
-                    onClick={() => setCurrentRoute('practice')}
+                    onClick={() => setCurrentRoute('courses')}
                   >
                     <div className="p-3 bg-primary-subtle text-primary rounded-circle d-inline-block mb-2">
-                      <i className="bi bi-clipboard2-check fs-3"></i>
+                      <i className="bi bi-mortarboard fs-3"></i>
                     </div>
-                    <h6 className="fw-bold text-dark mb-1">Kiểm Tra Năng Lực</h6>
-                    <small className="text-muted d-block">Chấm server & Skill Radar</small>
+                    <h6 className="fw-bold text-dark mb-1">Khám Phá Khóa Học</h6>
+                    <small className="text-muted d-block">Frontend, Backend, AI</small>
                   </div>
                 </div>
 
                 <div className="col-md-3 col-6">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
-                    onClick={() => setCurrentRoute('projects')}
+                    onClick={() => setCurrentRoute('try')}
+                  >
+                    <div className="p-3 bg-success-subtle text-success rounded-circle d-inline-block mb-2">
+                      <i className="bi bi-play-circle fs-3"></i>
+                    </div>
+                    <h6 className="fw-bold text-dark mb-1">Học Thử Tương Tác</h6>
+                    <small className="text-muted d-block">Code 3 Vùng & Runner</small>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div
+                    className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
+                    onClick={() => setCurrentRoute('practice')}
                   >
                     <div className="p-3 bg-warning-subtle text-warning-emphasis rounded-circle d-inline-block mb-2">
-                      <i className="bi bi-kanban fs-3"></i>
+                      <i className="bi bi-code-slash fs-3"></i>
                     </div>
-                    <h6 className="fw-bold text-dark mb-1">Làm Dự Án Thực Tế</h6>
-                    <small className="text-muted d-block">Brief, Rubric & Showcase</small>
+                    <h6 className="fw-bold text-dark mb-1">Luyện Tập & Sửa Lỗi</h6>
+                    <small className="text-muted d-block">Bug Fixing & Phỏng Vấn</small>
                   </div>
                 </div>
 
                 <div className="col-md-3 col-6">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
-                    onClick={() => setCurrentRoute('community')}
+                    onClick={() => setCurrentRoute('find-course')}
                   >
                     <div className="p-3 bg-info-subtle text-info-emphasis rounded-circle d-inline-block mb-2">
-                      <i className="bi bi-chat-dots fs-3"></i>
+                      <i className="bi bi-compass fs-3"></i>
                     </div>
-                    <h6 className="fw-bold text-dark mb-1">Hỏi Đáp Cộng Đồng</h6>
-                    <small className="text-muted d-block">Hỏi đáp & Kinh nghiệm</small>
+                    <h6 className="fw-bold text-dark mb-1">Chọn Khóa Phù Hợp</h6>
+                    <small className="text-muted d-block">Gợi Ý 4 Câu & So Sánh</small>
                   </div>
                 </div>
               </div>
@@ -781,6 +785,31 @@ export default function App() {
         )}
 
         {/* 4 Chức năng chính mới theo đặc tả */}
+        {/* 5 Cột Trụ Điều Hướng Chính Chuẩn Codecademy */}
+        {currentRoute === 'try' && (
+          <InteractiveTrialPage
+            currentUser={currentUser}
+            onNavigate={setCurrentRoute}
+            onCourseSelect={openCourseDetail}
+          />
+        )}
+
+        {currentRoute === 'find-course' && (
+          <CourseFinderPage
+            currentUser={currentUser}
+            onNavigate={setCurrentRoute}
+            onCourseSelect={openCourseDetail}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+
+        {currentRoute === 'help' && (
+          <HelpCenterPage
+            currentUser={currentUser}
+            onNavigate={setCurrentRoute}
+          />
+        )}
+
         {currentRoute === 'practice' && (
           <PracticeHub currentUser={currentUser} />
         )}
@@ -813,66 +842,67 @@ export default function App() {
 
         {currentRoute === 'docs' && (
           <div className="app-container py-5">
-            <h2 className="fw-bold mb-4">
-              <i className="bi bi-journal-code text-danger me-2"></i>
-              Tài Liệu Kỹ Thuật & Cheat Sheet
-            </h2>
-            <div className="row g-3">
-              {['React 19 Cheat Sheet', 'NestJS Architecture Guide', 'MySQL Query Optimization Notes', 'Git & Docker Command Quickref'].map((doc, idx) => (
-                <div className="col-md-6" key={idx}>
-                  <div className="p-3 bg-white border rounded-3 d-flex justify-content-between align-items-center">
-                    <div>
-                      <i className="bi bi-file-earmark-code text-primary fs-4 me-2"></i>
-                      <strong>{doc}</strong>
-                    </div>
-                    <Button variant="outline-primary" size="sm" onClick={() => alert(`Tải xuống tài liệu: ${doc}`)}>
-                      Tải PDF
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Alert variant="info" className="rounded-4 p-4 shadow-sm border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
+              <div>
+                <h5 className="fw-bold mb-1"><i className="bi bi-info-circle-fill me-2"></i>Tài Liệu Kỹ Thuật Đã Được Tích Hợp Vào Khóa Học</h5>
+                <p className="mb-0 text-secondary small">
+                  Tất cả tài liệu mẫu, cheat sheet và mã nguồn thực hành đã được gắn trực tiếp vào từng bài giảng và Trung tâm hỗ trợ.
+                </p>
+              </div>
+              <div className="d-flex gap-2">
+                <Button variant="primary" size="sm" className="rounded-pill fw-bold px-3" onClick={() => setCurrentRoute('courses')}>
+                  <i className="bi bi-mortarboard me-1"></i> Khám Phá Khóa Học
+                </Button>
+                <Button variant="outline-primary" size="sm" className="rounded-pill fw-bold px-3" onClick={() => setCurrentRoute('help')}>
+                  <i className="bi bi-question-circle me-1"></i> Trung Tâm Hỗ Trợ
+                </Button>
+              </div>
+            </Alert>
           </div>
         )}
 
-        {currentRoute === 'my-learning' && currentUser && (
-          <div className="app-container py-5 page-fade-in">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+        {currentRoute === 'roadmap' && (
+          <div className="app-container py-5">
+            <Alert variant="primary" className="rounded-4 p-4 shadow-sm border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
               <div>
-                <h2 className="fw-bold mb-1">
-                  <i className="bi bi-mortarboard-fill text-primary me-2"></i>
-                  Quản Lý Khóa Học Của Tôi
-                </h2>
-                <p className="text-secondary small mb-0">
-                  Danh sách khóa học bạn đã sở hữu. Bấm <strong>"Vào Học Ngay"</strong> để truy cập bài giảng và code studio.
+                <h5 className="fw-bold mb-1"><i className="bi bi-compass-fill me-2"></i>Lộ Trình Học Đã Được Nâng Cấp Thành "Chọn Khóa Phù Hợp"</h5>
+                <p className="mb-0 text-secondary small">
+                  Bộ khảo sát 4 câu hỏi thực tế giúp bạn tìm đúng khóa học theo mục tiêu, nền tảng và ngân sách minh bạch.
                 </p>
               </div>
-              <Badge bg="success" className="px-3 py-2 fs-6 rounded-pill fw-bold">
-                {currentUser.enrolledCourses?.length || 0} Khóa đã kích hoạt
-              </Badge>
-            </div>
+              <Button variant="primary" className="rounded-pill fw-bold px-4 shadow-sm" onClick={() => setCurrentRoute('find-course')}>
+                <i className="bi bi-arrow-right-circle me-1"></i> Đi Đến Chọn Khóa Phù Hợp
+              </Button>
+            </Alert>
+          </div>
+        )}
 
-            {currentUser.enrolledCourses?.length > 0 ? (
-              <CourseList
-                courses={courses.filter((c) => currentUser.enrolledCourses.includes(c.course_id))}
-                onViewDetail={openCourseDetail}
-                enrolledCourseIds={currentUser.enrolledCourses}
-                onStartLearning={(c) => {
-                  setActiveLearningCourse(c);
-                  setCurrentRoute('learning-room');
-                }}
-              />
-            ) : (
-              <div className="p-5 text-center bg-white rounded-4 border shadow-sm">
-                <i className="bi bi-journal-x display-4 text-muted d-block mb-3"></i>
-                <h5 className="fw-bold text-dark">Bạn chưa đăng ký khóa học lập trình nào</h5>
-                <p className="text-secondary small">Hãy khám phá danh mục khóa học để bắt đầu lộ trình của bạn.</p>
-                <Button variant="primary" className="fw-bold rounded-pill px-4 shadow-sm" onClick={() => setCurrentRoute('courses')}>
-                  <i className="bi bi-search me-1"></i> Khám Phá Khóa Học Ngay
+        {currentRoute === 'my-learning' && (
+          currentUser ? (
+            <MyLearningDashboard
+              currentUser={currentUser}
+              courses={courses}
+              onNavigate={setCurrentRoute}
+              onStartLearning={(c) => {
+                setActiveLearningCourse(c);
+                setCurrentRoute('learning-room');
+              }}
+              onOpenDeposit={() => setShowDepositModal(true)}
+            />
+          ) : (
+            <div className="app-container py-5 text-center">
+              <div className="bg-white p-5 rounded-4 border shadow-sm mx-auto" style={{ maxWidth: 500 }}>
+                <i className="bi bi-person-lock display-3 text-primary mb-3 d-block"></i>
+                <h4 className="fw-bold mb-2">Vui Lòng Đăng Nhập</h4>
+                <p className="text-muted small mb-4">
+                  Đăng nhập để xem tiến độ học tập, bài tập cần hoàn thành và tiếp tục bài học gần nhất.
+                </p>
+                <Button variant="primary" className="fw-bold px-4 py-2 rounded-pill shadow-sm" onClick={() => setShowAuthModal(true)}>
+                  Đăng Nhập Ngay
                 </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )
         )}
 
         {/* Quản lý hồ sơ cá nhân (Học viên & Admin) */}

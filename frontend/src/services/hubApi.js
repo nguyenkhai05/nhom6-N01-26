@@ -64,3 +64,23 @@ export const getArticles = (query = {}) => {
 };
 export const getArticle = (idOrSlug) => request(`/articles/${idOrSlug}`);
 export const likeArticle = (id) => request(`/articles/${id}/like`, { method: 'POST' });
+
+// 6. So Sánh Khóa Học (Course Comparison)
+export const compareCourses = (ids) => {
+  const idsStr = Array.isArray(ids) ? ids.join(',') : ids;
+  return request(`/courses/compare?ids=${encodeURIComponent(idsStr)}`);
+};
+
+// 7. Bộ Chọn Khóa Phù Hợp (Course Finder)
+export const getCourseFinderConfig = () => request('/course-finder/config');
+export const getCourseRecommendations = (body) =>
+  request('/course-finder/recommendations', { method: 'POST', body: JSON.stringify(body) });
+
+// 8. Học Thử Tương Tác (Interactive Trials - Codecademy Inspired)
+export const getTrials = () => request('/trials');
+export const getTrial = (id) => request(`/trials/${id}`);
+
+// 9. Trung Tâm Hỗ Trợ & FAQ (Help Center)
+export const getFaq = () => request('/help/faq');
+export const createSupportRequest = (body) =>
+  request('/help/requests', { method: 'POST', body: JSON.stringify(body) });

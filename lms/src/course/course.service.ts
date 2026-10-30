@@ -448,6 +448,114 @@ export class CourseService {
     return this.getCurriculum(courseId, user);
   }
 
+  // CA-US03: So sánh tối đa 3 khóa học
+  async compare(idsParam?: string): Promise<any[]> {
+    if (!idsParam || !idsParam.trim()) {
+      throw new BadRequestException('Vui lòng cung cấp ít nhất một mã khóa học để so sánh');
+    }
+
+    const rawIds = idsParam
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    const uniqueIds = Array.from(new Set(rawIds));
+    if (uniqueIds.length === 0) {
+      throw new BadRequestException('Danh sách mã khóa học không hợp lệ');
+    }
+    if (uniqueIds.length > 3) {
+      throw new BadRequestException('Chỉ được so sánh tối đa 3 khóa học cùng lúc');
+    }
+
+    const allPublished = await this.courseRepository.find({
+      where: { status: CourseStatus.PUBLISHED },
+      relations: { category: true, instructor: true },
+    });
+
+    const METADATA_EXTRAS: Record<number, any> = {
+      1: {
+        prerequisites: ['HTML5 & CSS3 cơ bản', 'JavaScript căn bản (Biến, Hàm, Mảng)'],
+        outcomes: ['Làm chủ React 19 & Next.js 15', 'Xây dựng 3 dự án Web hoàn chỉnh', 'Tối ưu SEO & Server Actions'],
+        duration: '52 giờ',
+        practice_format: 'Web Worker Code Sandbox & 3 Projects',
+        has_trial: true,
+        trial_id: 1,
+      },
+      2: {
+        prerequisites: ['JavaScript ES6+', 'Hiểu biết căn bản về HTTP / REST API'],
+        outcomes: ['Kiến trúc Clean Architecture với NestJS', 'Thiết kế TypeORM & MySQL chuẩn ACID', 'Xác thực JWT & Phân quyền RBAC'],
+        duration: '48 giờ',
+        practice_format: 'Live API Testing & Clean Arch Project',
+        has_trial: true,
+        trial_id: 2,
+      },
+      3: {
+        prerequisites: ['Tư duy logic cơ bản', 'Cài đặt MySQL Workbench'],
+        outcomes: ['Mô hình hóa dữ liệu quan hệ ERD chuẩn 3NF', 'Đánh chỉ mục B-Tree Index tối ưu', 'Xử lý Transaction và chống nghẽn DB'],
+        duration: '35 giờ',
+        practice_format: 'SQL Query Sandbox & Bài toán thực tế',
+        has_trial: false,
+      },
+      4: {
+        prerequisites: ['Cơ bản về biến và vòng lặp trong lập trình'],
+        outcomes: ['Thành thạo thư viện Pandas, NumPy, Matplotlib', 'Huấn luyện mô hình Scikit-Learn cơ bản', 'Xây dựng ứng dụng dự báo bằng dữ liệu'],
+        duration: '40 giờ',
+        practice_format: 'Python Data Lab & Pandas Playground',
+        has_trial: true,
+        trial_id: 3,
+      },
+      5: {
+        prerequisites: ['Lệnh Linux cơ bản', 'Đã từng phát triển ứng dụng Web'],
+        outcomes: ['Viết Dockerfile Multi-stage build siêu nhẹ', 'Điều phối dịch vụ với Docker Compose', 'Thiết lập tự động hóa CI/CD GitHub Actions'],
+        duration: '36 giờ',
+        practice_format: 'DevOps Scenario Lab & Compose Scripts',
+        has_trial: true,
+        trial_id: 4,
+      },
+      6: {
+        prerequisites: ['Tư duy lập trình hướng đối tượng cơ bản'],
+        outcomes: ['Thành thạo ngôn ngữ Dart', 'Xây dựng ứng dụng di động cho iOS & Android với Flutter', 'Tích hợp REST API và State Management Bloc'],
+        duration: '50 giờ',
+        practice_format: 'Flutter UI Sandbox & Mobile App Project',
+        has_trial: false,
+      },
+    };
+
+    const results = uniqueIds
+      .map((id) => {
+        const found = allPublished.find((c) => c.course_id === id);
+        if (!found) return null;
+        const extra = METADATA_EXTRAS[id] || {
+          prerequisites: ['Kiến thức lập trình cơ bản'],
+          outcomes: ['Nắm vững kiến thức trọng tâm', 'Tự tay làm sản phẩm thực tế'],
+          duration: '40 giờ',
+          practice_format: 'Thực hành tương tác & Dự án',
+          has_trial: false,
+        };
+        return {
+          course_id: found.course_id,
+          title: found.title,
+          slug: found.slug,
+          description: found.description,
+          price: found.price,
+          old_price: (found as any).old_price || Math.round(found.price * 1.3),
+          level: found.level,
+          thumbnail_url: found.thumbnail_url,
+          category_name: found.category?.category_name || (found.category as any)?.name || 'Lập trình',
+          instructor_name: found.instructor?.full_name || 'EduViet Specialist',
+          prerequisites: extra.prerequisites,
+          outcomes: extra.outcomes,
+          duration: extra.duration,
+          practice_format: extra.practice_format,
+          has_trial: extra.has_trial,
+          trial_id: extra.trial_id,
+        };
+      })
+      .filter(Boolean);
+
+    return results;
+  }
+
   // ================= UTILITIES & PERMISSION CHECKS =================
 
   private isAdmin(user: JwtPayload): boolean {

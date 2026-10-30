@@ -63,6 +63,61 @@ export const INITIAL_EXERCISES: any[] = [
       { input: '[[1,4],[4,5]]', expected_output: '[[1,5]]', description: 'Khoảng chạm biên' },
     ],
     hint: 'Sắp xếp mảng theo thời điểm bắt đầu `a[0]` trước khi duyệt tuần tự.',
+    exercise_type: 'SKILL',
+  },
+  {
+    exercise_id: 5,
+    title: 'Sửa Lỗi Bất Đồng Bộ Trong Vòng Lặp ForEach (Async/Await Bug)',
+    skill: 'JavaScript',
+    difficulty: 'Intermediate',
+    exercise_type: 'BUG_FIXING',
+    description: 'Đoạn code dưới đây sử dụng `forEach` với hàm callback bất đồng bộ khiến hàm trả về kết quả rỗng trước khi các thao tác fetch hoàn tất. Hãy sửa lại bằng cách sử dụng `Promise.all` kết hợp `.map()` hoặc vòng lặp `for...of`.',
+    initial_code: `async function fetchAllUserData(userIds, mockFetch) {
+  const results = [];
+  // BUG: forEach không chờ đợi hàm callback async hoàn tất
+  userIds.forEach(async (id) => {
+    const data = await mockFetch(id);
+    results.push(data);
+  });
+  return results;
+}`,
+    solution_code: `async function fetchAllUserData(userIds, mockFetch) {
+  const promises = userIds.map((id) => mockFetch(id));
+  return await Promise.all(promises);
+}`,
+    test_cases: [
+      { input: '[1, 2, 3]', expected_output: 'Array with 3 items', description: 'Đảm bảo đợi toàn bộ dữ liệu async' },
+    ],
+    hint: 'Sử dụng `await Promise.all(userIds.map(id => mockFetch(id)))` để đợi toàn bộ Promises hoàn thành.',
+  },
+  {
+    exercise_id: 6,
+    title: 'Sửa Lỗi Đột Biến State Đối Tượng Lồng Nhau (State Mutation Bug)',
+    skill: 'React',
+    difficulty: 'Beginner',
+    exercise_type: 'BUG_FIXING',
+    description: 'Trong React, đột biến (mutate) trực tiếp đối tượng state lồng nhau sẽ làm hỏng cơ chế so sánh Shallow Comparison của React. Hãy viết lại hàm `updateCity(state, newCity)` trả về một bản sao immutable không làm biến đổi state gốc.',
+    initial_code: `function updateCity(state, newCity) {
+  // BUG: Đột biến trực tiếp state gốc
+  state.user.address.city = newCity;
+  return state;
+}`,
+    solution_code: `function updateCity(state, newCity) {
+  return {
+    ...state,
+    user: {
+      ...state.user,
+      address: {
+        ...state.user.address,
+        city: newCity,
+      },
+    },
+  };
+}`,
+    test_cases: [
+      { input: 'Immutable update', expected_output: 'New reference and state.city updated', description: 'Không thay đổi tham chiếu state ban đầu' },
+    ],
+    hint: 'Sử dụng cú pháp Spread Operator `...` ở từng tầng lồng nhau để tạo bản sao bất biến.',
   },
 ];
 
@@ -158,13 +213,16 @@ export class PracticeService {
     @Inject('SKILL_ASSESSMENT_REPOSITORY') private readonly assessmentRepo: Repository<SkillAssessment>,
   ) {}
 
-  async getExercises(query?: { skill?: string; difficulty?: string; q?: string }) {
+  async getExercises(query?: { skill?: string; difficulty?: string; q?: string; type?: string }) {
     let exercises = INITIAL_EXERCISES;
     if (query?.skill && query.skill !== 'All') {
       exercises = exercises.filter((e) => e.skill.toLowerCase() === query.skill!.toLowerCase());
     }
     if (query?.difficulty && query.difficulty !== 'All') {
       exercises = exercises.filter((e) => e.difficulty.toLowerCase() === query.difficulty!.toLowerCase());
+    }
+    if (query?.type && query.type !== 'All') {
+      exercises = exercises.filter((e) => (e.exercise_type || 'SKILL').toLowerCase() === query.type!.toLowerCase());
     }
     if (query?.q) {
       const kw = query.q.toLowerCase().trim();

@@ -3,20 +3,20 @@ import { Container } from 'react-bootstrap';
 // Chân trang theo mẫu Booking.com: dải liên kết nhanh + 5 cột trên nền xám.
 const QUICK_LINKS = [
   { label: 'Tất cả khóa học', route: 'courses' },
+  { label: 'Học thử tương tác', route: 'try' },
   { label: 'Trung tâm luyện tập', route: 'practice' },
-  { label: 'Dự án thực tế', route: 'projects' },
-  { label: 'Cộng đồng & Bài viết', route: 'community' },
-  { label: 'Combo ưu đãi trọn gói', route: 'bundles' },
-  { label: 'Khóa học của tôi', route: 'my-learning' },
+  { label: 'Chọn khóa phù hợp', route: 'find-course' },
+  { label: 'Trung tâm hỗ trợ & FAQ', route: 'help' },
+  { label: 'Góc học tập của tôi', route: 'my-learning' },
 ];
 
 const COLUMNS = [
   { title: 'Học tập & Thực hành', links: [
     { label: 'Khóa học lập trình', route: 'courses' },
-    { label: 'Kho bài tập & Thử thách', route: 'practice' },
-    { label: 'Dự án thực chiến có Rubric', route: 'projects' },
-    { label: 'Cộng đồng & Bài viết công nghệ', route: 'community' },
-    { label: 'Combo ưu đãi tiết kiệm', route: 'bundles' },
+    { label: 'Học thử tương tác Sandbox', route: 'try' },
+    { label: 'Kho bài tập & Sửa lỗi code', route: 'practice' },
+    { label: 'Bộ chọn khóa theo nhu cầu', route: 'find-course' },
+    { label: 'Trung tâm trợ giúp học viên', route: 'help' },
   ] },
   { title: 'Hỗ trợ học viên', links: [
     { label: 'Khóa học của tôi', route: 'my-learning' },

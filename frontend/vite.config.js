@@ -13,6 +13,9 @@ const proxyConfig = {
   '/articles': { target: 'http://localhost:3000', changeOrigin: true },
   '/commerce': { target: 'http://localhost:3000', changeOrigin: true },
   '/learning': { target: 'http://localhost:3000', changeOrigin: true },
+  '/course-finder': { target: 'http://localhost:3000', changeOrigin: true },
+  '/trials': { target: 'http://localhost:3000', changeOrigin: true },
+  '/help': { target: 'http://localhost:3000', changeOrigin: true },
 };
 
 export default defineConfig({

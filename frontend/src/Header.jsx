@@ -65,26 +65,34 @@ export default function Header({
               </li>
               <li className="nav-item">
                 <button
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'try' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('try')}
+                >
+                  <i className="bi bi-laptop me-1 text-success"></i> Học thử
+                </button>
+              </li>
+              <li className="nav-item">
+                <button
                   className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'practice' ? 'active text-primary fw-bold' : ''}`}
                   onClick={() => onNavigate('practice')}
                 >
-                  <i className="bi bi-code-slash me-1 text-success"></i> Luyện tập
+                  <i className="bi bi-code-slash me-1 text-warning"></i> Luyện tập
                 </button>
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'projects' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('projects')}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'find-course' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('find-course')}
                 >
-                  <i className="bi bi-kanban me-1 text-warning"></i> Dự án thực tế
+                  <i className="bi bi-compass me-1 text-info"></i> Chọn khóa phù hợp
                 </button>
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'community' || currentRoute === 'articles' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('community')}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'help' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => onNavigate('help')}
                 >
-                  <i className="bi bi-chat-square-text me-1 text-info"></i> Cộng đồng & Bài viết
+                  <i className="bi bi-question-circle me-1 text-secondary"></i> Hỗ trợ
                 </button>
               </li>
               {currentUser?.role === 'ADMIN'  && (
@@ -98,6 +106,21 @@ export default function Header({
                 </li>
               )}
             </ul>
+
+            {/* Nút Học Tiếp nổi bật cho học viên */}
+            {currentUser && (
+              <div className="d-flex align-items-center me-2">
+                <Button
+                  variant="success"
+                  className="rounded-pill px-3 py-1 d-flex align-items-center gap-1 fw-bold shadow-sm"
+                  onClick={() => onNavigate('my-learning')}
+                  title="Tiếp tục bài học gần nhất"
+                >
+                  <i className="bi bi-play-circle-fill fs-5"></i>
+                  <span className="d-none d-md-inline">Học tiếp</span>
+                </Button>
+              </div>
+            )}
 
             {/* Giỏ hàng khóa học Button */}
             <div className="d-flex align-items-center me-2">

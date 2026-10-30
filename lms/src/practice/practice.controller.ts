@@ -15,7 +15,7 @@ export class PracticeController {
 
   // Danh mục bài luyện tập
   @Get('exercises')
-  getExercises(@Query() query: { skill?: string; difficulty?: string; q?: string }) {
+  getExercises(@Query() query: { skill?: string; difficulty?: string; q?: string; type?: string }) {
     return this.practiceService.getExercises(query);
   }
 
