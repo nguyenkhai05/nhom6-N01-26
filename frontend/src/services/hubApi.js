@@ -22,6 +22,14 @@ async function request(path, options = {}) {
   return data;
 }
 
+function toQueryString(params = {}) {
+  const filtered = Object.entries(params).filter(
+    ([, v]) => v !== undefined && v !== null && v !== '' && v !== 'undefined'
+  );
+  if (filtered.length === 0) return '';
+  return `?${new URLSearchParams(filtered).toString()}`;
+}
+
 // 1. Combo Ưu Đãi (Bundles)
 export const getBundles = () => request('/bundles');
 export const getBundle = (id) => request(`/bundles/${id}`);
@@ -37,8 +45,7 @@ export const getProjectShowcase = () => request('/projects/showcase');
 
 // 3. Trung Tâm Luyện Tập (Practice)
 export const getPracticeExercises = (query = {}) => {
-  const params = new URLSearchParams(query);
-  return request(`/practice/exercises?${params.toString()}`);
+  return request(`/practice/exercises${toQueryString(query)}`);
 };
 export const getPracticeExercise = (id) => request(`/practice/exercises/${id}`);
 export const getSkillAssessments = () => request('/practice/assessments');
@@ -48,8 +55,7 @@ export const getWeeklyChallenge = () => request('/practice/challenges/weekly');
 
 // 4. Cộng Đồng Học Viên (Community)
 export const getCommunityPosts = (query = {}) => {
-  const params = new URLSearchParams(query);
-  return request(`/community/posts?${params.toString()}`);
+  return request(`/community/posts${toQueryString(query)}`);
 };
 export const getCommunityPost = (id) => request(`/community/posts/${id}`);
 export const createCommunityPost = (body) => request('/community/posts', { method: 'POST', body: JSON.stringify(body) });
@@ -59,8 +65,7 @@ export const reportContent = (body) => request('/community/reports', { method: '
 
 // 5. Bài Viết & Cẩm Nang Công Nghệ (Articles)
 export const getArticles = (query = {}) => {
-  const params = new URLSearchParams(query);
-  return request(`/articles?${params.toString()}`);
+  return request(`/articles${toQueryString(query)}`);
 };
 export const getArticle = (idOrSlug) => request(`/articles/${idOrSlug}`);
 export const likeArticle = (id) => request(`/articles/${id}/like`, { method: 'POST' });

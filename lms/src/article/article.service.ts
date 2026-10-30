@@ -474,17 +474,17 @@ export class ArticleService {
       list = [...INITIAL_ARTICLES];
     }
 
-    if (category && category !== 'ALL') {
+    if (category && category !== 'ALL' && category !== 'undefined') {
       list = list.filter((a) => a.category?.toUpperCase() === category.toUpperCase());
     }
 
-    if (keyword && keyword.trim()) {
+    if (keyword && keyword.trim() && keyword !== 'undefined') {
       const q = keyword.toLowerCase().trim();
       list = list.filter(
         (a) =>
           a.title.toLowerCase().includes(q) ||
           a.summary.toLowerCase().includes(q) ||
-          a.tags.toLowerCase().includes(q),
+          (a.tags && a.tags.toLowerCase().includes(q)),
       );
     }
 

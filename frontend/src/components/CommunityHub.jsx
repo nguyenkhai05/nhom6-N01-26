@@ -54,6 +54,13 @@ export default function CommunityHub({ currentUser, initialTab = 'articles', onN
   // Alert feedback
   const [alertInfo, setAlertInfo] = useState(null);
 
+  // Đồng bộ tab khi props thay đổi
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   // Tải danh sách bài viết khi chọn tab hoặc filter
   useEffect(() => {
     if (activeTab === 'articles') {
@@ -66,11 +73,11 @@ export default function CommunityHub({ currentUser, initialTab = 'articles', onN
   const loadArticles = async () => {
     setArticlesLoading(true);
     try {
-      const data = await getArticles({
-        category: articleCategory !== 'ALL' ? articleCategory : undefined,
-        keyword: articleKeyword.trim() || undefined,
-      });
-      setArticles(data || []);
+      const q = {};
+      if (articleCategory && articleCategory !== 'ALL') q.category = articleCategory;
+      if (articleKeyword.trim()) q.keyword = articleKeyword.trim();
+      const data = await getArticles(q);
+      setArticles(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Lỗi tải bài viết:', err);
     } finally {
@@ -81,11 +88,11 @@ export default function CommunityHub({ currentUser, initialTab = 'articles', onN
   const loadPosts = async () => {
     setPostsLoading(true);
     try {
-      const data = await getCommunityPosts({
-        category: postCategory,
-        q: postKeyword,
-      });
-      setPosts(data || []);
+      const q = {};
+      if (postCategory && postCategory !== 'All') q.category = postCategory;
+      if (postKeyword.trim()) q.q = postKeyword.trim();
+      const data = await getCommunityPosts(q);
+      setPosts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Lỗi tải bài viết cộng đồng:', err);
     } finally {

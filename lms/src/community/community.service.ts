@@ -273,13 +273,13 @@ export class CommunityService {
 
   async getPosts(query?: { category?: string; tag?: string; q?: string }) {
     let posts = INITIAL_COMMUNITY_POSTS;
-    if (query?.category && query.category !== 'All') {
+    if (query?.category && query.category !== 'All' && query.category !== 'undefined') {
       posts = posts.filter((p) => p.category.toLowerCase() === query.category!.toLowerCase());
     }
-    if (query?.tag) {
+    if (query?.tag && query.tag !== 'undefined') {
       posts = posts.filter((p) => (p.tags || []).some((t: string) => t.toLowerCase() === query.tag!.toLowerCase()));
     }
-    if (query?.q) {
+    if (query?.q && query.q !== 'undefined') {
       const kw = query.q.toLowerCase().trim();
       posts = posts.filter((p) => p.title.toLowerCase().includes(kw) || p.content.toLowerCase().includes(kw));
     }

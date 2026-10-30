@@ -858,10 +858,10 @@ export default function App() {
                     onClick={() => setCurrentRoute('community')}
                   >
                     <div className="p-3 bg-danger-subtle text-danger rounded-circle d-inline-block mb-2">
-                      <i className="bi bi-chat-dots fs-3"></i>
+                      <i className="bi bi-journal-richtext fs-3"></i>
                     </div>
-                    <h6 className="fw-bold text-dark mb-1">Hỏi Đáp Cộng Đồng</h6>
-                    <small className="text-muted d-block">Hỏi Đáp & Bài Viết</small>
+                    <h6 className="fw-bold text-dark mb-1">Cộng Đồng & Bài Viết</h6>
+                    <small className="text-muted d-block">12 Cẩm Nang & Hỏi Đáp</small>
                   </div>
                 </div>
               </div>
@@ -890,6 +890,121 @@ export default function App() {
               onBrowse={handleBrowse}
               onViewDetail={openCourseDetail}
             />
+
+            {/* Mục: Bài Viết & Cẩm Nang Nổi Bật Trên Trang Chủ */}
+            <div className="app-container py-4 my-3">
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                  <div className="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill mb-2">
+                    <i className="bi bi-journal-code me-1"></i> BÀI VIẾT & CẨM NANG CÔNG NGHỆ
+                  </div>
+                  <h2 className="fw-bold fs-3 text-dark mb-1">Kiến Thức & Kinh Nghiệm Từ Ban Chuyên Môn</h2>
+                  <p className="text-muted mb-0">Cập nhật xu hướng công nghệ lập trình mới nhất: React 19, NestJS, Docker, AI RAG và phỏng vấn.</p>
+                </div>
+                <button
+                  className="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2"
+                  onClick={() => setCurrentRoute('community')}
+                >
+                  <span>Xem tất cả 12 bài viết</span>
+                  <i className="bi bi-arrow-right"></i>
+                </button>
+              </div>
+
+              <div className="row g-4">
+                <div className="col-12 col-md-4">
+                  <div
+                    className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden cursor-pointer hover-shadow transition"
+                    onClick={() => setCurrentRoute('community')}
+                  >
+                    <div style={{ height: '170px', overflow: 'hidden' }}>
+                      <img
+                        src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=80"
+                        alt="React 19"
+                        className="w-100 h-100 object-fit-cover"
+                      />
+                    </div>
+                    <div className="card-body p-3 d-flex flex-column">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="badge bg-primary rounded-pill">Frontend</span>
+                        <small className="text-muted"><i className="bi bi-clock me-1"></i>7 phút đọc</small>
+                      </div>
+                      <h6 className="fw-bold text-dark mb-2" style={{ lineHeight: 1.4 }}>
+                        Cẩm Nang Tối Ưu Hóa Hiệu Năng React 19: useTransition & Compiler
+                      </h6>
+                      <p className="text-muted small flex-grow-1" style={{ lineHeight: 1.5 }}>
+                        Phân tích cơ chế React 19 Server Components, loại bỏ useMemo với React Compiler tự động.
+                      </p>
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-center text-primary fw-semibold small">
+                        <span>Vũ Quốc Huy (Lead Frontend)</span>
+                        <span>Đọc tiếp →</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-4">
+                  <div
+                    className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden cursor-pointer hover-shadow transition"
+                    onClick={() => setCurrentRoute('community')}
+                  >
+                    <div style={{ height: '170px', overflow: 'hidden' }}>
+                      <img
+                        src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80"
+                        alt="NestJS Clean Architecture"
+                        className="w-100 h-100 object-fit-cover"
+                      />
+                    </div>
+                    <div className="card-body p-3 d-flex flex-column">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="badge bg-success rounded-pill">Backend</span>
+                        <small className="text-muted"><i className="bi bi-clock me-1"></i>9 phút đọc</small>
+                      </div>
+                      <h6 className="fw-bold text-dark mb-2" style={{ lineHeight: 1.4 }}>
+                        Xây Dựng RESTful API Chuẩn Clean Architecture Với NestJS
+                      </h6>
+                      <p className="text-muted small flex-grow-1" style={{ lineHeight: 1.5 }}>
+                        Hướng dẫn thiết kế kiến trúc phân tầng trong NestJS: Controller, Service, DTO và TypeORM.
+                      </p>
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-center text-primary fw-semibold small">
+                        <span>Trần Minh Quân (Senior Backend)</span>
+                        <span>Đọc tiếp →</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-4">
+                  <div
+                    className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden cursor-pointer hover-shadow transition"
+                    onClick={() => setCurrentRoute('community')}
+                  >
+                    <div style={{ height: '170px', overflow: 'hidden' }}>
+                      <img
+                        src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80"
+                        alt="Interview 2026"
+                        className="w-100 h-100 object-fit-cover"
+                      />
+                    </div>
+                    <div className="card-body p-3 d-flex flex-column">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="badge bg-warning text-dark rounded-pill">Career</span>
+                        <small className="text-muted"><i className="bi bi-clock me-1"></i>12 phút đọc</small>
+                      </div>
+                      <h6 className="fw-bold text-dark mb-2" style={{ lineHeight: 1.4 }}>
+                        Trọn Bộ 50 Câu Hỏi Phỏng Vấn Fullstack & Tips Đàm Phán Lương 2026
+                      </h6>
+                      <p className="text-muted small flex-grow-1" style={{ lineHeight: 1.5 }}>
+                        Tổng hợp các câu hỏi kỹ thuật về Event Loop, Concurrency, Indexing cùng phương pháp STAR.
+                      </p>
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-center text-primary fw-semibold small">
+                        <span>Lê Hoàng Long (Tech Lead)</span>
+                        <span>Đọc tiếp →</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="app-container">
               <ConversionTriggers
                 onClaimBonus={() => {
