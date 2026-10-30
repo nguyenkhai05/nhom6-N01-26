@@ -319,6 +319,12 @@ export class CommerceService {
   // ================= US11: THANH TOÁN BẰNG VÍ (CHECKOUT) =================
 
   async checkoutWithWallet(userId: number, dto: CheckoutDto) {
+    if (dto.course_ids && dto.course_ids.length > 0) {
+      for (const cid of dto.course_ids) {
+        await this.addToCart(userId, { course_id: cid }).catch(() => {});
+      }
+    }
+
     const quote = await this.calculateQuote(userId, dto.voucher_code);
     if (!quote.items || quote.items.length === 0) {
       throw new BadRequestException('Giỏ hàng trống, không thể thanh toán');
@@ -359,7 +365,7 @@ export class CommerceService {
       final_amount: finalAmount,
       voucher_id: quote.voucher ? quote.voucher.voucher_id : null,
       status: OrderStatus.PAID,
-      payment_method: 'WALLET',
+      payment_method: dto.payment_method || 'WALLET',
       paid_at: new Date(),
     });
     const savedOrder = await this.orderRepo.save(order);

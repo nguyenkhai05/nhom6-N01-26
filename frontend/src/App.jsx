@@ -542,6 +542,7 @@ export default function App() {
       // 2. Gọi API thanh toán bằng ví trên server
       const checkoutRes = await apiCheckout({
         payment_method: 'WALLET',
+        course_ids: [courseToEnroll.course_id],
       });
 
       const newBalance = checkoutRes.wallet_balance !== undefined
@@ -625,6 +626,7 @@ export default function App() {
       await apiCheckout({
         voucher_code: order.coupon?.code,
         payment_method: order.method === 'Ví EduViet' ? 'WALLET' : 'BANK_QR',
+        course_ids: order.items?.map((it) => it.course_id),
       }).catch((e) => console.warn('Lỗi thanh toán server checkout:', e));
     } catch {}
 
