@@ -1,4 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export const FAQ_TOPICS = [
   {
@@ -51,6 +53,36 @@ export const FAQ_TOPICS = [
 @Injectable()
 export class HelpService {
   private supportTickets: any[] = [];
+  private dataFilePath: string;
+
+  constructor() {
+    const baseDir = process.cwd().endsWith('lms') ? process.cwd() : path.join(process.cwd(), 'lms');
+    this.dataFilePath = path.join(baseDir, 'data', 'support_tickets.json');
+    this.loadTickets();
+  }
+
+  private loadTickets() {
+    try {
+      if (fs.existsSync(this.dataFilePath)) {
+        const raw = fs.readFileSync(this.dataFilePath, 'utf8');
+        this.supportTickets = JSON.parse(raw);
+      }
+    } catch {
+      this.supportTickets = [];
+    }
+  }
+
+  private saveTickets() {
+    try {
+      const dir = path.dirname(this.dataFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(this.dataFilePath, JSON.stringify(this.supportTickets, null, 2), 'utf8');
+    } catch {
+      // Giữ trong RAM nếu không ghi được đĩa
+    }
+  }
 
   getFaq() {
     return FAQ_TOPICS;
@@ -71,20 +103,35 @@ export class HelpService {
     const ticket = {
       ticket_id: 'TCK-' + Math.floor(100000 + Math.random() * 900000),
       fullName: body.fullName || 'Học viên EduViet',
-      email: body.email,
+      email: body.email.trim().toLowerCase(),
       courseId: body.courseId || null,
       topic: body.topic || 'Tư vấn trước khi mua khóa học',
-      message: body.message,
+      message: body.message.trim(),
       status: 'PENDING',
-      created_at: new Date(),
+      created_at: new Date().toISOString(),
+      user_id: body.userId || null,
     };
 
-    this.supportTickets.push(ticket);
+    this.supportTickets.unshift(ticket);
+    this.saveTickets();
 
     return {
       success: true,
       ticket_id: ticket.ticket_id,
+      ticket,
       message: 'Yêu cầu của bạn đã được tiếp nhận. Đội ngũ Chuyên viên & Giảng viên sẽ phản hồi qua email trong vòng 2-4 giờ làm việc.',
     };
+  }
+
+  getUserTickets(emailOrUserId?: string | number) {
+    if (!emailOrUserId) return [];
+    const query = String(emailOrUserId).toLowerCase().trim();
+    return this.supportTickets.filter(
+      (t) => (t.email && t.email.toLowerCase() === query) || (t.user_id && String(t.user_id) === query),
+    );
+  }
+
+  getAllTickets() {
+    return [...this.supportTickets];
   }
 }

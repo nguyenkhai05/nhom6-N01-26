@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Course, CourseStatus } from '../course/course.entity.js';
 import { RecommendationRequestDto } from './dto/recommendation-request.dto.js';
+import { INITIAL_TRIALS } from '../trial/trial.service.js';
 
 export const FINDER_QUESTIONS_CONFIG = {
   ruleVersion: 'finder-1',
@@ -14,7 +15,7 @@ export const FINDER_QUESTIONS_CONFIG = {
         { value: 'FRONTEND', label: 'Phát triển giao diện Web (Frontend / React / UI)', icon: 'bi-window-sidebar' },
         { value: 'BACKEND', label: 'Xây dựng hệ thống máy chủ & API (Backend / NestJS / SQL)', icon: 'bi-hdd-network' },
         { value: 'AI', label: 'Phân tích dữ liệu & Trí tuệ nhân tạo (Python AI / Machine Learning)', icon: 'bi-cpu' },
-        { value: 'FOUNDATION', label: 'Làm quen tư duy lập trình từ con số 0 (Mobile / Database)', icon: 'bi-stars' },
+        { value: 'FOUNDATION', label: 'Làm quen tư duy lập trình từ con số 0 (Nền tảng / Nhập môn)', icon: 'bi-stars' },
       ],
     },
     {
@@ -74,8 +75,8 @@ export class CourseFinderService {
     const goal = (dto.goal || 'FRONTEND').toUpperCase();
     const knownSkills = (dto.knownSkills || []).map((s) => s.toUpperCase());
     const budget = Number(dto.budgetMaxVnd || 0);
+    const hours = Number(dto.hoursPerWeek || 0);
 
-    // Bảng quy tắc phân tích theo mục tiêu
     const recommendations: any[] = [];
 
     allCourses.forEach((c) => {
@@ -83,52 +84,57 @@ export class CourseFinderService {
       const reasons: string[] = [];
       const missingPrerequisites: string[] = [];
 
-      // 1. Phù hợp mục tiêu
+      const titleLower = (c.title || '').toLowerCase();
+      const descLower = (c.description || '').toLowerCase();
+      const catLower = (c.category?.category_name || (c.category as any)?.name || '').toLowerCase();
+      const textCorpus = `${titleLower} ${descLower} ${catLower}`;
+
+      // 1. Phù hợp mục tiêu học tập (Dựa trên metadata và phân loại thật của khóa học)
       if (goal === 'FRONTEND') {
-        if (c.course_id === 1 || c.course_id === 8) {
+        if (textCorpus.includes('react') || textCorpus.includes('frontend') || textCorpus.includes('next') || textCorpus.includes('ui')) {
           score += 50;
           reasons.push('Khóa học trực tiếp giải quyết mục tiêu xây dựng giao diện người dùng hiện đại với React/Next.js');
         }
       } else if (goal === 'BACKEND') {
-        if (c.course_id === 2 || c.course_id === 7 || c.course_id === 3) {
+        if (textCorpus.includes('nest') || textCorpus.includes('backend') || textCorpus.includes('sql') || textCorpus.includes('api')) {
           score += 50;
           reasons.push('Đào tạo trực tiếp kỹ năng thiết kế RESTful API, cơ sở dữ liệu và kiến trúc Clean Architecture');
         }
       } else if (goal === 'AI') {
-        if (c.course_id === 4 || c.course_id === 9) {
+        if (textCorpus.includes('python') || textCorpus.includes('ai') || textCorpus.includes('data') || textCorpus.includes('machine learning')) {
           score += 50;
-          reasons.push('Tập trung vào phân tích dữ liệu, Machine Learning và kỹ thuật Prompt Engineering với LLMs');
+          reasons.push('Tập trung vào phân tích dữ liệu, Machine Learning và kỹ thuật ứng dụng AI hiện đại');
         }
       } else if (goal === 'FOUNDATION') {
-        if (c.course_id === 1 || c.course_id === 3 || c.course_id === 6) {
-          score += 40;
+        if (c.level === 'Beginner' || textCorpus.includes('cơ bản') || textCorpus.includes('nhập môn') || textCorpus.includes('foundation') || textCorpus.includes('react')) {
+          score += 45;
           reasons.push('Nội dung phù hợp cho người mới bắt đầu làm quen tư duy lập trình và xây dựng nền tảng vững chắc');
         }
       }
 
-      // 2. Phù hợp kỹ năng đầu vào (Prerequisites)
-      if (c.course_id === 1) { // React
+      // 2. Kiểm tra điều kiện tiên quyết (Prerequisites) dựa trên kỹ năng đầu vào
+      if (textCorpus.includes('react') || textCorpus.includes('frontend')) {
         if (knownSkills.includes('HTML_CSS') || knownSkills.includes('JAVASCRIPT')) {
           score += 25;
           reasons.push('Bạn đã có nền tảng HTML/CSS hoặc JS, rất thuận lợi để tiếp thu nhanh React 19');
         } else if (knownSkills.includes('ZERO')) {
           missingPrerequisites.push('Cần bổ sung kiến thức cú pháp HTML/CSS cơ bản trong module đầu tiên');
         }
-      } else if (c.course_id === 2) { // NestJS
-        if (knownSkills.includes('JAVASCRIPT')) {
+      } else if (textCorpus.includes('nest') || textCorpus.includes('backend')) {
+        if (knownSkills.includes('JAVASCRIPT') || knownSkills.includes('SQL')) {
           score += 25;
-          reasons.push('Kiến thức JavaScript của bạn sẵn sàng để học TypeScript & NestJS');
-        } else {
+          reasons.push('Kiến thức JavaScript hoặc SQL của bạn sẵn sàng để học TypeScript & NestJS');
+        } else if (knownSkills.includes('ZERO')) {
           missingPrerequisites.push('Nên nắm vững JavaScript ES6+ trước khi học kiến trúc NestJS');
         }
-      } else if (c.course_id === 4) { // Python AI
+      } else if (textCorpus.includes('python') || textCorpus.includes('ai')) {
         if (knownSkills.includes('PYTHON') || knownSkills.includes('ZERO')) {
           score += 20;
           reasons.push('Giáo trình có module nhập môn Python từ số 0 cho người chưa biết gì');
         }
       }
 
-      // 3. Phù hợp ngân sách
+      // 3. Phù hợp ngân sách dự kiến (Budget Matching)
       if (budget > 0) {
         if (c.price <= budget) {
           score += 15;
@@ -138,8 +144,20 @@ export class CourseFinderService {
         }
       }
 
-      // Có bài học thử đại diện
-      const canTry = [1, 2, 4, 5].includes(c.course_id);
+      // 4. Tư vấn thời lượng học theo quỹ thời gian
+      if (hours > 0) {
+        if (hours <= 5) {
+          reasons.push('Lộ trình được chia nhỏ thành các bài giảng 8-15 phút, phù hợp học tranh thủ 3-5 giờ/tuần');
+        } else if (hours >= 10) {
+          reasons.push('Với trên 10 giờ/tuần, bạn có thể hoàn thành trọn vẹn lộ trình và bài tập dự án trong vòng 3-4 tuần');
+        }
+      }
+
+      // Kiểm tra sự tồn tại của bài học thử tương tác thật
+      const canTry = INITIAL_TRIALS.some((t) => t.course_id === c.course_id);
+
+      // Giá cũ: chỉ hiển thị nếu trong DB có old_price lớn hơn price thật (không tự nhân 1.3)
+      const realOldPrice = (c as any).old_price && (c as any).old_price > c.price ? (c as any).old_price : null;
 
       if (score >= 30) {
         recommendations.push({
@@ -150,7 +168,7 @@ export class CourseFinderService {
             slug: c.slug,
             description: c.description,
             price: c.price,
-            old_price: (c as any).old_price || Math.round(c.price * 1.3),
+            old_price: realOldPrice,
             level: c.level,
             thumbnail_url: c.thumbnail_url,
             category_name: c.category?.category_name || (c.category as any)?.name || 'Lập trình',

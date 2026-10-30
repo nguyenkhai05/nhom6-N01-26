@@ -56,6 +56,12 @@ export class CommunityController {
     return this.communityService.acceptReply(id, replyId, user.sub);
   }
 
+  @Get('reports')
+  @UseGuards(JwtAuthGuard)
+  getReports() {
+    return this.communityService.getReports();
+  }
+
   @Post('reports')
   @UseGuards(JwtAuthGuard)
   reportContent(

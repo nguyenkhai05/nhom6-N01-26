@@ -132,13 +132,19 @@ describe('Codecademy-Inspired Features Unit Tests (Compare, Course Finder, Trial
       expect(list[0]).toHaveProperty('duration_minutes');
     });
 
-    it('8. Trả về chi tiết không gian học thử 3 vùng Codecademy (hướng dẫn, gợi ý, test cases)', () => {
+    it('8. Trả về chi tiết không gian học thử 3 vùng Codecademy (hướng dẫn, gợi ý, test cases) và bảo mật lời giải', () => {
       const trial = trialService.findOne(1);
       expect(trial.title).toContain('React 19');
       expect(trial.instructions).toContain('Mục tiêu bài học thử');
       expect(trial.hints.length).toBeGreaterThan(0);
       expect(trial.test_cases.length).toBeGreaterThan(0);
       expect(trial.initial_code).toBeDefined();
+      expect((trial as any).solution_code).toBeUndefined();
+
+      // Endpoint getSolution cấp lời giải khi có yêu cầu
+      const sol = trialService.getSolution(1);
+      expect(sol.solution_code).toBeDefined();
+      expect(sol.solution_code).toContain('WelcomeCard');
     });
 
     it('9. Báo lỗi NotFoundException khi truy vấn bài thử không tồn tại', () => {
@@ -178,6 +184,13 @@ describe('Codecademy-Inspired Features Unit Tests (Compare, Course Finder, Trial
           message: '',
         }),
       ).toThrow('cung cấp email');
+    });
+
+    it('13. Truy vấn danh sách ticket hỗ trợ của học viên theo email hoặc user_id', () => {
+      const tickets = helpService.getUserTickets('nguyenvana@gmail.com');
+      expect(tickets.length).toBeGreaterThanOrEqual(1);
+      expect(tickets[0].email).toBe('nguyenvana@gmail.com');
+      expect(tickets[0].status).toBe('PENDING');
     });
   });
 });

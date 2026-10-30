@@ -145,8 +145,7 @@ export default function AuthModal({
           phone: regPhone?.trim() || '0912.888.999',
           bio: `Mục tiêu nghề nghiệp: ${regTarget || 'Frontend Web Engineer'}`,
           targetTrack: regTarget || 'Frontend Web Engineer',
-          walletBalance: 1000000, // Tặng ngay 1.000.000đ vào ví học viên
-          enrolledCourses: [],
+                    enrolledCourses: [],
           joinDate: new Date().toLocaleDateString('vi-VN'),
         });
         onLoginSuccess(frontendUser, { isNew: true });

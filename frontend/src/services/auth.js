@@ -143,7 +143,7 @@ export function toFrontendUser(serverUser, newExtras = {}) {
     roles,
     role: roles.includes('Admin') ? 'ADMIN' : 'USER',
     phone: 'Chưa cập nhật',
-    walletBalance: 1000000,
+    walletBalance: serverUser.wallet_balance !== undefined ? Number(serverUser.wallet_balance) : (saved.walletBalance ?? 1000000),
     enrolledCourses: [],
     bio: 'Học viên đam mê chinh phục công nghệ lập trình.',
     targetTrack: 'Fullstack Web Engineer',

@@ -82,5 +82,10 @@ export const getTrial = (id) => request(`/trials/${id}`);
 
 // 9. Trung Tâm Hỗ Trợ & FAQ (Help Center)
 export const getFaq = () => request('/help/faq');
+export const getMySupportRequests = () => request('/help/requests/my');
 export const createSupportRequest = (body) =>
   request('/help/requests', { method: 'POST', body: JSON.stringify(body) });
+
+// 10. Tiến Độ & Khóa Học Của Tôi (Learning Dashboard)
+export const getMyCourses = () => request('/learning/my-courses');
+

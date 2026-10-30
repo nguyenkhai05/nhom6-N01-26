@@ -44,8 +44,10 @@ describe('Hub Features Unit Tests (Bundles, Projects, Practice, Community)', () 
     projectStore = [...INITIAL_PROJECTS];
     submissionStore = [];
     userStore = [
-      { user_id: 10, full_name: 'Nguyễn Học Viên' },
-      { user_id: 99, full_name: 'Giảng Viên Vũ' },
+      { user_id: 1, full_name: 'Quản trị viên EduViet', roles: [{ role_name: 'Admin' }] },
+      { user_id: 3, full_name: 'Nguyễn Văn Dev', roles: [{ role_name: 'Student' }] },
+      { user_id: 10, full_name: 'Nguyễn Học Viên', roles: [{ role_name: 'Student' }] },
+      { user_id: 99, full_name: 'Giảng Viên Vũ', roles: [{ role_name: 'Instructor' }] },
     ];
 
     bundleStore = JSON.parse(JSON.stringify(INITIAL_BUNDLES));
@@ -152,6 +154,7 @@ describe('Hub Features Unit Tests (Bundles, Projects, Practice, Community)', () 
     };
     const mockUserRepo: any = {
       findOneBy: async (cond: any) => userStore.find((u) => u.user_id === cond.user_id) || null,
+      findOne: async (opts: any) => userStore.find((u) => u.user_id === opts?.where?.user_id) || null,
     };
     communityService = new CommunityService(mockPostRepo, mockReplyRepo, mockUserRepo);
   });
@@ -273,6 +276,29 @@ describe('Hub Features Unit Tests (Bundles, Projects, Practice, Community)', () 
       const res = await communityService.acceptReply(1, 1, 3); // User 3 là tác giả post 1
       expect(res.success).toBe(true);
       expect(res.accepted_reply_id).toBe(1);
+    });
+
+    it('acceptReply: chặn người dùng lạ không có quyền duyệt câu trả lời (ForbiddenException)', async () => {
+      await expect(communityService.acceptReply(1, 1, 10)).rejects.toThrow();
+    });
+
+    it('acceptReply: cho phép Quản trị viên duyệt câu trả lời ngay cả khi không phải tác giả', async () => {
+      const res = await communityService.acceptReply(1, 1, 1); // User 1 là Admin
+      expect(res.success).toBe(true);
+      expect(res.accepted_reply_id).toBe(1);
+    });
+
+    it('reportContent: ghi nhận báo cáo nội dung vi phạm và lưu trữ hàng đợi kiểm duyệt', async () => {
+      const rep = await communityService.reportContent(
+        { target_type: 'post', target_id: 1, reason: 'Nội dung spam quảng cáo' },
+        10,
+      );
+      expect(rep.success).toBe(true);
+      expect(rep.report.status).toBe('PENDING');
+
+      const allReports = await communityService.getReports();
+      expect(allReports.length).toBeGreaterThanOrEqual(1);
+      expect(allReports[0].target_id).toBe(1);
     });
   });
 });

@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
   BadRequestException,
   ForbiddenException,
@@ -164,7 +166,19 @@ export class CommunityService {
     }
 
     // Chỉ tác giả bài viết hoặc Admin mới được duyệt câu trả lời
-    if (post.user_id !== currentUserId && currentUserId !== 1) {
+    let isAdmin = false;
+    try {
+      const user = await this.userRepo.findOne({
+        where: { user_id: currentUserId },
+        relations: { roles: true },
+      });
+      isAdmin = !!user?.roles?.some((r: any) => r.role_name === 'Admin' || r === 'Admin');
+    } catch {
+      const user: any = await this.userRepo.findOneBy({ user_id: currentUserId });
+      isAdmin = !!user?.roles?.some((r: any) => r.role_name === 'Admin' || r === 'Admin');
+    }
+
+    if (post.user_id !== currentUserId && !isAdmin) {
       throw new ForbiddenException('Chỉ chủ bài viết mới có quyền chọn câu trả lời được chấp nhận');
     }
 
@@ -186,14 +200,57 @@ export class CommunityService {
     };
   }
 
+  private getReportsFilePath() {
+    const baseDir = process.cwd().endsWith('lms') ? process.cwd() : path.join(process.cwd(), 'lms');
+    return path.join(baseDir, 'data', 'community_reports.json');
+  }
+
+  private loadReports(): any[] {
+    try {
+      const file = this.getReportsFilePath();
+      if (fs.existsSync(file)) {
+        return JSON.parse(fs.readFileSync(file, 'utf8'));
+      }
+    } catch {
+      // fallback
+    }
+    return [];
+  }
+
+  private saveReport(report: any) {
+    try {
+      const file = this.getReportsFilePath();
+      const dir = path.dirname(file);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      const list = this.loadReports();
+      list.unshift(report);
+      fs.writeFileSync(file, JSON.stringify(list, null, 2), 'utf8');
+    } catch {
+      // fallback
+    }
+  }
+
   async reportContent(dto: { target_type: string; target_id: number; reason: string }, reporterId: number) {
-    return {
-      success: true,
+    const report = {
       report_id: Date.now(),
       target_type: dto.target_type,
       target_id: dto.target_id,
       reporter_id: reporterId,
+      reason: dto.reason || 'Nội dung vi phạm tiêu chuẩn cộng đồng',
+      status: 'PENDING',
+      created_at: new Date().toISOString(),
+    };
+    this.saveReport(report);
+
+    return {
+      success: true,
+      report_id: report.report_id,
+      report,
       message: 'Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung này trong vòng 24 giờ.',
     };
+  }
+
+  async getReports() {
+    return this.loadReports();
   }
 }

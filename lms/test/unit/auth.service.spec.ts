@@ -329,5 +329,62 @@ describe('AuthService Unit Tests (UT01, UT02, UT03, UT04, UT31)', () => {
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('Đăng nhập Google với id_token giải mã payload an toàn và cấp quyền', async () => {
+      // Giả lập ID token JWT có payload hợp lệ
+      const payload = {
+        email: 'token.student@gmail.com',
+        name: 'Học viên ID Token',
+        picture: 'https://lh3.googleusercontent.com/avatar.jpg',
+        sub: 'google_sub_123456789',
+      };
+      const fakeToken = `header.${Buffer.from(JSON.stringify(payload)).toString('base64')}.signature`;
+      const res = await authService.googleLogin({ id_token: fakeToken });
+      expect(res.access_token).toBeDefined();
+      expect(res.user.email).toBe('token.student@gmail.com');
+      expect(res.user.roles).toContain('Student');
+    });
+
+    it('Tự động cấp ví và ghi sổ cái máy chủ 1.000.000đ khi học viên mới đăng ký', async () => {
+      const wallets: any[] = [];
+      const ledgers: any[] = [];
+
+      const mockWalletRepo: any = {
+        findOne: async (opts: any) => wallets.find((w) => w.user_id === opts?.where?.user_id) || null,
+        create: (data: any) => ({ wallet_id: wallets.length + 1, ...data }),
+        save: async (data: any) => {
+          wallets.push(data);
+          return data;
+        },
+      };
+
+      const mockLedgerRepo: any = {
+        create: (data: any) => ({ ledger_id: ledgers.length + 1, ...data }),
+        save: async (data: any) => {
+          ledgers.push(data);
+          return data;
+        },
+      };
+
+      const serviceWithWallet = new AuthService(mockUserRepo, mockRoleRepo, mockWalletRepo, mockLedgerRepo);
+
+      // Đăng ký học viên mới
+      const regRes = await serviceWithWallet.register({
+        email: 'lucky.student@gmail.com',
+        full_name: 'Học Viên May Mắn',
+        password: 'Password123@',
+      });
+
+      expect(regRes.access_token).toBeDefined();
+      expect(wallets.length).toBe(1);
+      expect(wallets[0].balance).toBe(1000000);
+      expect(ledgers.length).toBe(1);
+      expect(ledgers[0].amount).toBe(1000000);
+      expect(ledgers[0].reference_type).toBe('WELCOME_BONUS');
+
+      // Gọi me() kiểm tra số dư ví từ server
+      const meRes = await serviceWithWallet.me(regRes.user.user_id);
+      expect(meRes.wallet_balance).toBe(1000000);
+    });
   });
 });

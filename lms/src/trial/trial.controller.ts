@@ -14,4 +14,9 @@ export class TrialController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.trialService.findOne(id);
   }
+
+  @Get(':id/solution')
+  getSolution(@Param('id', ParseIntPipe) id: number) {
+    return this.trialService.getSolution(id);
+  }
 }

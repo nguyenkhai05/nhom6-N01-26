@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { HelpService } from './help.service.js';
 
 @Controller('help')
@@ -8,6 +8,16 @@ export class HelpController {
   @Get('faq')
   getFaq() {
     return this.helpService.getFaq();
+  }
+
+  @Get('requests/my')
+  getMyRequests(@Query('email') email?: string, @Query('user_id') userId?: string) {
+    return this.helpService.getUserTickets(userId || email);
+  }
+
+  @Get('requests')
+  getAllRequests() {
+    return this.helpService.getAllTickets();
   }
 
   @Post('requests')

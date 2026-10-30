@@ -116,54 +116,155 @@ export default function InteractiveTrialPage({ currentUser, onNavigate, onCourse
     }
   };
 
-  // Kiểm tra đáp án đối chiếu test cases
+  // Kiểm tra đáp án thực tế qua Web Worker Sandbox (Thực thi test cases thật, không giả lập chuỗi)
   const handleCheckSolution = () => {
+    if (!activeTrial?.test_cases?.length) {
+      setOutputLogs(['Bài học này không có test cases tự động. Bạn hãy xem mục Gợi ý để kiểm tra.']);
+      return;
+    }
+
     setIsRunning(true);
-    setOutputLogs(['[Đang kiểm tra kết quả qua Test Cases...]']);
+    setOutputLogs(['[Đang nạp mã nguồn vào Sandbox và thực thi từng Test Case thực tế...]']);
+    setTestResults(null);
 
-    setTimeout(() => {
-      setIsRunning(false);
-      if (!activeTrial?.test_cases?.length) {
-        setOutputLogs(['Bài học này không có test cases tự động. Bạn hãy xem mục Gợi ý để kiểm tra.']);
-        return;
-      }
+    const workerScript = `
+      self.onmessage = function(e) {
+        const { code, testCases, trialId } = e.data;
+        const results = [];
+        let passedCount = 0;
 
-      // Giả lập kiểm tra dựa trên mã nguồn
-      let passedCount = 0;
-      const results = activeTrial.test_cases.map((tc, idx) => {
-        // Kiểm tra cơ bản từ khóa hoặc mẫu giải pháp
-        const hasLogic =
-          userCode.includes('return') &&
-          !userCode.includes('// Hoàn thiện mã nguồn của bạn tại đây') &&
-          (userCode.includes('+') || userCode.includes('`') || userCode.includes('find') || userCode.includes('round') || userCode.includes('builder'));
+        try {
+          const fnScope = new Function(\`
+            \${code};
+            return {
+              WelcomeCard: typeof WelcomeCard !== 'undefined' ? WelcomeCard : undefined,
+              getCourseOverview: typeof getCourseOverview !== 'undefined' ? getCourseOverview : undefined,
+              calculateAverageScore: typeof calculateAverageScore !== 'undefined' ? calculateAverageScore : (typeof calculate_average_score !== 'undefined' ? calculate_average_score : undefined),
+              validateDevOpsPipeline: typeof validateDevOpsPipeline !== 'undefined' ? validateDevOpsPipeline : undefined,
+              __eval: function(expr) { return eval(expr); }
+            };
+          \`);
+          const exports = fnScope();
 
-        if (hasLogic) {
-          passedCount++;
-          return { ...tc, passed: true, actual: tc.expected_output };
-        } else {
-          return { ...tc, passed: false, actual: 'Chưa đạt yêu cầu' };
+          for (let i = 0; i < testCases.length; i++) {
+            const tc = testCases[i];
+            let actualVal;
+            let passed = false;
+
+            try {
+              let result;
+              if (trialId === 1 && typeof exports.WelcomeCard === 'function') {
+                const args = new Function('return (' + tc.input + ')')();
+                result = exports.WelcomeCard(args);
+              } else if (trialId === 2 && typeof exports.getCourseOverview === 'function') {
+                result = exports.__eval(tc.input);
+              } else if (trialId === 3 && (typeof exports.calculateAverageScore === 'function' || typeof exports.calculate_average_score === 'function')) {
+                const fn = exports.calculateAverageScore || exports.calculate_average_score;
+                const args = new Function('return (' + tc.input + ')')();
+                result = fn(args);
+              } else if (trialId === 4 && typeof exports.validateDevOpsPipeline === 'function') {
+                const args = new Function('return (' + tc.input + ')')();
+                result = exports.validateDevOpsPipeline(args);
+              } else {
+                result = exports.__eval(tc.input);
+              }
+
+              const actualStr = typeof result === 'object' && result !== null ? JSON.stringify(result) : String(result);
+              actualVal = actualStr;
+
+              const expTrim = String(tc.expected_output).trim();
+              const actTrim = actualStr.trim();
+
+              if ((actTrim.startsWith('{') || actTrim.startsWith('[')) && (expTrim.startsWith('{') || expTrim.startsWith('['))) {
+                try {
+                  passed = JSON.stringify(JSON.parse(actTrim)) === JSON.stringify(JSON.parse(expTrim));
+                } catch {
+                  passed = actTrim === expTrim;
+                }
+              } else {
+                passed = actTrim === expTrim;
+              }
+            } catch (execErr) {
+              actualVal = 'Lỗi thực thi: ' + execErr.message;
+              passed = false;
+            }
+
+            if (passed) passedCount++;
+            results.push({
+              ...tc,
+              passed,
+              actual: actualVal,
+            });
+          }
+
+          self.postMessage({
+            success: true,
+            passedCount,
+            total: testCases.length,
+            results,
+          });
+        } catch (syntaxErr) {
+          self.postMessage({
+            success: false,
+            error: 'Lỗi cú pháp (SyntaxError): ' + syntaxErr.message,
+            results: testCases.map(tc => ({ ...tc, passed: false, actual: 'Lỗi cú pháp: ' + syntaxErr.message })),
+          });
         }
-      });
+      };
+    `;
 
-      setTestResults({
-        passedCount,
-        total: activeTrial.test_cases.length,
-        results,
-      });
+    try {
+      const blob = new Blob([workerScript], { type: 'application/javascript' });
+      const workerUrl = URL.createObjectURL(blob);
+      const worker = new Worker(workerUrl);
 
-      if (passedCount === activeTrial.test_cases.length) {
-        setOutputLogs([
-          ' Chúc mừng! Toàn bộ Test Cases đã vượt qua thành công.',
-          'Bạn đã nắm vững kiến thức trọng tâm của bài học thử này!',
-        ]);
-        setTimeout(() => setShowCompletionModal(true), 800);
-      } else {
-        setOutputLogs([
-          ' Một số Test Cases chưa vượt qua.',
-          'Hãy xem lại mục Hướng dẫn & Gợi ý từng bước ở cột bên trái.',
-        ]);
-      }
-    }, 600);
+      const timeoutId = setTimeout(() => {
+        worker.terminate();
+        URL.revokeObjectURL(workerUrl);
+        setIsRunning(false);
+        setOutputLogs(['Lỗi: Quá thời gian thực thi (Timeout 3000ms). Vui lòng kiểm tra vòng lặp vô tận.']);
+      }, 3000);
+
+      worker.onmessage = (e) => {
+        clearTimeout(timeoutId);
+        worker.terminate();
+        URL.revokeObjectURL(workerUrl);
+        setIsRunning(false);
+
+        const data = e.data;
+        if (data.results) {
+          setTestResults({
+            passedCount: data.passedCount || 0,
+            total: data.total || activeTrial.test_cases.length,
+            results: data.results,
+          });
+
+          if (data.passedCount === (data.total || activeTrial.test_cases.length)) {
+            setOutputLogs([
+              '🎉 Chúc mừng! Toàn bộ Test Cases đã vượt qua thành công.',
+              'Mã nguồn của bạn đã thực thi chuẩn xác và trả về kết quả khớp với toàn bộ điều kiện kiểm thử!',
+            ]);
+            setTimeout(() => setShowCompletionModal(true), 800);
+          } else {
+            setOutputLogs([
+              '⚠️ Một số Test Cases chưa vượt qua kết quả thực tế.',
+              data.error || 'Hãy xem mục Chi tiết Test Cases bên dưới để đối chiếu Actual vs Expected.',
+            ]);
+          }
+        } else {
+          setOutputLogs([data.error || 'Kiểm tra thất bại.']);
+        }
+      };
+
+      worker.postMessage({
+        code: userCode,
+        testCases: activeTrial.test_cases || [],
+        trialId: activeTrial.trial_id,
+      });
+    } catch (err) {
+      setIsRunning(false);
+      setOutputLogs([`Lỗi khởi tạo sandbox: ${err.message}`]);
+    }
   };
 
   return (
@@ -395,13 +496,22 @@ export default function InteractiveTrialPage({ currentUser, onNavigate, onCourse
                         {testResults.results.map((tc, idx) => (
                           <div
                             key={idx}
-                            className={`p-2 rounded-2 mb-1 d-flex justify-content-between align-items-center ${tc.passed ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}
+                            className={`p-2 px-3 rounded-3 mb-2 border ${tc.passed ? 'bg-success-subtle border-success-subtle text-success-emphasis' : 'bg-danger-subtle border-danger-subtle text-danger-emphasis'}`}
                           >
-                            <span>
-                              <i className={`bi ${tc.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1`}></i>
-                              {tc.description}
-                            </span>
-                            <span className="small">{tc.passed ? 'PASSED' : 'FAILED'}</span>
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <span className="fw-bold">
+                                <i className={`bi ${tc.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1`}></i>
+                                {tc.description}
+                              </span>
+                              <Badge bg={tc.passed ? 'success' : 'danger'}>
+                                {tc.passed ? 'PASSED' : 'FAILED'}
+                              </Badge>
+                            </div>
+                            <div className="small font-monospace text-muted mt-1 bg-white p-2 rounded border">
+                              <div><strong>Đầu vào (Input):</strong> <code>{tc.input}</code></div>
+                              <div><strong>Kết quả thực tế (Actual):</strong> <code className={tc.passed ? 'text-success fw-bold' : 'text-danger fw-bold'}>{tc.actual !== undefined ? tc.actual : 'undefined'}</code></div>
+                              <div><strong>Kỳ vọng (Expected):</strong> <code className="text-primary">{tc.expected_output}</code></div>
+                            </div>
                           </div>
                         ))}
                       </div>
