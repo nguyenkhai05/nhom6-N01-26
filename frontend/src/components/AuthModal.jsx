@@ -96,44 +96,38 @@ export default function AuthModal({
     }
   };
 
-  // Đăng nhập nhanh với Google OAuth
+  // Đăng nhập nhanh với Google OAuth (Không dùng window.prompt gây lỗi trình duyệt)
   const handleGoogleLogin = async () => {
     setErrorMsg('');
     setSuccessMsg('');
     setLoading(true);
 
     try {
-      let googleUser = {
-        email: 'student.google@phenikaa-uni.edu.vn',
-        full_name: 'Học viên Google Phenikaa',
+      // Ưu tiên email người dùng đã gõ trong ô 'Email *' ở trên, nếu chưa nhập thì dùng tài khoản Google học viên
+      const emailInput = loginForm.email?.trim() || '';
+      const emailToUse = (emailInput && emailInput.includes('@'))
+        ? emailInput.toLowerCase()
+        : 'student.google@phenikaa-uni.edu.vn';
+
+      const rawName = emailToUse.split('@')[0].replace(/[\._]/g, ' ');
+      const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : 'Học viên Google';
+
+      const googleUser = {
+        email: emailToUse,
+        full_name: formattedName,
         avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
       };
-
-      const customEmail = window.prompt(
-        'Nhập địa chỉ Email Google của bạn để đăng nhập:',
-        googleUser.email
-      );
-
-      if (customEmail === null) {
-        setLoading(false);
-        return;
-      }
-
-      if (customEmail.trim()) {
-        googleUser.email = customEmail.trim().toLowerCase();
-        googleUser.full_name = customEmail.split('@')[0];
-      }
 
       const { access_token, user } = await apiGoogleLogin(googleUser);
       saveToken(access_token, rememberMe);
       const frontendUser = toFrontendUser(user);
 
-      setSuccessMsg('Đăng nhập với tài khoản Google thành công!');
+      setSuccessMsg(`Đăng nhập Google thành công: ${googleUser.email}`);
       setTimeout(() => {
         onLoginSuccess(frontendUser);
         onHide();
         resetForms();
-      }, 500);
+      }, 400);
     } catch (err) {
       setErrorMsg(err.message || 'Đăng nhập Google thất bại');
       setLoading(false);

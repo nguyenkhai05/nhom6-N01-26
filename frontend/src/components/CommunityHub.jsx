@@ -218,8 +218,16 @@ export default function CommunityHub({ currentUser, initialTab = 'articles', onN
       alert('Vui lòng đăng nhập để báo cáo nội dung.');
       return;
     }
-    const reason = window.prompt('Nhập lý do báo cáo vi phạm nội dung:');
-    if (!reason?.trim()) return;
+    let reason = 'Nội dung vi phạm tiêu chuẩn cộng đồng';
+    try {
+      if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+        const input = window.prompt('Nhập lý do báo cáo vi phạm nội dung:', reason);
+        if (input === null) return;
+        if (input.trim()) reason = input.trim();
+      }
+    } catch {
+      // Trình duyệt không hỗ trợ prompt(), sử dụng lý do mặc định
+    }
     try {
       const res = await reportContent({
         target_type: targetType,
