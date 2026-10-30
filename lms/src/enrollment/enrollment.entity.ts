@@ -2,6 +2,12 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDa
 import { Course } from '../course/course.entity.js';
 import { User } from '../user/user.entity.js';
 
+export enum EnrollmentStatus {
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  REFUNDED = 'REFUNDED',
+}
+
 @Entity('enrollments')
 export class Enrollment {
   @PrimaryGeneratedColumn()
@@ -18,6 +24,9 @@ export class Enrollment {
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0.0 })
   progress_percent: number;
+
+  @Column({ type: 'enum', enum: EnrollmentStatus, default: EnrollmentStatus.ACTIVE })
+  status: EnrollmentStatus;
 
   @ManyToOne(() => User, (u) => u.enrollments, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'student_id' })

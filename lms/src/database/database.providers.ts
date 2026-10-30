@@ -6,6 +6,43 @@ import { Category } from '../category/category.entity.js';
 import { CourseModule } from '../course-module/course-module.entity.js';
 import { Enrollment } from '../enrollment/enrollment.entity.js';
 import { Lesson } from '../lesson/lesson.entity.js';
+import { CartItem } from '../commerce/entities/cart-item.entity.js';
+import { Voucher } from '../commerce/entities/voucher.entity.js';
+import { Wallet } from '../commerce/entities/wallet.entity.js';
+import { WalletLedger } from '../commerce/entities/wallet-ledger.entity.js';
+import { TopupRequest } from '../commerce/entities/topup-request.entity.js';
+import { Order } from '../commerce/entities/order.entity.js';
+import { OrderItem } from '../commerce/entities/order-item.entity.js';
+import { RefundRequest } from '../commerce/entities/refund-request.entity.js';
+
+export const INITIAL_VOUCHERS = [
+  {
+    voucher_id: 1,
+    code: 'GIAM20',
+    discount_type: 'PERCENT',
+    discount_value: 20,
+    min_order_value: 200000,
+    max_discount_amount: 300000,
+    valid_from: new Date('2026-01-01'),
+    valid_until: new Date('2027-01-01'),
+    usage_limit: 100,
+    used_count: 5,
+    is_active: true,
+  },
+  {
+    voucher_id: 2,
+    code: 'CHAOHANG',
+    discount_type: 'FIXED',
+    discount_value: 50000,
+    min_order_value: 100000,
+    max_discount_amount: 50000,
+    valid_from: new Date('2026-01-01'),
+    valid_until: new Date('2027-01-01'),
+    usage_limit: 50,
+    used_count: 0,
+    is_active: true,
+  },
+];
 
 export const INITIAL_CATEGORIES = [
   { category_id: 1, category_name: 'Frontend', order_index: 1 },
@@ -285,7 +322,23 @@ export const databaseProviders = [
         username: dbUser,
         password: dbPass,
         database: dbName,
-        entities: [User, Role, Course, Category, CourseModule, Enrollment, Lesson],
+        entities: [
+          User,
+          Role,
+          Course,
+          Category,
+          CourseModule,
+          Enrollment,
+          Lesson,
+          CartItem,
+          Voucher,
+          Wallet,
+          WalletLedger,
+          TopupRequest,
+          Order,
+          OrderItem,
+          RefundRequest,
+        ],
         // R02: Tắt synchronize: true mặc định để bảo vệ schema CSDL và không drop cột users.created_at
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
       });
@@ -316,6 +369,15 @@ export const databaseProviders = [
         const roleRepo = createMockRepository(INITIAL_ROLES, 'role_id');
         const moduleRepo = createMockRepository(INITIAL_MODULES, 'module_id');
         const lessonRepo = createMockRepository(INITIAL_LESSONS, 'lesson_id');
+        const cartRepo = createMockRepository([], 'id');
+        const voucherRepo = createMockRepository(INITIAL_VOUCHERS, 'voucher_id');
+        const walletRepo = createMockRepository([], 'wallet_id');
+        const ledgerRepo = createMockRepository([], 'ledger_id');
+        const topupRepo = createMockRepository([], 'request_id');
+        const orderRepo = createMockRepository([], 'order_id');
+        const orderItemRepo = createMockRepository([], 'item_id');
+        const refundRepo = createMockRepository([], 'refund_id');
+        const enrollmentRepo = createMockRepository([], 'enrollment_id');
         const defaultRepo = createMockRepository([], 'id');
 
         return {
@@ -327,6 +389,15 @@ export const databaseProviders = [
             if (entity === Role || entity?.name === 'Role') return roleRepo;
             if (entity === CourseModule || entity?.name === 'CourseModule') return moduleRepo;
             if (entity === Lesson || entity?.name === 'Lesson') return lessonRepo;
+            if (entity === CartItem || entity?.name === 'CartItem') return cartRepo;
+            if (entity === Voucher || entity?.name === 'Voucher') return voucherRepo;
+            if (entity === Wallet || entity?.name === 'Wallet') return walletRepo;
+            if (entity === WalletLedger || entity?.name === 'WalletLedger') return ledgerRepo;
+            if (entity === TopupRequest || entity?.name === 'TopupRequest') return topupRepo;
+            if (entity === Order || entity?.name === 'Order') return orderRepo;
+            if (entity === OrderItem || entity?.name === 'OrderItem') return orderItemRepo;
+            if (entity === RefundRequest || entity?.name === 'RefundRequest') return refundRepo;
+            if (entity === Enrollment || entity?.name === 'Enrollment') return enrollmentRepo;
             return defaultRepo;
           },
         } as unknown as DataSource;
