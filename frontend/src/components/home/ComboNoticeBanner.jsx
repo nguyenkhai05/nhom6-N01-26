@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Container, Badge, Button, Modal, Row, Col, Card, Alert, Spinner, Table } from 'react-bootstrap';
+import { Container, Badge, Button, Modal, Row, Col, Alert, Spinner, Table } from 'react-bootstrap';
 import { getBundles, getBundleQuote, checkoutBundle } from '../../services/hubApi';
+
+const SNOOZE_STORAGE_KEY = 'eduviet_combo_notice_snooze_until';
+const SNOOZE_HOURS = 4;
 
 export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNavigate }) {
   const [bundles, setBundles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [quote, setQuote] = useState(null);
@@ -13,7 +14,47 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [alertInfo, setAlertInfo] = useState(null);
 
+  // Kiểm tra trạng thái ẩn 4 tiếng
+  const checkIsSnoozed = () => {
+    try {
+      const snoozedUntil = localStorage.getItem(SNOOZE_STORAGE_KEY);
+      if (snoozedUntil && Date.now() < Number(snoozedUntil)) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  };
+
+  const [isDismissed, setIsDismissed] = useState(checkIsSnoozed);
+  const [remainingText, setRemainingText] = useState('');
+
+  const updateRemainingTime = () => {
+    try {
+      const snoozedUntil = localStorage.getItem(SNOOZE_STORAGE_KEY);
+      if (snoozedUntil) {
+        const diffMs = Number(snoozedUntil) - Date.now();
+        if (diffMs > 0) {
+          const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+          setRemainingText(`Ẩn còn ~${hours}h`);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setRemainingText('');
+  };
+
   useEffect(() => {
+    // Luôn kiểm tra khi xuất hiện ở đầu trang: nếu đã hết hạn 4 tiếng thì hiển thị lại
+    const snoozed = checkIsSnoozed();
+    setIsDismissed(snoozed);
+    if (snoozed) {
+      updateRemainingTime();
+    }
+
     let isMounted = true;
     getBundles()
       .then((data) => {
@@ -26,6 +67,28 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
       isMounted = false;
     };
   }, []);
+
+  const handleSnooze4Hours = (e) => {
+    if (e) e.stopPropagation();
+    const until = Date.now() + SNOOZE_HOURS * 60 * 60 * 1000;
+    try {
+      localStorage.setItem(SNOOZE_STORAGE_KEY, String(until));
+    } catch (err) {
+      console.error(err);
+    }
+    setIsDismissed(true);
+    setRemainingText('Ẩn 4h');
+  };
+
+  const handleReopenNotice = () => {
+    try {
+      localStorage.removeItem(SNOOZE_STORAGE_KEY);
+    } catch (err) {
+      console.error(err);
+    }
+    setIsDismissed(false);
+    setRemainingText('');
+  };
 
   const handleOpenQuote = async (bundle) => {
     setSelectedBundle(bundle);
@@ -67,32 +130,35 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
     }
   };
 
-  const maxSaving = bundles.length > 0 
-    ? Math.max(...bundles.map(b => b.savings_percent || 0)) 
+  const maxSaving = bundles.length > 0
+    ? Math.max(...bundles.map((b) => b.savings_percent || 0))
     : 22;
 
   return (
     <>
-      {/* 1. Thanh Thông Báo Nổi Bật Trên Trang Chủ */}
+      {/* 1. Thanh Thông Báo Luôn Xuất Hiện Ở Đầu Trang */}
       {!isDismissed ? (
-        <div 
-          className="combo-announcement-bar py-2 px-3 shadow-sm border-bottom"
+        <div
+          className="combo-announcement-bar py-2 px-3 border-bottom shadow-sm"
           style={{
             background: 'linear-gradient(90deg, #0d3b66 0%, #174276 50%, #001e3d 100%)',
             color: '#ffffff',
             position: 'relative',
-            zIndex: 10
+            zIndex: 1040,
           }}
         >
           <div className="container-fluid px-lg-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div className="d-flex align-items-center flex-wrap gap-2">
-              <span className="badge rounded-pill text-dark fw-bold px-3 py-1" style={{ backgroundColor: '#ffb700' }}>
+              <span
+                className="badge rounded-pill text-dark fw-bold px-3 py-1 shadow-sm"
+                style={{ backgroundColor: '#ffb700' }}
+              >
                 <i className="bi bi-megaphone-fill me-1"></i> THÔNG BÁO ƯU ĐÃI
               </span>
-              <span className="small fw-semibold">
-                🔥 <strong>Tiết kiệm đến {maxSaving}%</strong> khi đăng ký học theo <strong>Gói Combo</strong> (Fullstack, DevOps AI, Mobile Flutter).
+              <span className="small fw-semibold text-white">
+                🔥 <strong>Tiết kiệm đến {maxSaving}%</strong> khi đăng ký học theo <strong>Gói Combo</strong> (Fullstack Web, Flutter Mobile, DevOps & AI).
               </span>
-              <span className="small text-light d-none d-md-inline opacity-75">
+              <span className="small text-light d-none d-lg-inline opacity-75">
                 | Thuật toán Smart Quote tự động khấu trừ học phí các khóa bạn đã sở hữu!
               </span>
             </div>
@@ -111,12 +177,26 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
               >
                 <i className="bi bi-tag-fill me-1"></i> Xem Chi Tiết Combo
               </button>
+
+              {/* Mục ẩn thông báo trong 4 tiếng */}
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-light rounded-pill px-2 py-1 small d-flex align-items-center gap-1 opacity-75 hover-opacity-100"
+                onClick={handleSnooze4Hours}
+                title="Tạm ẩn thông báo này trong vòng 4 tiếng"
+                style={{ fontSize: '0.8rem', lineHeight: 1.2 }}
+              >
+                <i className="bi bi-clock-history"></i>
+                <span className="d-none d-sm-inline">Ẩn 4 tiếng</span>
+              </button>
+
+              {/* Nút đóng & ẩn 4 tiếng */}
               <button
                 type="button"
                 className="btn btn-sm btn-link text-white-50 p-0 text-decoration-none ms-1"
-                onClick={() => setIsDismissed(true)}
-                title="Tạm ẩn thông báo này"
-                style={{ fontSize: '1.2rem', lineHeight: 1 }}
+                onClick={handleSnooze4Hours}
+                title="Đóng thông báo (ẩn trong 4 tiếng)"
+                style={{ fontSize: '1.25rem', lineHeight: 1 }}
               >
                 &times;
               </button>
@@ -124,29 +204,36 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
           </div>
         </div>
       ) : (
-        /* Nút Ghim Nhỏ Mở Lại Thông Báo Khi Đã Ẩn */
+        /* Nút Ghim Nhỏ Mở Lại Khi Học Viên Muốn Xem */
         <div className="position-fixed bottom-0 start-0 m-3" style={{ zIndex: 1050 }}>
           <button
             type="button"
-            className="btn btn-sm rounded-pill shadow d-flex align-items-center gap-2 px-3 py-2 fw-semibold border"
+            className="btn btn-sm rounded-pill shadow-lg d-flex align-items-center gap-2 px-3 py-2 fw-semibold border"
             style={{ backgroundColor: '#0d3b66', color: '#ffb700', borderColor: '#ffb700' }}
-            onClick={() => setIsDismissed(false)}
+            onClick={handleReopenNotice}
+            title="Nhấn để mở lại thanh thông báo ưu đãi"
           >
             <i className="bi bi-bell-fill"></i>
             <span>Ưu Đãi Combo (-{maxSaving}%)</span>
+            {remainingText && (
+              <span className="badge bg-warning text-dark ms-1 small">{remainingText}</span>
+            )}
           </button>
         </div>
       )}
 
       {/* 2. Modal Thông Báo Chi Tiết & Báo Giá Smart Quote */}
-      <Modal 
-        show={showModal} 
-        onHide={() => setShowModal(false)} 
-        size="lg" 
+      <Modal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        size="lg"
         centered
         className="combo-notice-modal"
       >
-        <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #0d3b66 0%, #001e3d 100%)', color: '#fff' }}>
+        <Modal.Header
+          closeButton
+          style={{ background: 'linear-gradient(135deg, #0d3b66 0%, #001e3d 100%)', color: '#fff' }}
+        >
           <Modal.Title className="fs-5 fw-bold d-flex align-items-center gap-2">
             <i className="bi bi-tags-fill text-warning"></i>
             Thông Báo Ưu Đãi: Các Gói Combo Đang Mở Bán
@@ -162,11 +249,13 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
 
           {/* Danh Sách Chọn Gói Combo */}
           <div className="mb-4">
-            <label className="fw-bold small text-muted text-uppercase mb-2">Chọn gói Combo bạn quan tâm:</label>
+            <label className="fw-bold small text-muted text-uppercase mb-2">
+              Chọn gói Combo bạn quan tâm:
+            </label>
             <Row className="g-2">
               {bundles.map((b) => (
                 <Col key={b.bundle_id} md={4} sm={6}>
-                  <div 
+                  <div
                     className={`p-3 rounded-3 border h-100 cursor-pointer transition ${selectedBundle?.bundle_id === b.bundle_id ? 'border-primary bg-primary-subtle shadow-sm' : 'bg-white hover-shadow'}`}
                     onClick={() => handleOpenQuote(b)}
                     style={{ cursor: 'pointer' }}
@@ -196,7 +285,9 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
                   <i className="bi bi-calculator text-primary"></i>
                   Báo Giá Trực Tiếp Từ Máy Chủ (Smart Quote)
                 </h6>
-                <Badge bg="success" className="px-2 py-1">Tiết kiệm {Number(selectedBundle.savings_amount).toLocaleString('vi-VN')} đ</Badge>
+                <Badge bg="success" className="px-2 py-1">
+                  Tiết kiệm {Number(selectedBundle.savings_amount).toLocaleString('vi-VN')} đ
+                </Badge>
               </div>
 
               {quoteLoading ? (
@@ -259,9 +350,9 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
                         Số dư ví hiện tại: <strong>{Number(currentUser?.walletBalance || 0).toLocaleString('vi-VN')} đ</strong>
                       </small>
                       {currentUser && currentUser.walletBalance < quote.final_amount && (
-                        <Button 
-                          variant="outline-warning" 
-                          size="sm" 
+                        <Button
+                          variant="outline-warning"
+                          size="sm"
                           className="mt-1 fw-bold text-dark"
                           onClick={() => {
                             setShowModal(false);
@@ -289,10 +380,10 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
                         <i className="bi bi-box-arrow-in-right me-1"></i> Đăng nhập để mua
                       </Button>
                     ) : (
-                      <Button 
-                        variant="success" 
-                        size="sm" 
-                        className="fw-bold px-4" 
+                      <Button
+                        variant="success"
+                        size="sm"
+                        className="fw-bold px-4"
                         disabled={checkoutLoading || currentUser.walletBalance < quote.final_amount}
                         onClick={handleCheckout}
                       >

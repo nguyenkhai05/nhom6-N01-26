@@ -572,6 +572,14 @@ export default function App() {
 
   return (
     <div className="d-flex flex-column min-vh-100">
+      {/* Thông Báo Ưu Đãi Luôn Xuất Hiện Ở Đầu Trang */}
+      {currentRoute !== 'learning-room' && (
+        <ComboNoticeBanner
+          currentUser={currentUser}
+          onOpenDeposit={() => setShowDepositModal(true)}
+          onNavigate={setCurrentRoute}
+        />
+      )}
       {currentRoute !== 'learning-room' && (
       <Header
         currentUser={currentUser}
@@ -615,11 +623,7 @@ export default function App() {
       <main className="flex-grow-1">
         {currentRoute === 'home' && (
           <div className="page-fade-in">
-            <ComboNoticeBanner
-              currentUser={currentUser}
-              onOpenDeposit={() => setShowDepositModal(true)}
-              onNavigate={setCurrentRoute}
-            />
+
             <Her onSearch={handleSearch} />
             {catalog.status === 'error' && (
               <div className="app-container pt-3">
@@ -786,11 +790,21 @@ export default function App() {
         )}
 
         {currentRoute === 'community' && (
-          <CommunityHub currentUser={currentUser} />
+          <CommunityHub
+            currentUser={currentUser}
+            initialTab="articles"
+            onNavigate={setCurrentRoute}
+            onCourseSelect={openCourseDetail}
+          />
         )}
 
         {currentRoute === 'articles' && (
-          <ArticlesHub onNavigate={setCurrentRoute} onCourseSelect={openCourseDetail} />
+          <CommunityHub
+            currentUser={currentUser}
+            initialTab="articles"
+            onNavigate={setCurrentRoute}
+            onCourseSelect={openCourseDetail}
+          />
         )}
 
         {currentRoute === 'bundles' && (

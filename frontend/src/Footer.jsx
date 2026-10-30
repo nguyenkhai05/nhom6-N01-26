@@ -5,8 +5,8 @@ const QUICK_LINKS = [
   { label: 'Tất cả khóa học', route: 'courses' },
   { label: 'Trung tâm luyện tập', route: 'practice' },
   { label: 'Dự án thực tế', route: 'projects' },
-  { label: 'Cộng đồng học viên', route: 'community' },
-  { label: 'Bài viết & Cẩm nang', route: 'articles' },
+  { label: 'Cộng đồng & Bài viết', route: 'community' },
+  { label: 'Combo ưu đãi trọn gói', route: 'bundles' },
   { label: 'Khóa học của tôi', route: 'my-learning' },
 ];
 
@@ -15,8 +15,8 @@ const COLUMNS = [
     { label: 'Khóa học lập trình', route: 'courses' },
     { label: 'Kho bài tập & Thử thách', route: 'practice' },
     { label: 'Dự án thực chiến có Rubric', route: 'projects' },
-    { label: 'Cộng đồng trao đổi Q&A', route: 'community' },
-    { label: 'Bài viết công nghệ thực chiến', route: 'articles' },
+    { label: 'Cộng đồng & Bài viết công nghệ', route: 'community' },
+    { label: 'Combo ưu đãi tiết kiệm', route: 'bundles' },
   ] },
   { title: 'Hỗ trợ học viên', links: [
     { label: 'Khóa học của tôi', route: 'my-learning' },
