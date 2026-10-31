@@ -367,85 +367,118 @@ function computeCourseRecommendations(dto) {
   const goal = (dto?.goal || 'FRONTEND').toUpperCase();
   const knownSkills = (dto?.knownSkills || []).map((s) => s.toUpperCase());
   const budget = Number(dto?.budgetMaxVnd || 0);
+  const hours = Number(dto?.hoursPerWeek || 8);
 
-  const COURSES_INFO = [
+  const COURSES = [
     {
       course_id: 1,
       title: 'Lập Trình Web Frontend Chuyên Sâu với ReactJS & Next.js',
-      category: 'Frontend',
+      category_name: 'Frontend',
       price: 890000,
+      old_price: 1200000,
       goals: ['FRONTEND'],
-      matchScore: 0.98,
-      matchReason: 'Trực tiếp trang bị React 19, Next.js 15 và xây dựng 3 dự án thực tế chuẩn nhu cầu tuyển dụng Frontend.',
-      duration: '52 giờ',
-      level: 'Beginner - Intermediate',
-      instructor: 'Vũ Quốc Huy (Lead Frontend)',
+      reasons: [
+        'Trực tiếp giải quyết mục tiêu làm chủ React 19, Next.js 15 và Server Components chuẩn công nghiệp',
+        'Được thực hành xây dựng 3 dự án thực tế có portfolio hoàn thiện',
+      ],
+      level: 'Cơ bản - Trung cấp',
+      thumbnail_url: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&auto=format&fit=crop&q=80',
+      instructor_name: 'Vũ Quốc Huy (Lead Frontend)',
+      canTry: true,
+      previewTrialId: 1,
     },
     {
       course_id: 2,
       title: 'Xây Dựng Backend & RESTful API cùng NestJS & MySQL',
-      category: 'Backend',
+      category_name: 'Backend',
       price: 950000,
+      old_price: 1350000,
       goals: ['BACKEND'],
-      matchScore: 0.96,
-      matchReason: 'Đào tạo chuẩn Clean Architecture, Dependency Injection và thiết kế API chuyên nghiệp quy mô lớn.',
-      duration: '48 giờ',
-      level: 'Intermediate',
-      instructor: 'Nguyễn Tuấn Kiệt (Senior Architect)',
+      reasons: [
+        'Đào tạo kiến trúc Clean Architecture, Dependency Injection và TypeORM chuẩn doanh nghiệp',
+        'Nắm vững thiết kế API bảo mật cao với JWT, RBAC và tối ưu hóa truy vấn',
+      ],
+      level: 'Trung cấp',
+      thumbnail_url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
+      instructor_name: 'Nguyễn Tuấn Kiệt (Senior Architect)',
+      canTry: true,
+      previewTrialId: 2,
     },
     {
       course_id: 3,
       title: 'Thiết Kế CSDL Quan Hệ & Tối Ưu Hóa Truy Vấn MySQL',
-      category: 'Cơ sở dữ liệu',
+      category_name: 'Cơ sở dữ liệu',
       price: 490000,
+      old_price: 750000,
       goals: ['BACKEND', 'FOUNDATION'],
-      matchScore: 0.92,
-      matchReason: 'Tập trung chuẩn hóa dữ liệu 3NF, phân tích câu lệnh SQL phức tạp và tối ưu hóa hiệu năng truy vấn.',
-      duration: '32 giờ',
-      level: 'Beginner',
-      instructor: 'Trần Minh Quang (DBA Expert)',
+      reasons: [
+        'Tập trung chuẩn hóa dữ liệu 3NF, phân tích câu lệnh SQL phức tạp và kỹ thuật Indexing B-Tree',
+      ],
+      level: 'Cơ bản',
+      thumbnail_url: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&auto=format&fit=crop&q=80',
+      instructor_name: 'Trần Minh Quang (DBA Specialist)',
+      canTry: false,
     },
     {
       course_id: 4,
       title: 'Lập Trình Python Cho Phân Tích Dữ Liệu & AI Cơ Bản',
-      category: 'AI & Data',
+      category_name: 'AI & Data',
       price: 790000,
+      old_price: 1100000,
       goals: ['AI', 'FOUNDATION'],
-      matchScore: 0.95,
-      matchReason: 'Lộ trình bắt đầu từ cú pháp Python thực chiến đến phân tích dữ liệu với Pandas, NumPy và thuật toán AI cơ bản.',
-      duration: '45 giờ',
-      level: 'Beginner',
-      instructor: 'Đặng Hải Nam (AI Engineer)',
+      reasons: [
+        'Bắt đầu từ cú pháp Python thực chiến đến phân tích dữ liệu với Pandas, NumPy và AI cơ bản',
+      ],
+      level: 'Cơ bản',
+      thumbnail_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+      instructor_name: 'Đặng Hải Nam (AI Engineer)',
+      canTry: false,
     },
     {
       course_id: 8,
       title: 'Next.js 15 App Router Fullstack & Server Actions',
-      category: 'Frontend',
+      category_name: 'Frontend',
       price: 890000,
-      goals: ['FRONTEND', 'BACKEND'],
-      matchScore: 0.91,
-      matchReason: 'Làm chủ SSR/SSG chuẩn công nghiệp, Server Actions và tối ưu hóa SEO tốc độ cao.',
-      duration: '44 giờ',
-      level: 'Intermediate',
-      instructor: 'Vũ Quốc Huy (Lead Frontend)',
+      old_price: 1250000,
+      goals: ['FRONTEND'],
+      reasons: [
+        'Làm chủ SSR/SSG chuẩn công nghiệp, Server Actions và tối ưu hóa SEO tốc độ cao',
+      ],
+      level: 'Trung cấp',
+      thumbnail_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
+      instructor_name: 'Vũ Quốc Huy (Lead Frontend)',
+      canTry: true,
+      previewTrialId: 1,
     },
   ];
 
-  let matches = COURSES_INFO.filter((c) => c.goals.includes(goal));
+  let matches = COURSES.filter((c) => c.goals.includes(goal));
+  if (budget > 0) {
+    const budgetFiltered = matches.filter((c) => c.price <= budget);
+    if (budgetFiltered.length > 0) matches = budgetFiltered;
+  }
   if (matches.length === 0) {
-    matches = COURSES_INFO.slice(0, 3);
+    matches = COURSES.slice(0, 3);
   }
 
+  const items = matches.slice(0, 3).map((c, idx) => ({
+    score: 95 - idx * 5,
+    rankingScore: 95 - idx * 5,
+    readiness: 'READY',
+    course: c,
+    reasons: c.reasons,
+    missingPrerequisites: [],
+    estimatedWeeks: Math.ceil(40 / Math.max(hours, 4)),
+    previewTrialId: c.previewTrialId || null,
+    canTry: c.canTry || false,
+    owned: false,
+  }));
+
   return {
-    success: true,
-    primary_course: matches[0],
-    alternative_courses: matches.slice(1),
-    total_evaluated: COURSES_INFO.length,
-    criteria_summary: {
-      goal,
-      known_skills_count: knownSkills.length,
-      budget_filter: budget > 0 ? `${budget.toLocaleString('vi-VN')} đ` : 'Tất cả ngân sách',
-    },
+    ruleVersion: 'finder-1',
+    items,
+    needsPreparation: [],
+    notice: 'Gợi ý khóa học dựa trên mục tiêu khảo sát của bạn. Bạn có thể học thử tương tác miễn phí trước khi đăng ký!',
   };
 }
 
@@ -506,12 +539,74 @@ function handleHubFallback(path, options) {
     return trial;
   }
 
-  // 3. Chọn Khóa Phù Hợp (Course Finder)
+  // 3. Chọn Khóa Phù Hợp (Course Finder) & So Sánh
   if (path === '/course-finder/config') {
     return FALLBACK_FINDER_CONFIG;
   }
   if (path === '/course-finder/recommendations') {
     return computeCourseRecommendations(body);
+  }
+  if (path.startsWith('/courses/compare')) {
+    const idsParam = path.split('ids=')[1] || '';
+    const ids = decodeURIComponent(idsParam).split(',').map(Number);
+    const mockCompareList = [
+      {
+        course_id: 1,
+        title: 'Lập Trình Web Frontend Chuyên Sâu với ReactJS & Next.js',
+        price: 890000,
+        level: 'Cơ bản - Trung cấp',
+        category_name: 'Frontend',
+        instructor_name: 'Vũ Quốc Huy (Lead Frontend)',
+        prerequisites: ['HTML/CSS', 'JavaScript cơ bản'],
+        targetOutcome: 'Xây dựng hoàn chỉnh ứng dụng Web hiện đại với React 19 & Next.js',
+        hasInteractiveTrial: true,
+      },
+      {
+        course_id: 2,
+        title: 'Xây Dựng Backend & RESTful API cùng NestJS & MySQL',
+        price: 950000,
+        level: 'Trung cấp',
+        category_name: 'Backend',
+        instructor_name: 'Nguyễn Tuấn Kiệt (Senior Architect)',
+        prerequisites: ['JavaScript ES6', 'Cơ bản về Database'],
+        targetOutcome: 'Thiết kế RESTful API chuẩn Clean Architecture, bảo mật JWT & TypeORM',
+        hasInteractiveTrial: true,
+      },
+      {
+        course_id: 3,
+        title: 'Thiết Kế CSDL Quan Hệ & Tối Ưu Hóa Truy Vấn MySQL',
+        price: 490000,
+        level: 'Cơ bản',
+        category_name: 'Cơ sở dữ liệu',
+        instructor_name: 'Trần Minh Quang (DBA Specialist)',
+        prerequisites: ['Không yêu cầu kiến thức trước'],
+        targetOutcome: 'Thành thạo mô hình hóa ERD, chuẩn hóa 3NF và Indexing B-Tree tối ưu',
+        hasInteractiveTrial: false,
+      },
+      {
+        course_id: 4,
+        title: 'Lập Trình Python Cho Phân Tích Dữ Liệu & AI Cơ Bản',
+        price: 790000,
+        level: 'Cơ bản',
+        category_name: 'AI & Data',
+        instructor_name: 'Đặng Hải Nam (AI Engineer)',
+        prerequisites: ['Không yêu cầu kiến thức trước'],
+        targetOutcome: 'Phân tích dữ liệu thực tế với Pandas, NumPy và thuật toán Machine Learning',
+        hasInteractiveTrial: false,
+      },
+      {
+        course_id: 8,
+        title: 'Next.js 15 App Router Fullstack & Server Actions',
+        price: 890000,
+        level: 'Trung cấp',
+        category_name: 'Frontend',
+        instructor_name: 'Vũ Quốc Huy (Lead Frontend)',
+        prerequisites: ['ReactJS cơ bản'],
+        targetOutcome: 'Chinh phục SSR/SSG, Server Actions và triển khai Vercel Production',
+        hasInteractiveTrial: true,
+      },
+    ];
+    return mockCompareList.filter((c) => ids.includes(c.course_id));
   }
 
   // 4. FAQ & Trợ Giúp (Help Center)

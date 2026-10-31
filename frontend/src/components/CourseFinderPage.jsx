@@ -266,7 +266,7 @@ export default function CourseFinderPage({ currentUser, onNavigate, onCourseSele
                 <h5 className="fw-bold mt-3">Đang đối chiếu catalog khóa học thực tế...</h5>
                 <p className="text-muted small">Phân tích mục tiêu, độ khó và ngân sách của bạn.</p>
               </div>
-            ) : !results || results.items?.length === 0 ? (
+            ) : !results || !results.items || results.items.length === 0 ? (
               <div className="text-center py-5 bg-white rounded-4 border p-5 shadow-sm">
                 <i className="bi bi-search fs-1 text-muted d-block mb-3"></i>
                 <h5 className="fw-bold">Chưa tìm thấy khóa học khớp 100% tiêu chí</h5>
@@ -295,7 +295,7 @@ export default function CourseFinderPage({ currentUser, onNavigate, onCourseSele
                 </Alert>
 
                 <div className="d-flex flex-column gap-4">
-                  {results.items.map((item, idx) => {
+                  {(results.items || []).map((item, idx) => {
                     const c = item.course;
                     const isComparing = selectedCompareIds.includes(c.course_id);
 
@@ -342,7 +342,7 @@ export default function CourseFinderPage({ currentUser, onNavigate, onCourseSele
                                   <i className="bi bi-check-circle-fill me-1"></i> Lý do phù hợp với bạn:
                                 </strong>
                                 <ul className="mb-0 ps-3 text-secondary" style={{ fontSize: '0.82rem' }}>
-                                  {item.reasons.map((r, rIdx) => (
+                                  {(item.reasons || []).map((r, rIdx) => (
                                     <li key={rIdx}>{r}</li>
                                   ))}
                                 </ul>
@@ -398,14 +398,14 @@ export default function CourseFinderPage({ currentUser, onNavigate, onCourseSele
                 </div>
 
                 {/* Danh mục khóa học cần chuẩn bị thêm nền tảng (CF03 / NEEDS_FOUNDATION) */}
-                {results.needsPreparation?.length > 0 && (
+                {results?.needsPreparation?.length > 0 && (
                   <div className="mt-4 pt-3 border-top">
                     <h6 className="fw-bold text-muted d-flex align-items-center gap-2 mb-3">
                       <i className="bi bi-mortarboard text-warning"></i>
                       Khóa học cần chuẩn bị thêm nền tảng ({results.needsPreparation.length})
                     </h6>
                     <div className="d-flex flex-column gap-3">
-                      {results.needsPreparation.map((item) => (
+                      {(results.needsPreparation || []).map((item) => (
                         <Card key={item.course.course_id} className="border-warning shadow-sm rounded-4 p-3 bg-warning-subtle bg-opacity-10">
                           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
