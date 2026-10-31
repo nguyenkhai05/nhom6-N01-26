@@ -36,8 +36,8 @@ export default function Header({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   return (
-    <header>
-      <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom custom-navbar sticky-top">
+    <header className="sticky-top custom-header-sticky" style={{ position: 'sticky', top: 0, zIndex: 1030 }}>
+      <nav className="navbar navbar-expand-lg navbar-light custom-navbar shadow-sm">
         <div className="container-fluid px-lg-4">
           <a
             className="navbar-brand d-flex align-items-center gap-2"

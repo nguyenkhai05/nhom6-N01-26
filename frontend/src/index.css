@@ -33,7 +33,6 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: clip;
 }
 
 body {
@@ -89,6 +88,15 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 
 /* 1. Header & Full-Width Navbar */
+.custom-header-sticky {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1030 !important;
+  width: 100% !important;
+  background: #003b95 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+}
 .custom-navbar { background: #003b95 !important; border: 0 !important; color: #fff; min-height: 68px; width: 100%; max-width: 100vw; }
 
 .brand-badge {
@@ -802,7 +810,6 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 body {
   background: #fff;
   color: #1b1b1b;
-  overflow-x: clip;
   max-width: 100vw;
 }
 .app-container, .booking-container { width: min(100% - 40px, 1220px); max-width: 1220px; margin-inline: auto; }
