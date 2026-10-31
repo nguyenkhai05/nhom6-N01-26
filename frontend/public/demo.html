@@ -325,10 +325,10 @@
 
     <div class="header-actions">
       <span class="badge-hd">
-        <i class="bi bi-badge-hd-fill"></i> 1440p FHD • 60Hz
+        <i class="bi bi-badge-hd-fill"></i> 1080p FHD • 1.25x Speed
       </span>
-      <a href="https://files.catbox.moe/05smjk.mp4" download="eduviet_demo_walkthrough.mp4" class="btn-action" title="Tải file video gốc">
-        <i class="bi bi-download"></i> Tải Video
+      <a href="https://files.catbox.moe/zvh20w.mp4" download="eduviet_demo_1080p_fast.mp4" class="btn-action" title="Tải file video gốc (67.9 MB)">
+        <i class="bi bi-download"></i> Tải Video (68MB)
       </a>
       <a href="/" class="btn-action btn-primary-action" title="Truy cập hệ sinh thái EduViet">
         <i class="bi bi-box-arrow-up-right"></i> Mở Web App
@@ -342,7 +342,7 @@
     <!-- Player Wrapper -->
     <div class="player-wrapper paused" id="playerWrapper">
       <video id="demoVideo" controls preload="metadata" playsinline poster="/bank_qr.png">
-        <source src="https://files.catbox.moe/05smjk.mp4" type="video/mp4">
+        <source src="https://files.catbox.moe/zvh20w.mp4" type="video/mp4">
         Trình duyệt của bạn không hỗ trợ thẻ video HTML5.
       </video>
       <div class="big-play-btn" id="bigPlayBtn">
@@ -355,19 +355,19 @@
       <div class="info-specs">
         <div class="info-spec-item">
           <i class="bi bi-camera-video text-primary"></i>
-          <span>Độ phân giải: <strong>1440 × 900 (FHD Native)</strong></span>
+          <span>Độ phân giải: <strong>1920 × 1080 (Full HD)</strong></span>
         </div>
         <div class="info-spec-item">
           <i class="bi bi-speedometer2 text-success"></i>
-          <span>Tốc độ: <strong>24 FPS Mượt Mà</strong></span>
+          <span>Tốc độ: <strong>1.25x (Gãy gọn & Mượt mà)</strong></span>
         </div>
         <div class="info-spec-item">
           <i class="bi bi-clock-history text-warning"></i>
-          <span>Thời lượng: <strong>04:29</strong></span>
+          <span>Thời lượng: <strong>03:36</strong></span>
         </div>
         <div class="info-spec-item">
-          <i class="bi bi-person-check text-info"></i>
-          <span>Học viên Demo: <strong>Nguyễn Hoàng Sơn (Nuicuti10)</strong></span>
+          <i class="bi bi-hdd-network text-info"></i>
+          <span>Dung lượng: <strong>67.9 MB (&lt; 100MB)</strong></span>
         </div>
       </div>
       <div>
@@ -390,36 +390,36 @@
           <span class="chapter-time">00:00</span>
           <span class="chapter-name">1. Mở Modal Đăng Nhập Hệ Thống</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(18)">
-          <span class="chapter-time">00:18</span>
+        <div class="chapter-item" onclick="seekTo(14)">
+          <span class="chapter-time">00:14</span>
           <span class="chapter-name">2. Đăng Ký Học Viên: Nguyễn Hoàng Sơn</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(45)">
-          <span class="chapter-time">00:45</span>
+        <div class="chapter-item" onclick="seekTo(36)">
+          <span class="chapter-time">00:36</span>
           <span class="chapter-name">3. Nhận Thưởng Quà Tặng +1.000.000đ Ví</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(68)">
-          <span class="chapter-time">01:08</span>
+        <div class="chapter-item" onclick="seekTo(54)">
+          <span class="chapter-time">00:54</span>
           <span class="chapter-name">4. Nạp Số Dư +500.000đ (VietQR MBBank)</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(95)">
-          <span class="chapter-time">01:35</span>
+        <div class="chapter-item" onclick="seekTo(76)">
+          <span class="chapter-time">01:16</span>
           <span class="chapter-name">5. Review 6 Mục Menu Điều Hướng</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(140)">
-          <span class="chapter-time">02:20</span>
+        <div class="chapter-item" onclick="seekTo(112)">
+          <span class="chapter-time">01:52</span>
           <span class="chapter-name">6. Giáo Trình Khóa React 19 & Next.js</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(168)">
-          <span class="chapter-time">02:48</span>
+        <div class="chapter-item" onclick="seekTo(134)">
+          <span class="chapter-time">02:14</span>
           <span class="chapter-name">7. Mua Bằng Ví Khấu Trừ (-890.000đ)</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(195)">
-          <span class="chapter-time">03:15</span>
+        <div class="chapter-item" onclick="seekTo(156)">
+          <span class="chapter-time">02:36</span>
           <span class="chapter-name">8. Phòng Học & Code Studio Thực Chiến</span>
         </div>
-        <div class="chapter-item" onclick="seekTo(248)">
-          <span class="chapter-time">04:08</span>
+        <div class="chapter-item" onclick="seekTo(198)">
+          <span class="chapter-time">03:18</span>
           <span class="chapter-name">9. Đăng Xuất An Toàn Trở Về Khách</span>
         </div>
       </div>
@@ -446,7 +446,7 @@
     }
 
     // Highlight current active chapter based on time
-    const timestamps = [0, 18, 45, 68, 95, 140, 168, 195, 248];
+    const timestamps = [0, 14, 36, 54, 76, 112, 134, 156, 198];
     video.addEventListener('timeupdate', () => {
       const cur = video.currentTime;
       let activeIdx = 0;
