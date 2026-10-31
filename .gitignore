@@ -48,4 +48,5 @@ __pycache__/
 
 # Runtime data
 lms/data/
+demo_videos/
 
