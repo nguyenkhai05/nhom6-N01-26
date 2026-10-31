@@ -260,9 +260,17 @@ const FALLBACK_BUNDLES = [
     thumbnail_url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80',
     bundle_price: 1890000,
     original_price: 2330000,
+    retail_total: 2330000,
+    savings_amount: 440000,
     discount_percent: 20,
+    savings_percent: 20,
     is_active: true,
     course_ids: [1, 2, 3],
+    items: [
+      { course_id: 1, title: 'Lập Trình Web Frontend ReactJS & Next.js' },
+      { course_id: 2, title: 'Backend NestJS & MySQL' },
+      { course_id: 3, title: 'Tối Ưu CSDL Quan Hệ MySQL' },
+    ],
   },
   {
     bundle_id: 2,
@@ -272,9 +280,16 @@ const FALLBACK_BUNDLES = [
     thumbnail_url: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&auto=format&fit=crop&q=80',
     bundle_price: 1350000,
     original_price: 1740000,
+    retail_total: 1740000,
+    savings_amount: 390000,
     discount_percent: 22,
+    savings_percent: 22,
     is_active: true,
     course_ids: [1, 6],
+    items: [
+      { course_id: 1, title: 'Lập Trình Web Frontend ReactJS & Next.js' },
+      { course_id: 6, title: 'Lập Trình Di Động Flutter & Dart' },
+    ],
   },
   {
     bundle_id: 3,
@@ -284,9 +299,16 @@ const FALLBACK_BUNDLES = [
     thumbnail_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80',
     bundle_price: 1150000,
     original_price: 1480000,
+    retail_total: 1480000,
+    savings_amount: 330000,
     discount_percent: 22,
+    savings_percent: 22,
     is_active: true,
     course_ids: [4, 5],
+    items: [
+      { course_id: 4, title: 'Python Cho Phân Tích Dữ Liệu & AI' },
+      { course_id: 5, title: 'DevOps Docker & CI/CD GitHub Actions' },
+    ],
   },
 ];
 
@@ -627,6 +649,26 @@ function handleHubFallback(path, options) {
   if (path.startsWith('/bundles/')) {
     const id = Number(path.replace('/bundles/', '').split('/')[0]);
     const bundle = FALLBACK_BUNDLES.find((b) => b.bundle_id === id) || FALLBACK_BUNDLES[0];
+    if (path.endsWith('/quote')) {
+      return {
+        bundle_id: bundle.bundle_id,
+        title: bundle.title,
+        bundle_price: bundle.bundle_price,
+        final_amount: bundle.bundle_price,
+        original_amount: bundle.retail_total,
+        discount_amount: bundle.savings_amount,
+        discount_percent: bundle.savings_percent,
+        owned_count: 0,
+      };
+    }
+    if (path.endsWith('/checkout')) {
+      return {
+        success: true,
+        order_code: 'BND-' + Math.floor(1000 + Math.random() * 9000),
+        message: 'Kích hoạt combo khóa học thành công! Bạn đã được cấp toàn quyền học tập.',
+        balance_after: 0,
+      };
+    }
     return bundle;
   }
 

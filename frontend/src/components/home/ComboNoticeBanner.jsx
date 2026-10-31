@@ -156,7 +156,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
   };
 
   const maxSaving = bundles.length > 0
-    ? Math.max(...bundles.map((b) => b.savings_percent || 0))
+    ? Math.max(...bundles.map((b) => b.savings_percent || b.discount_percent || 20))
     : 22;
 
   return (
@@ -214,6 +214,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
         show={isOpen}
         onHide={() => handleClose(null, false)}
         centered
+        size="lg"
         backdrop="static"
         keyboard={true}
         className="combo-popup-modal"
@@ -286,32 +287,45 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
             <Row className="g-2">
               {bundles.map((b) => {
                 const isSelected = selectedBundle?.bundle_id === b.bundle_id;
+                const savingsPercent = b.savings_percent ?? b.discount_percent ?? 20;
+                const originalPrice = b.retail_total ?? b.original_price ?? 2000000;
+                const savingsAmount = b.savings_amount ?? Math.max(0, originalPrice - b.bundle_price);
+                const courseCount = b.items?.length ?? b.course_ids?.length ?? 2;
+
                 return (
                   <Col key={b.bundle_id} xs={12}>
                     <div
-                      className={`p-2 px-3 rounded-3 border transition d-flex align-items-center justify-content-between cursor-pointer ${isSelected ? 'border-primary bg-primary-subtle shadow-sm' : 'bg-white hover-shadow'}`}
+                      className={`p-3 rounded-4 border transition d-flex align-items-center justify-content-between gap-3 ${isSelected ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : 'bg-white hover-shadow'}`}
                       onClick={() => handleOpenQuote(b)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className="d-flex align-items-center gap-2" style={{ maxWidth: '65%' }}>
-                        <Badge bg="danger" className="rounded-pill">-{b.savings_percent}%</Badge>
-                        <div>
+                      {/* Cột trái: Badge + Tên lộ trình + Thông tin tiết kiệm */}
+                      <div className="d-flex align-items-center gap-2" style={{ minWidth: 0, flex: '1 1 auto' }}>
+                        <Badge bg="danger" className="rounded-pill px-2 py-1 fw-bold flex-shrink-0">
+                          -{savingsPercent}%
+                        </Badge>
+                        <div style={{ minWidth: 0, overflow: 'hidden' }}>
                           <strong className="d-block text-dark small text-truncate" title={b.title}>
                             {b.title}
                           </strong>
-                          <span className="text-muted x-small">
-                            {b.items?.length || 2} khóa học · Tiết kiệm {Number(b.savings_amount).toLocaleString('vi-VN')} đ
-                          </span>
+                          <div className="text-muted small mt-1" style={{ fontSize: '0.78rem' }}>
+                            <span className="text-dark fw-semibold">{courseCount} khóa học</span>
+                            <span className="mx-1">·</span>
+                            <span>Tiết kiệm <strong className="text-success font-monospace">{Number(savingsAmount).toLocaleString('vi-VN')} đ</strong></span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="text-end">
-                        <span className="fw-bold text-primary d-block small">
+                      {/* Cột phải: Giá ưu đãi + Giá gốc gạch ngang */}
+                      <div className="text-end flex-shrink-0" style={{ minWidth: '120px' }}>
+                        <div className="fw-bold text-primary fs-6 font-monospace">
                           {Number(b.bundle_price).toLocaleString('vi-VN')} đ
-                        </span>
-                        <s className="text-muted x-small">
-                          {Number(b.retail_total).toLocaleString('vi-VN')} đ
-                        </s>
+                        </div>
+                        {originalPrice > b.bundle_price && (
+                          <s className="text-muted small font-monospace d-block" style={{ fontSize: '0.75rem' }}>
+                            {Number(originalPrice).toLocaleString('vi-VN')} đ
+                          </s>
+                        )}
                       </div>
                     </div>
                   </Col>
@@ -329,7 +343,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
                   Chiết khấu Smart Quote:
                 </span>
                 <span className="badge bg-success">
-                  Học phí thực trả: {Number(quote.final_amount).toLocaleString('vi-VN')} đ
+                  Học phí thực trả: {Number(quote.final_amount ?? quote.bundle_price ?? selectedBundle?.bundle_price ?? 0).toLocaleString('vi-VN')} đ
                 </span>
               </div>
 
