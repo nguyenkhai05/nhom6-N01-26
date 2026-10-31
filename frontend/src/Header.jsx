@@ -24,6 +24,17 @@ export default function Header({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleNavClick = (route) => {
+    onNavigate?.(route);
+    try {
+      const navContent = document.getElementById('navbarContent');
+      if (navContent && navContent.classList.contains('show')) {
+        navContent.classList.remove('show');
+      }
+    } catch {}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   return (
     <header>
       <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom custom-navbar sticky-top">
