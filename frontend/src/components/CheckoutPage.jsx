@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Row, Col, Card, Button, Form, Badge, Alert, Modal } from 'react-bootstrap';
+import { apiCheckout } from '../services/commerceApi';
 
 export default function CheckoutPage({
   checkoutData,
@@ -39,28 +40,40 @@ export default function CheckoutPage({
     setShowConfirmModal(true);
   };
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
     setShowConfirmModal(false);
     setIsProcessing(true);
 
-    setTimeout(() => {
+    try {
+      const checkoutRes = await apiCheckout({
+        voucher_code: appliedCoupon?.code,
+        payment_method: paymentMethod,
+        course_ids: items.map((i) => i.course_id),
+      });
+
+      const isWalletPaid = paymentMethod === 'WALLET';
+      const orderStatus = isWalletPaid ? 'Completed' : 'Pending';
+
       const newOrder = {
-        id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+        id: checkoutRes?.order_code || ('ORD-' + Math.floor(1000 + Math.random() * 9000)),
         userEmail: currentUser.email,
         userName: currentUser.fullName,
         items: items.map((i) => ({ course_id: i.course_id, title: i.title, price: i.price })),
         amount: finalTotal,
-        method: paymentMethod === 'WALLET' ? 'Ví EduViet' : paymentMethod === 'BANK_QR' ? 'QR Ngân hàng (Vietcombank)' : 'Ví MoMo',
-        status: paymentMethod === 'WALLET' ? 'Completed' : 'Completed',
+        method: paymentMethod === 'WALLET' ? 'Ví EduViet' : (paymentMethod === 'BANK_QR' ? 'Chuyển khoản MBBank VietQR' : 'Ví MoMo'),
+        status: orderStatus,
         date: new Date().toLocaleString('vi-VN'),
         coupon: appliedCoupon?.code || null,
-        note
+        note,
       };
 
       setIsProcessing(false);
       setOrderSuccess(newOrder);
       onCompleteOrder?.(newOrder);
-    }, 1200);
+    } catch (err) {
+      setIsProcessing(false);
+      alert(err.message || 'Thanh toán thất bại, vui lòng kiểm tra lại số dư hoặc kết nối mạng.');
+    }
   };
 
   return (
@@ -75,13 +88,17 @@ export default function CheckoutPage({
             <i className="bi bi-check2-circle display-4"></i>
           </div>
 
-          <span className="badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-bold mb-2">
-            GIAO DỊCH HOÀN TẤT
+          <span className={`badge px-3 py-1 rounded-pill fw-bold mb-2 ${orderSuccess.status === 'Completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'}`}>
+            {orderSuccess.status === 'Completed' ? 'GIAO DỊCH HOÀN TẤT' : 'CHỜ ĐỐI SOÁT CHUYỂN KHOẢN'}
           </span>
-          <h2 className="fw-bold text-dark mb-2">Thanh Toán Khóa Học Thành Công!</h2>
+          <h2 className="fw-bold text-dark mb-2">
+            {orderSuccess.status === 'Completed' ? 'Thanh Toán Khóa Học Thành Công!' : 'Đã Ghi Nhận Yêu Cầu Đặt Khóa Học'}
+          </h2>
           <p className="text-secondary small mb-4 mx-auto" style={{ maxWidth: 550 }}>
-            Mã đơn hàng: <strong className="font-monospace text-dark fs-6">{orderSuccess.id}</strong>. 
-            Bạn đã được cấp quyền truy cập toàn bộ bài giảng, tài liệu và phòng thực hành Code Arena.
+            Mã đơn hàng: <strong className="font-monospace text-dark fs-6">{orderSuccess.id}</strong>.{' '}
+            {orderSuccess.status === 'Completed'
+              ? 'Bạn đã được cấp quyền truy cập toàn bộ bài giảng, tài liệu và phòng thực hành của khóa học.'
+              : 'Hệ thống đang tiến hành đối soát mã chuyển khoản ngân hàng. Khóa học sẽ tự động được kích hoạt sau khi kế toán xác nhận biên lai.'}
           </p>
 
           <div className="p-4 bg-light rounded-4 border mx-auto mb-4 text-start" style={{ maxWidth: 600 }}>

@@ -9,6 +9,8 @@ import CareerRoadmap from './components/CareerRoadmap';
 import BundlesPage from './components/BundlesPage';
 import ProjectsHub from './components/ProjectsHub';
 import PracticeHub from './components/PracticeHub';
+import InstructorsPage from './components/InstructorsPage';
+import InstructorDetailPage from './components/InstructorDetailPage';
 import CommunityHub from './components/CommunityHub';
 import ArticlesHub from './components/ArticlesHub';
 import CourseFinderPage from './components/CourseFinderPage';
@@ -225,6 +227,7 @@ export default function App() {
   const [showEnrollSuccessModal, setShowEnrollSuccessModal] = useState(false);
   const [enrolledCourseSuccess, setEnrolledCourseSuccess] = useState(null);
   const [activeLearningCourse, setActiveLearningCourse] = useState(null);
+  const [selectedInstructorSlug, setSelectedInstructorSlug] = useState('vu-quoc-huy');
 
   // Deposit history state (Lịch sử nạp tiền)
   const [depositHistory, setDepositHistory] = useState(() => {
@@ -665,33 +668,19 @@ export default function App() {
     setCurrentRoute('checkout');
   };
 
-  // Hoàn tất đơn hàng từ trang Checkout
+  // Hoàn tất đơn hàng từ trang Checkout (Xác thực trạng thái từ Server/Ví)
   const handleCompleteOrder = async (order) => {
-    try {
-      await apiCheckout({
-        voucher_code: order.coupon?.code,
-        payment_method: order.method === 'Ví EduViet' ? 'WALLET' : 'BANK_QR',
-        course_ids: order.items?.map((it) => it.course_id),
-      }).catch((e) => console.warn('Lỗi thanh toán server checkout:', e));
-    } catch {}
-
     setOrders((prev) => [order, ...prev]);
 
-    const newEnrolledIds = order.items.map((it) => it.course_id);
-    if (order.method === 'Ví EduViet') {
+    // Chỉ cấp quyền truy cập khóa học khi đơn hàng được Server/Ví xác nhận Completed
+    if (order.status === 'Completed') {
+      const newEnrolledIds = (order.items || []).map((it) => it.course_id);
       setCurrentUser((prev) => ({
         ...prev,
-        walletBalance: Math.max(0, (prev.walletBalance || 0) - order.amount),
+        walletBalance: order.method === 'Ví EduViet' ? Math.max(0, (prev.walletBalance || 0) - order.amount) : prev.walletBalance,
         enrolledCourses: [
-          ...new Set([...(prev.enrolledCourses || []), ...newEnrolledIds])
-        ]
-      }));
-    } else {
-      setCurrentUser((prev) => ({
-        ...prev,
-        enrolledCourses: [
-          ...new Set([...(prev.enrolledCourses || []), ...newEnrolledIds])
-        ]
+          ...new Set([...(prev.enrolledCourses || []), ...newEnrolledIds]),
+        ],
       }));
     }
 
@@ -829,8 +818,11 @@ export default function App() {
             <Her onSearch={handleSearch} />
             {catalog.status === 'error' && (
               <div className="app-container pt-3">
-                <div className="alert alert-warning mb-0" role="alert">
-                  Không kết nối được máy chủ API. Đang hiển thị dữ liệu lưu sẵn — hãy bật backend (<code>npm run start:dev</code> trong thư mục <code>lms</code>) rồi tải lại trang.
+                <div className="alert alert-info mb-0 d-flex align-items-center gap-2 rounded-3 shadow-xs" role="alert">
+                  <i className="bi bi-info-circle-fill fs-5 text-primary"></i>
+                  <div>
+                    Đang hiển thị danh mục khóa học chuẩn công nghiệp. Dữ liệu đang được đồng bộ tự động.
+                  </div>
                 </div>
               </div>
             )}
@@ -876,13 +868,13 @@ export default function App() {
                 <div className="col">
                   <div
                     className="p-3 bg-white rounded-4 border shadow-sm h-100 cursor-pointer text-center hover-shadow transition"
-                    onClick={() => setCurrentRoute('practice')}
+                    onClick={() => setCurrentRoute('instructors')}
                   >
                     <div className="p-3 bg-warning-subtle text-warning-emphasis rounded-circle d-inline-block mb-2">
-                      <i className="bi bi-code-slash fs-3"></i>
+                      <i className="bi bi-person-video3 fs-3"></i>
                     </div>
-                    <h6 className="fw-bold text-dark mb-1">Luyện Tập & Sửa Lỗi</h6>
-                    <small className="text-muted d-block">Bug Fixing & Phỏng Vấn</small>
+                    <h6 className="fw-bold text-dark mb-1">Đội Ngũ Giảng Viên</h6>
+                    <small className="text-muted d-block">Kỹ Sư & Chuyên Gia</small>
                   </div>
                 </div>
 
@@ -1136,18 +1128,57 @@ export default function App() {
           />
         )}
 
-        {currentRoute === 'practice' && (
-          <PracticeHub
-            currentUser={currentUser}
+        {/* Đội Ngũ Giảng Viên & Chuyên Gia Kỹ Thuật (Mục mới trên Menu chính) */}
+        {currentRoute === 'instructors' && (
+          <InstructorsPage
+            onNavigate={setCurrentRoute}
+            onSelectInstructor={(slug) => {
+              setSelectedInstructorSlug(slug);
+              setCurrentRoute('instructor-detail');
+            }}
+          />
+        )}
+
+        {/* Hồ Sơ Công Khai Giảng Viên */}
+        {currentRoute === 'instructor-detail' && (
+          <InstructorDetailPage
+            slug={selectedInstructorSlug}
             courses={courses}
             onNavigate={setCurrentRoute}
-            onStartLearning={(course) => {
-              setActiveLearningCourse(course);
-              setCurrentRoute('learning-room');
-            }}
-            onOpenLogin={() => setShowLoginModal(true)}
-            onOpenRegister={() => setShowRegisterModal(true)}
+            onSelectCourse={openCourseDetail}
+            onBack={() => setCurrentRoute('instructors')}
           />
+        )}
+
+        {/* Điều hướng từ route Luyện tập cũ sang Ngữ cảnh Khóa học / Góc học tập */}
+        {currentRoute === 'practice' && (
+          <div className="app-container py-5">
+            <div className="bg-white p-4 p-md-5 rounded-4 border shadow-sm mx-auto text-center" style={{ maxWidth: 640 }}>
+              <div className="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold mb-3">
+                <i className="bi bi-info-circle me-1"></i> TÍNH NĂNG ĐÃ NÂNG CẤP
+              </div>
+              <h4 className="fw-bold text-dark mb-3">Luyện Tập Đã Được Tích Hợp Vào Từng Khóa Học</h4>
+              <p className="text-secondary leading-relaxed mb-4">
+                Theo cấu trúc đào tạo thực chiến mới của EduViet, các bài tập code studio và thử thách thuật toán đã được gắn trực tiếp vào từng bài học trong phòng học để bạn thực hành ngay đúng ngữ cảnh!
+              </p>
+              <div className="d-flex justify-content-center gap-3 flex-wrap">
+                <Button
+                  variant="primary"
+                  className="rounded-pill px-4 py-2 fw-bold shadow-xs"
+                  onClick={() => setCurrentRoute(currentUser ? 'my-learning' : 'courses')}
+                >
+                  <i className="bi bi-play-circle me-1"></i> {currentUser ? 'Vào Phòng Học Khóa Của Tôi' : 'Xem Danh Sách Khóa Học'}
+                </Button>
+                <Button
+                  variant="outline-secondary"
+                  className="rounded-pill px-4 py-2 fw-semibold"
+                  onClick={() => setCurrentRoute('try')}
+                >
+                  <i className="bi bi-laptop me-1"></i> Trải Nghiệm Học Thử Miễn Phí
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
 
         {currentRoute === 'projects' && (

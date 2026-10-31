@@ -465,7 +465,7 @@ export default function ComboNoticeBanner({ currentUser, onOpenDeposit, onNaviga
       </Modal>
 
       {/* 2. NÚT GHIM NỔI Ở GÓC MÀN HÌNH (Để mở lại bất cứ lúc nào) */}
-      <div className="position-fixed bottom-0 start-0 m-3" style={{ zIndex: 1040 }}>
+      <div className="position-fixed bottom-0 start-0 m-3 d-none d-md-block" style={{ zIndex: 1040 }}>
         <button
           type="button"
           className="btn btn-sm rounded-pill shadow-lg d-flex align-items-center gap-2 px-3 py-2 fw-semibold border transition hover-shadow"

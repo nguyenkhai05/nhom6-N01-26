@@ -45,13 +45,13 @@ export default function CourseCard({ course, onViewDetail, onEnroll, isEnrolled,
         {/* Thời lượng */}
         <span className="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 rounded-pill px-2 py-1">
           <i className="bi bi-clock me-1"></i>
-          {course.duration || '40 giờ'}
+          {course.duration || 'Theo giáo trình'}
         </span>
 
         {/* Level badge */}
         <span className="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-3 px-2 py-1 small">
           <i className="bi bi-bar-chart-fill me-1 text-warning"></i>
-          {course.level || 'Beginner'}
+          {course.level || 'Cơ bản'}
         </span>
       </div>
 
@@ -60,11 +60,17 @@ export default function CourseCard({ course, onViewDetail, onEnroll, isEnrolled,
           <Badge bg={getBadgeColor(course.category?.name)} className="px-2 py-1 rounded-pill fw-semibold">
             {course.category?.name || 'Lập trình'}
           </Badge>
-          <div className="d-flex align-items-center text-warning small fw-bold">
-            <i className="bi bi-star-fill me-1"></i>
-            <span className="text-dark">{course.rating || '4.9'}</span>
-            <span className="text-muted ms-1" style={{ fontSize: '0.75rem' }}>(340+)</span>
-          </div>
+          {course.rating ? (
+            <div className="d-flex align-items-center text-warning small fw-bold">
+              <i className="bi bi-star-fill me-1"></i>
+              <span className="text-dark">{course.rating}</span>
+              {course.reviewsCount && (
+                <span className="text-muted ms-1" style={{ fontSize: '0.75rem' }}>({course.reviewsCount})</span>
+              )}
+            </div>
+          ) : (
+            <span className="badge bg-light text-secondary border small py-1 px-2">Khóa thực chiến</span>
+          )}
         </div>
 
         <Card.Title className="fw-bold fs-6 mb-2 text-truncate-2 text-dark" style={{ minHeight: 44 }}>
@@ -75,40 +81,25 @@ export default function CourseCard({ course, onViewDetail, onEnroll, isEnrolled,
           {course.description || 'Chương trình đào tạo thực chiến cùng giảng viên chuyên gia từ doanh nghiệp công nghệ.'}
         </Card.Text>
 
-        {/* Lợi ích hoặc Tiến độ học tập */}
-        {isEnrolled ? (
+        {/* Quyền học tập nếu đã sở hữu */}
+        {isEnrolled && (
           <div className="p-2 bg-success-subtle border border-success-subtle rounded-3 mb-3 small" style={{ fontSize: '0.75rem' }}>
-            <div className="d-flex justify-content-between align-items-center text-success fw-bold mb-1">
+            <div className="d-flex justify-content-between align-items-center text-success fw-bold">
               <span><i className="bi bi-patch-check-fill me-1"></i> Quyền truy cập:</span>
               <span>Trọn đời (Lifetime)</span>
-            </div>
-            <div className="d-flex justify-content-between text-muted">
-              <span>Cấp chứng chỉ:</span>
-              <span className="text-dark fw-semibold">Đủ điều kiện nhận bằng</span>
-            </div>
-          </div>
-        ) : (
-          <div className="p-2 bg-light rounded-3 mb-3 small" style={{ fontSize: '0.75rem' }}>
-            <div className="d-flex align-items-center text-success mb-1">
-              <i className="bi bi-check-circle-fill me-1 text-success"></i>
-              <span>Bảo hành hoàn học phí 100% trong 7 ngày</span>
-            </div>
-            <div className="d-flex align-items-center text-primary">
-              <i className="bi bi-patch-check-fill me-1 text-primary"></i>
-              <span>Cấp chứng chỉ & kết nối việc làm đối tác</span>
             </div>
           </div>
         )}
 
-        {/* Thông tin Giảng viên & Số học viên */}
+        {/* Thông tin Giảng viên & Giáo trình */}
         <div className="text-secondary small mb-3 d-flex align-items-center justify-content-between pt-1 border-top" style={{ fontSize: '0.78rem' }}>
-          <span className="text-truncate" style={{ maxWidth: 160 }} title={course.instructor?.name}>
+          <span className="text-truncate" style={{ maxWidth: 180 }} title={course.instructor?.name || course.instructor?.full_name}>
             <i className="bi bi-person-badge-fill me-1 text-primary"></i>
-            {course.instructor?.name || 'EduViet Mentor'}
+            {course.instructor?.name || course.instructor?.full_name || 'Vũ Quốc Huy'}
           </span>
           <span className="text-muted">
-            <i className="bi bi-people-fill me-1 text-success"></i>
-            <strong>{course.studentsCount || 120}</strong> học viên
+            <i className="bi bi-patch-check-fill me-1 text-success"></i>
+            Chuẩn đại học
           </span>
         </div>
 

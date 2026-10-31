@@ -49,6 +49,9 @@ export default function Header({
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbarContent"
+            aria-controls="navbarContent"
+            aria-expanded="false"
+            aria-label="Mở menu điều hướng EduViet"
           >
             <span className="navbar-toggler-icon"></span>
           </button>
@@ -58,7 +61,7 @@ export default function Header({
               <li className="nav-item">
                 <button
                   className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'courses' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => handleNavClick('courses')}
                 >
                   <i className="bi bi-mortarboard me-1 text-primary"></i> Khóa học
                 </button>
@@ -66,39 +69,39 @@ export default function Header({
               <li className="nav-item">
                 <button
                   className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'try' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('try')}
+                  onClick={() => handleNavClick('try')}
                 >
                   <i className="bi bi-laptop me-1 text-success"></i> Học thử
                 </button>
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'practice' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('practice')}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'find-course' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => handleNavClick('find-course')}
                 >
-                  <i className="bi bi-code-slash me-1 text-warning"></i> Luyện tập
+                  <i className="bi bi-compass me-1 text-warning"></i> Chọn khóa
                 </button>
               </li>
               <li className="nav-item">
                 <button
-                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'find-course' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('find-course')}
+                  className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'instructors' || currentRoute === 'instructor-detail' ? 'active text-primary fw-bold' : ''}`}
+                  onClick={() => handleNavClick('instructors')}
                 >
-                  <i className="bi bi-compass me-1 text-info"></i> Chọn khóa phù hợp
+                  <i className="bi bi-person-video3 me-1 text-info"></i> Giảng viên
                 </button>
               </li>
               <li className="nav-item">
                 <button
                   className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'community' || currentRoute === 'articles' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('community')}
+                  onClick={() => handleNavClick('community')}
                 >
-                  <i className="bi bi-chat-square-text me-1 text-info"></i> Cộng đồng & Bài viết
+                  <i className="bi bi-chat-square-text me-1 text-info"></i> Cộng đồng
                 </button>
               </li>
               <li className="nav-item">
                 <button
                   className={`nav-link border-0 bg-transparent fw-semibold ${currentRoute === 'help' ? 'active text-primary fw-bold' : ''}`}
-                  onClick={() => onNavigate('help')}
+                  onClick={() => handleNavClick('help')}
                 >
                   <i className="bi bi-question-circle me-1 text-secondary"></i> Hỗ trợ
                 </button>
@@ -107,7 +110,7 @@ export default function Header({
                 <li className="nav-item">
                   <button
                     className={`nav-link border-0 bg-transparent text-danger fw-bold ${currentRoute === 'admin' ? 'active' : ''}`}
-                    onClick={() => onNavigate('admin')}
+                    onClick={() => handleNavClick('admin')}
                   >
                     <i className="bi bi-shield-lock me-1"></i> Quản Trị CSDL
                   </button>
@@ -121,7 +124,7 @@ export default function Header({
                 <Button
                   variant="success"
                   className="rounded-pill px-3 py-1 d-flex align-items-center gap-1 fw-bold shadow-sm"
-                  onClick={() => onNavigate('my-learning')}
+                  onClick={() => handleNavClick('my-learning')}
                   title="Tiếp tục bài học gần nhất"
                 >
                   <i className="bi bi-play-circle-fill fs-5"></i>
@@ -135,7 +138,7 @@ export default function Header({
               <Button
                 variant={currentRoute === 'cart' ? 'primary' : 'light'}
                 className="position-relative border rounded-pill px-3 py-1 d-flex align-items-center gap-2 fw-semibold shadow-sm"
-                onClick={() => onNavigate('cart')}
+                onClick={() => handleNavClick('cart')}
                 title="Xem giỏ hàng khóa học"
               >
                 <i className={`bi bi-cart3 fs-5 ${currentRoute === 'cart' ? 'text-white' : 'text-primary'}`}></i>
@@ -294,19 +297,19 @@ export default function Header({
                     <li>
                       <a
                         className="dropdown-item"
-                        href="#practice"
+                        href="#instructors"
                         onClick={(e) => {
                           e.preventDefault();
                           setDropdownOpen(false);
-                          onNavigate('practice');
+                          onNavigate('instructors');
                         }}
                       >
                         <div className="dropdown-item-icon-wrapper bg-success bg-opacity-10 text-success">
-                          <i className="bi bi-terminal"></i>
+                          <i className="bi bi-person-video3"></i>
                         </div>
                         <div>
-                          <span>Sân chơi Code Arena</span>
-                          <small className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Luyện thuật toán & chấm điểm test</small>
+                          <span>Đội ngũ Giảng viên</span>
+                          <small className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Hồ sơ chuyên gia & khóa học phụ trách</small>
                         </div>
                       </a>
                     </li>

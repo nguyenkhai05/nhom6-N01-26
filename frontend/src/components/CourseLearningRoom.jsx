@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Row, Col, Card, Button, Badge, ProgressBar, Tab, Nav, Accordion, Form, InputGroup } from 'react-bootstrap';
 import { getCurriculumForCourse } from '../utils/courseCurriculum';
 import { apiUpdateLessonProgress, apiGetLessonNotes, apiCreateLessonNote } from '../services/commerceApi';
+import { runCodeInSandbox } from '../utils/codeRunner';
 
 export default function CourseLearningRoom({
   course,
@@ -322,31 +323,33 @@ export default function CourseLearningRoom({
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
   };
 
-  // Chạy code JavaScript trong sandbox
-  const handleRunCode = () => {
+  // Chạy code JavaScript an toàn trong Web Worker Sandbox (Unified Code Runner)
+  const handleRunCode = async () => {
     setIsRunningCode(true);
-    setTerminalOutput('Đang biên dịch qua EduViet Sandbox Engine...');
-    setTimeout(() => {
+    setTerminalOutput('Đang khởi tạo Web Worker Sandbox an toàn...');
+    try {
+      const runner = runCodeInSandbox({ code: codeEditorValue, timeoutMs: 3000 });
+      const result = await runner.promise;
       setIsRunningCode(false);
-      try {
-        const logs = [];
-        const originalLog = console.log;
-        console.log = (...args) => {
-          logs.push(args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' '));
-        };
 
-        const fn = new Function(codeEditorValue);
-        fn();
-        console.log = originalLog;
-
+      if (result.success) {
         setTerminalOutput(
-          `[BIÊN DỊCH THÀNH CÔNG] - Runtime: 0.14s | Exit Code: 0\n---------------------------------------------\n` +
-          (logs.length > 0 ? logs.join('\n') : 'Chương trình chạy hoàn tất, không có lỗi runtime.')
+          `[BIÊN DỊCH THÀNH CÔNG] - Thời gian thực thi: ${result.durationMs}ms | Trạng thái: An toàn\n` +
+          `---------------------------------------------------------------------------\n` +
+          (result.logs?.length ? result.logs.join('\n') : '(Chương trình chạy hoàn tất, không có log đầu ra)')
         );
-      } catch (err) {
-        setTerminalOutput(`[LỖI RUNTIME / CÚ PHÁP]:\n${err.message}`);
+      } else {
+        setTerminalOutput(
+          `[LỖI RUNTIME HOẶC NGOẠI LỆ]:\n` +
+          `Thời gian: ${result.durationMs}ms\n` +
+          `Chi tiết lỗi: ${result.error}\n` +
+          (result.logs?.length ? `\nLogs trước khi lỗi:\n${result.logs.join('\n')}` : '')
+        );
       }
-    }, 450);
+    } catch (err) {
+      setIsRunningCode(false);
+      setTerminalOutput(`[LỖI HỆ THỐNG]: ${err.message}`);
+    }
   };
 
   // Tính tỷ lệ hoàn thành thực tế (chỉ tính các bài đã hoàn thành thật)
@@ -563,18 +566,29 @@ export default function CourseLearningRoom({
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                size="sm"
-                className="rounded-pill px-3 py-1 fw-bold"
-                onClick={handleNextLesson}
-                disabled={activeLessonIndex === allLessons.length - 1}
-              >
-                Bài Tiếp <i className="bi bi-chevron-right ms-1"></i>
-              </Button>
+              <div className="d-flex align-items-center gap-2">
+                <Button
+                  variant="outline-warning"
+                  size="sm"
+                  className="rounded-pill px-3 py-1 fw-bold text-dark border-warning shadow-xs"
+                  onClick={() => setActiveTab('code')}
+                  title="Mở trình thực hành code studio của bài học này"
+                >
+                  <i className="bi bi-code-square me-1 text-warning"></i> Luyện bài này
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="rounded-pill px-3 py-1 fw-bold shadow-xs"
+                  onClick={handleNextLesson}
+                  disabled={activeLessonIndex === allLessons.length - 1}
+                >
+                  Bài Tiếp <i className="bi bi-chevron-right ms-1"></i>
+                </Button>
+              </div>
             </div>
 
-            {/* Khối Tabs Học Tập Toàn Diện (Tổng Quan, Code Sandbox, Ghi Chú, Hỏi Đáp) */}
+            {/* Khối Tabs Học Tập Toàn Diện (Tổng Quan, Thực Hành & Bài Tập, Ghi Chú, Hỏi Đáp) */}
             <Card className="border-0 rounded-4 shadow-sm bg-white overflow-hidden mb-4">
               <Card.Header className="bg-white border-bottom p-2">
                 <Nav variant="pills" activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="gap-2">
@@ -585,7 +599,7 @@ export default function CourseLearningRoom({
                   </Nav.Item>
                   <Nav.Item>
                     <Nav.Link eventKey="code" className="rounded-pill px-3 py-2 fw-semibold">
-                      <i className="bi bi-terminal-fill me-1"></i> Code Studio Sandbox
+                      <i className="bi bi-code-square text-warning me-1"></i> Thực Hành & Bài Tập
                     </Nav.Link>
                   </Nav.Item>
                   <Nav.Item>

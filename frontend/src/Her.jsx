@@ -17,20 +17,12 @@ export default function Her({ onSearch }) {
     <section className="booking-hero" id="home">
       <Container className="booking-container">
         <div className="booking-hero-copy">
-          <h1 className="d-flex flex-wrap align-items-center gap-2">
-            <span>Học</span>
-            <TypingText
-              texts={[
-                'lập trình React & Next.js',
-                'Backend NestJS & Golang',
-                'Cơ sở dữ liệu & DevOps',
-                'xây dựng sự nghiệp Dev',
-              ]}
-              className="text-warning fw-bold text-decoration-underline"
-              cursorClassName="text-warning"
-            />
+          <h1 className="fw-bold text-white mb-2" style={{ color: '#ffffff' }}>
+            Học lập trình để <span className="text-warning">tự xây dựng sản phẩm</span>
           </h1>
-          <p>Tìm khóa học chất lượng cao, thực chiến lộ trình nghề nghiệp chuẩn công nghiệp...</p>
+          <p className="text-light opacity-90 fs-6 mb-3">
+            Nắm vững kiến thức cốt lõi từ Frontend React 19, Backend NestJS đến AI & DevOps. Học thử tương tác miễn phí và làm chủ công nghệ thực chiến.
+          </p>
         </div>
         <Form className="booking-search-box" onSubmit={handleSubmit}>
           <div className="booking-search-inner">
@@ -88,7 +80,7 @@ export default function Her({ onSearch }) {
             </ShimmerButton>
           </div>
         </Form>
-        <div className="booking-hero-checks">
+        <div className="booking-hero-checks text-white">
           <span>
             <i className="bi bi-check-circle-fill" /> Học theo lộ trình thực chiến
           </span>

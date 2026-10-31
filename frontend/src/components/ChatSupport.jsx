@@ -4,7 +4,7 @@ import { Button, Form } from 'react-bootstrap';
 const FAQ_SUGGESTIONS = [
   'Lộ trình học Web Fullstack 2026',
   'Học phí và ưu đãi ví EduViet',
-  'Cách làm bài tập trên Code Arena',
+  'Cách làm bài thực hành trong khóa',
   'Tài khoản Admin đăng nhập thế nào?'
 ];
 
@@ -94,7 +94,7 @@ export default function ChatSupport() {
               <div>
                 <h6 className="fw-bold mb-0 text-white">EduViet AI Support</h6>
                 <span className="text-light opacity-75 small" style={{ fontSize: '0.72rem' }}>
-                  Trực tuyến • Hỗ trợ 24/7
+                  Trực tuyến • Tư vấn học tập
                 </span>
               </div>
             </div>

@@ -34,7 +34,7 @@ export default function DealsSection({ courses, onViewDetail, onSelectCombo }) {
       <div className="bv-promo">
         <div className="bv-promo-copy">
           <span className="bv-eyebrow">Ưu đãi cuối năm</span>
-          <h3>Giảm đến 40% cho combo Fullstack</h3>
+          <h3>Tiết kiệm đến 22% khi đăng ký lộ trình Combo</h3>
           <p>Tiết kiệm học phí với combo React, NestJS và Docker. Đăng ký ngay để bắt đầu hành trình trở thành lập trình viên thực chiến.</p>
           <Button onClick={onSelectCombo}>Tìm ưu đãi</Button>
         </div>

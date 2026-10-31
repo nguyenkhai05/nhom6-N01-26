@@ -736,19 +736,260 @@ console.log('Dữ liệu API phản hồi:', parsed.data);`
         ]
       }
     ]
+  },
+  // KHÓA 7: LẬP TRÌNH HỆ THỐNG PHÂN TÁN VỚI GOLANG & GRPC
+  7: {
+    courseId: 7,
+    courseTitle: 'Lập Trình Hệ Thống Phân Tán Cao Cấp với Golang & gRPC',
+    instructor: 'Vũ Quốc Huy & Tech Lead Microservices',
+    totalModules: 3,
+    totalLessons: 6,
+    totalDuration: '38 giờ học thực chiến',
+    modules: [
+      {
+        moduleTitle: 'Chương 1: Cú pháp Golang hiện đại, Concurrency với Goroutines & Channels',
+        lessons: [
+          {
+            id: 701,
+            title: '01. Nền tảng Go: Types, Structs, Interfaces & Pointers',
+            duration: '35:00',
+            videoId: 'yyUHQIec83I',
+            start_seconds: 0,
+            end_seconds: 2100,
+            description: 'Làm quen tư duy Go: cú pháp tối giản, con trỏ an toàn, mô hình interface ngầm định và xử lý lỗi không dùng try/catch.',
+            sampleCode: `// Khởi tạo struct và interface trong Go
+type CourseService interface {
+    GetCourse(id int) string
+}
+
+type Service struct{}
+func (s *Service) GetCourse(id int) string {
+    return "Khóa học Golang High-Performance Microservices"
+}
+console.log("Go Service khởi tạo thành công!");`
+          },
+          {
+            id: 702,
+            title: '02. Đa luồng đỉnh cao với Goroutines, Channels & Worker Pools',
+            duration: '40:00',
+            videoId: 'yyUHQIec83I',
+            start_seconds: 2100,
+            end_seconds: 4500,
+            description: 'Thành thạo lập trình đồng thời: khởi chạy goroutine nhẹ, đồng bộ hóa qua buffered/unbuffered channel và sync.WaitGroup.',
+            sampleCode: `// Mô phỏng Worker Pool xử lý 10,000 requests/s
+const totalJobs = 5;
+const results = [];
+for (let i = 1; i <= totalJobs; i++) {
+  results.push({ jobId: i, worker: (i % 3) + 1, status: 'DONE' });
+}
+console.log('Kết quả xử lý song song:', results);`
+          }
+        ]
+      },
+      {
+        moduleTitle: 'Chương 2: Xây dựng REST & gRPC High Performance Microservices',
+        lessons: [
+          {
+            id: 703,
+            title: '03. Thiết kế Protocol Buffers (Protobuf) & gRPC Server / Client',
+            duration: '45:00',
+            videoId: 'yyUHQIec83I',
+            start_seconds: 4500,
+            end_seconds: 7200,
+            description: 'Định nghĩa schema .proto, biên dịch code nhị phân Protobuf, xây dựng gRPC streaming hai chiều với độ trễ thấp.',
+            sampleCode: `// Định nghĩa gRPC message
+const protoSchema = \`
+syntax = "proto3";
+message CourseRequest { int32 course_id = 1; }
+message CourseResponse { string title = 1; double price = 2; }
+\`;
+console.log("Schema Protobuf đã định nghĩa:\\n", protoSchema);`
+          },
+          {
+            id: 704,
+            title: '04. Middleware, Rate Limiting, JWT Auth & Clean Architecture trong Go',
+            duration: '40:00',
+            videoId: 'yyUHQIec83I',
+            start_seconds: 7200,
+            end_seconds: 9600,
+            description: 'Tổ chức source code theo chuẩn Clean Architecture (domain, usecase, repository), gRPC interceptor và xác thực JWT.',
+            sampleCode: `// Rate Limiter Token Bucket Pattern
+class TokenBucket {
+  constructor(capacity) { this.capacity = capacity; this.tokens = capacity; }
+  allow() { return this.tokens-- > 0; }
+}
+const limiter = new TokenBucket(100);
+console.log("Yêu cầu 1 được duyệt:", limiter.allow());`
+          }
+        ]
+      },
+      {
+        moduleTitle: 'Chương 3: Phân tán, Message Queue & Triển khai Docker / K8s',
+        lessons: [
+          {
+            id: 705,
+            title: '05. Tích hợp Kafka Message Broker & Event-Driven Architecture',
+            duration: '45:00',
+            videoId: 'yyUHQIec83I',
+            start_seconds: 9600,
+            end_seconds: 12300,
+            description: 'Kết nối Apache Kafka, xuất bản event đơn hàng và người tiêu dùng (consumer) đảm bảo tính nhất quán cuối cùng.',
+            sampleCode: `// Event thanh toán khóa học qua Message Broker
+const orderEvent = {
+  event_type: 'ORDER_COMPLETED',
+  order_id: 'ORD-9901',
+  user_id: 100,
+  timestamp: new Date().toISOString()
+};
+console.log("Publishing Kafka event:", orderEvent);`
+          },
+          {
+            id: 706,
+            title: '06. Giám sát Prometheus / Grafana & Containerize Docker Swarm',
+            duration: '35:00',
+            videoId: 'yyUHQIec83I',
+            start_seconds: 12300,
+            end_seconds: 14400,
+            description: 'Thu thập chỉ số CPU/RAM với Prometheus, thiết lập dashboard Grafana và đóng gói Docker image đa tầng siêu nhẹ (<15MB).',
+            sampleCode: `// Chỉ số Health Check Microservice
+const metrics = { uptimeSeconds: 36000, goroutines: 42, heapAllocMB: 18.4, status: "UP" };
+console.log("Hệ thống Microservice sẵn sàng:", metrics);`
+          }
+        ]
+      }
+    ]
+  },
+  // KHÓA 8: NEXT.JS 15 APP ROUTER FULLSTACK & SERVER ACTIONS
+  8: {
+    courseId: 8,
+    courseTitle: 'Next.js 15 App Router Fullstack & Server Actions',
+    instructor: 'Vũ Quốc Huy (Lead Frontend)',
+    totalModules: 3,
+    totalLessons: 6,
+    totalDuration: '44 giờ học thực chiến',
+    modules: [
+      {
+        moduleTitle: 'Chương 1: Kiến trúc Next.js 15 App Router & React Server Components',
+        lessons: [
+          {
+            id: 801,
+            title: '01. Tổng quan Next.js 15: File-based Routing, Layouts & Templates',
+            duration: '35:00',
+            videoId: 'wm5gMKuwSYk',
+            start_seconds: 0,
+            end_seconds: 2100,
+            description: 'Khám phá cấu trúc thư mục App Router, Route Groups, Parallel Routes, Intercepting Routes và phân cấp Layouts.',
+            sampleCode: `// Định nghĩa metadata động cho trang Next.js 15
+export async function generateMetadata({ params }) {
+  return {
+    title: "Khóa học Next.js 15 App Router Fullstack",
+    description: "Thành thạo RSC, Server Actions và tối ưu tốc độ tải trang."
+  };
+}
+console.log("Metadata động cấu hình chuẩn SEO");`
+          },
+          {
+            id: 802,
+            title: '02. Phân biệt Server Components vs Client Components & Hydration',
+            duration: '40:00',
+            videoId: 'wm5gMKuwSYk',
+            start_seconds: 2100,
+            end_seconds: 4500,
+            description: 'Chiến lược phân chia ranh giới "use client", stream HTML với Suspense và loại bỏ hoàn toàn flash of unstyled content.',
+            sampleCode: `// Ranh giới Client Component với Server Component
+const isServer = typeof window === 'undefined';
+console.log("Môi trường thực thi hiện tại:", isServer ? "Node.js Server" : "Browser Client");`
+          }
+        ]
+      },
+      {
+        moduleTitle: 'Chương 2: Server Actions, Data Fetching & Caching Tối Tân',
+        lessons: [
+          {
+            id: 803,
+            title: '03. Mutation dữ liệu trực tiếp với Next.js Server Actions & Zod',
+            duration: '45:00',
+            videoId: 'wm5gMKuwSYk',
+            start_seconds: 4500,
+            end_seconds: 7200,
+            description: 'Viết Server Actions trực tiếp trong file, validate dữ liệu với Zod, xử lý pending state với useActionState hook.',
+            sampleCode: `// Xử lý Server Action với validation
+function submitForm(formData) {
+  const email = formData.get('email');
+  if (!email || !email.includes('@')) throw new Error('Email không hợp lệ');
+  return { success: true, message: 'Đăng ký thành công!' };
+}
+console.log("Server Action kết quả:", submitForm(new Map([['email', 'dev@eduviet.vn']])));`
+          },
+          {
+            id: 804,
+            title: '04. Chiến lược Caching: revalidatePath, revalidateTag, ISR & PPR',
+            duration: '40:00',
+            videoId: 'wm5gMKuwSYk',
+            start_seconds: 7200,
+            end_seconds: 9600,
+            description: 'Hiểu cặn kẽ 4 tầng cache trong Next.js (Request Memoization, Data Cache, Full Route Cache, Router Cache) và Partial Prerendering (PPR).',
+            sampleCode: `// Revalidation theo Tag
+function revalidateCatalog(tag) {
+  console.log(\`[Cache Invalidation] Đã làm mới cache cho thẻ: \${tag}\`);
+}
+revalidateCatalog('courses-list');`
+          }
+        ]
+      },
+      {
+        moduleTitle: 'Chương 3: Xác thực bảo mật, Thanh toán & Triển khai Production',
+        lessons: [
+          {
+            id: 805,
+            title: '05. Tích hợp Authentication (NextAuth / JWT) & Middleware phân quyền',
+            duration: '40:00',
+            videoId: 'wm5gMKuwSYk',
+            start_seconds: 9600,
+            end_seconds: 12000,
+            description: 'Bảo vệ routes bằng Edge Middleware, xác thực phiên người dùng, quản lý cookies HttpOnly và vai trò RBAC.',
+            sampleCode: `// Middleware bảo vệ đường dẫn admin
+function authMiddleware(pathname, role) {
+  if (pathname.startsWith('/admin') && role !== 'ADMIN') {
+    return { redirect: '/auth/login', status: 302 };
+  }
+  return { status: 200 };
+}
+console.log("Kiểm tra phân quyền:", authMiddleware('/admin/courses', 'STUDENT'));`
+          },
+          {
+            id: 806,
+            title: '06. Tối ưu hóa Web Vitals, Open Graph và Triển khai Vercel Production',
+            duration: '35:00',
+            videoId: 'wm5gMKuwSYk',
+            start_seconds: 12000,
+            end_seconds: 14100,
+            description: 'Đo lường LCP, FID, CLS, tối ưu next/image, dynamic imports và cấu hình CI/CD tự động deploy lên Vercel.',
+            sampleCode: `// Báo cáo Web Vitals
+const vitals = { LCP: '0.8s (Tốt)', CLS: '0.01 (Tuyệt vời)', FID: '12ms' };
+console.log("Điểm số Core Web Vitals của trang:", vitals);`
+          }
+        ]
+      }
+    ]
   }
 };
 
-// Hàm lấy curriculum theo courseId, có fallback mặc định nếu chưa định nghĩa
+// Hàm lấy curriculum theo courseId, có trạng thái rõ ràng nếu chưa hoàn thiện
 export function getCurriculumForCourse(course) {
   const courseId = Number(course?.course_id || 1);
   if (COURSE_CURRICULA[courseId]) {
     return COURSE_CURRICULA[courseId];
   }
-  // Fallback an toàn dựa trên React Course
+  // Nếu khóa học chưa có giáo trình riêng, trả về thông báo trung thực không dùng giả lập
   return {
-    ...COURSE_CURRICULA[1],
     courseId,
-    courseTitle: course?.title || 'Khóa học lập trình EduViet'
+    courseTitle: course?.title || 'Khóa học lập trình EduViet',
+    isPending: true,
+    totalModules: 0,
+    totalLessons: 0,
+    totalDuration: 'Đang cập nhật',
+    modules: [],
+    message: 'Giáo trình chi tiết của khóa học đang được Ban Chuyên Môn EduViet biên soạn và hoàn thiện theo chuẩn công nghiệp.',
   };
 }
